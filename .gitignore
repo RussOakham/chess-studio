@@ -29,6 +29,12 @@ build/
 *.egg-info/
 *.tsbuildinfo
 
+# TypeScript config build artifacts
+*.config.js
+*.config.d.ts
+*.config.js.map
+*.config.d.ts.map
+
 # Environment variables
 .env
 .env.local
