@@ -57,13 +57,12 @@ This document outlines the technology stack for the chess game project.
   - Simple, lightweight auth endpoints
   - Leverages Next.js middleware for session management
   - Good for auth-related operations
-  
 - **Separate Backend Service** (`apps/api`): Express.js or Go
   - **Express.js Option**: TypeScript, shared codebase, easier to start
   - **Go Option**: Higher performance, better for CPU-intensive operations (engine coordination)
   - Handles: Game logic, database operations, chess engine coordination, AI integration
   - Performance-critical operations (move validation, engine communication)
-  
+
 **Rationale for Hybrid**:
 
 - Auth is simple and benefits from Next.js integration
@@ -169,6 +168,20 @@ This document outlines the technology stack for the chess game project.
 - Better developer experience with autocomplete
 - Reduces runtime errors
 
+**TypeScript 7.0 (Native Go-based Compiler)** 🔮 **Future**:
+
+- Microsoft is rewriting TypeScript compiler in Go (codename "Corsa")
+- **10x faster** compilation and type checking
+- **8x faster** editor load times
+- **50% less memory** usage
+- Still compiles TypeScript → JavaScript (same output)
+- **Linting**: Use `tsgolint` (ESLint equivalent for Go-based compiler)
+  - `typescript-eslint` for TypeScript 6.x
+  - `tsgolint` for TypeScript 7.0 (when available)
+- **Timeline**: Preview mid-2025, stable release end of 2025
+- **No code changes needed** - just faster tooling
+- See `docs/planning/typescript-go-strategy.temp.md` for detailed strategy
+
 ### Styling
 
 **Tailwind CSS** ✅ **Selected**
@@ -269,23 +282,24 @@ This document outlines the technology stack for the chess game project.
 
 ## Decision Summary
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| Monorepo | Turbo Repo | Multi-service management, code sharing |
-| Frontend | Next.js 14+ | Full-stack capabilities, auth integration, SSR |
-| Auth | Better Auth | Modern, type-safe, Next.js friendly |
-| Backend | Hybrid (Next.js Auth + Express/Go API) | Performance + simplicity |
-| Database | Neon DB (PostgreSQL) | Serverless, branching, pgvector support |
-| Caching | TBD (Start without, add Redis/Upstash if needed) | Performance optimization |
-| ORM | Drizzle | Lightweight, SQL-like, performant |
-| Chess Engine | Stockfish | Industry standard, multiple integration options |
-| AI | Stockfish + LLM API | Best moves from engine, summaries from LLM |
-| Language | TypeScript | Type safety, better DX |
-| Type Safety | tRPC | End-to-end type safety between frontend and backend |
-| Styling | Tailwind CSS | Utility-first CSS framework |
-| UI Components | ShadCN UI | Component library built on Radix UI |
-| Chess Board | Custom 2D (SVG icons) | Full control, brand consistency |
-| 3D Board (Future) | Three.js + @react-three/fiber | 3D rendering for enhanced board view |
+| Component           | Choice                                           | Rationale                                           |
+| ------------------- | ------------------------------------------------ | --------------------------------------------------- |
+| Monorepo            | Turbo Repo                                       | Multi-service management, code sharing              |
+| Frontend            | Next.js 14+                                      | Full-stack capabilities, auth integration, SSR      |
+| Auth                | Better Auth                                      | Modern, type-safe, Next.js friendly                 |
+| Backend             | Hybrid (Next.js Auth + Express/Go API)           | Performance + simplicity                            |
+| TypeScript Compiler | TypeScript 6.x (now), 7.0 (future)               | 10x faster with Go-based compiler                   |
+| Database            | Neon DB (PostgreSQL)                             | Serverless, branching, pgvector support             |
+| Caching             | TBD (Start without, add Redis/Upstash if needed) | Performance optimization                            |
+| ORM                 | Drizzle                                          | Lightweight, SQL-like, performant                   |
+| Chess Engine        | Stockfish                                        | Industry standard, multiple integration options     |
+| AI                  | Stockfish + LLM API                              | Best moves from engine, summaries from LLM          |
+| Language            | TypeScript                                       | Type safety, better DX                              |
+| Type Safety         | tRPC                                             | End-to-end type safety between frontend and backend |
+| Styling             | Tailwind CSS                                     | Utility-first CSS framework                         |
+| UI Components       | ShadCN UI                                        | Component library built on Radix UI                 |
+| Chess Board         | Custom 2D (SVG icons)                            | Full control, brand consistency                     |
+| 3D Board (Future)   | Three.js + @react-three/fiber                    | 3D rendering for enhanced board view                |
 
 ## Alternative Considerations
 

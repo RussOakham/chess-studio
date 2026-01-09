@@ -152,8 +152,8 @@ Turbo Repo benefits from:
 - name: Setup Turbo
   uses: actions/setup-node@v4
   with:
-    node-version: '20'
-    
+    node-version: "20"
+
 - name: Install Turbo
   run: npm install -g turbo
 
@@ -174,7 +174,7 @@ Turbo Repo benefits from:
    - name: Install Doppler
      run: |
        curl -Ls --tlsv1.2 --proto "=https" https://cli.doppler.com/install.sh | sh
-   
+
    - name: Run with Doppler
      run: doppler run -- npm test
      env:

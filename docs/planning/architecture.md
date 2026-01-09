@@ -256,14 +256,14 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://api:3001
-      - DATABASE_URL=${DATABASE_URL}  # Neon DB connection string
+      - DATABASE_URL=${DATABASE_URL} # Neon DB connection string
 
   api:
     build: ./apps/api
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=${DATABASE_URL}  # Neon DB connection string
+      - DATABASE_URL=${DATABASE_URL} # Neon DB connection string
       - STOCKFISH_PATH=/usr/bin/stockfish
 
 # Note: Database is Neon DB (serverless), not a container

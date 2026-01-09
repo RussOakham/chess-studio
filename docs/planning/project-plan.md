@@ -17,6 +17,7 @@ This document contains the project planning, milestones, and roadmap for the che
 See `docs/planning/mvp-features.md` for detailed feature breakdown.
 
 **Core MVP Features (Phase 1)**:
+
 - **Authentication**: User registration, login, session management
 - **Chess Game vs Engine**: Play games against a chess engine (Stockfish)
 - **Engine Evaluation**: Real-time position evaluation during games

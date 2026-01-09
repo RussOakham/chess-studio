@@ -302,7 +302,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'infrastructure/**'
+      - "infrastructure/**"
 
 jobs:
   terraform:

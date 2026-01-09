@@ -120,7 +120,7 @@ services:
    ```bash
    # macOS
    brew install doppler
-   
+
    # Linux
    curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A3C913B8.key' | sudo apt-key add -
    echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list
@@ -144,7 +144,7 @@ services:
    ```bash
    # In apps/web
    doppler run -- npm run dev
-   
+
    # In apps/api
    doppler run -- npm run dev
    ```
@@ -164,7 +164,7 @@ services:
      web:
        image: chess-game-web:latest
        environment:
-         DOPPLER_TOKEN: ${DOPPLER_WEB_TOKEN}  # From Dokploy env vars
+         DOPPLER_TOKEN: ${DOPPLER_WEB_TOKEN} # From Dokploy env vars
        command: doppler run -- npm start
    ```
 

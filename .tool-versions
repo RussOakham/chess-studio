@@ -1,0 +1,5 @@
+# Tool versions for this project
+# Use nvm to manage Node.js: nvm install 24.12.0 && nvm use
+nodejs 24.12.0
+pnpm 10.27.0
+turbo 2.7.3

@@ -28,13 +28,19 @@ This document outlines the end-to-end type safety strategy for the chess game ap
 - Type-safe API calls
 - Automatic request/response typing
 
-**Backend (Express.js)**:
+**Backend (Express.js or Go)**:
 
-- tRPC router definition
+- tRPC router definition (Express.js)
 - Procedure definitions with input/output types
 - Type inference for all procedures
+- **Note**: TypeScript 7.0 (Go-based compiler) works perfectly with tRPC
+  - No compatibility issues
+  - Just makes type checking faster
+  - Same tRPC setup, better performance
 
 ### Type Flow
+
+**With Express.js:**
 
 ```text
 Backend (Express.js)
@@ -50,63 +56,95 @@ tRPC Client (TypeScript)
 Full Type Safety ✅
 ```
 
+**With TypeScript 7.0 (Go-based compiler):**
+
+```text
+TypeScript Source Code
+  ↓
+TypeScript 7.0 Compiler (Go-based, 10x faster)
+  ↓
+JavaScript Output (same as before)
+  ↓
+tRPC Router (Express.js)
+  ↓
+Type Inference
+  ↓
+Frontend (Next.js)
+  ↓
+tRPC Client (TypeScript)
+  ↓
+Full Type Safety ✅ (same as before, just faster)
+```
+
 ## Implementation
 
 ### Backend tRPC Router
 
 ```typescript
 // apps/api/src/routers/game.ts
-import { z } from 'zod';
-import { router, publicProcedure } from '../trpc';
+import { z } from "zod";
+import { router, publicProcedure } from "../trpc";
 
 export const gameRouter = router({
   create: publicProcedure
-    .input(z.object({
-      difficulty: z.enum(['easy', 'medium', 'hard']),
-      color: z.enum(['white', 'black']).optional(),
-    }))
-    .output(z.object({
-      gameId: z.string(),
-      fen: z.string(),
-      turn: z.enum(['white', 'black']),
-    }))
+    .input(
+      z.object({
+        difficulty: z.enum(["easy", "medium", "hard"]),
+        color: z.enum(["white", "black"]).optional(),
+      })
+    )
+    .output(
+      z.object({
+        gameId: z.string(),
+        fen: z.string(),
+        turn: z.enum(["white", "black"]),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       // Implementation
-      return { gameId: '...', fen: '...', turn: 'white' };
+      return { gameId: "...", fen: "...", turn: "white" };
     }),
 
   makeMove: publicProcedure
-    .input(z.object({
-      gameId: z.string(),
-      from: z.string(),
-      to: z.string(),
-      promotion: z.string().optional(),
-    }))
-    .output(z.object({
-      success: z.boolean(),
-      fen: z.string(),
-      move: z.object({
+    .input(
+      z.object({
+        gameId: z.string(),
         from: z.string(),
         to: z.string(),
-        san: z.string(),
-      }),
-    }))
+        promotion: z.string().optional(),
+      })
+    )
+    .output(
+      z.object({
+        success: z.boolean(),
+        fen: z.string(),
+        move: z.object({
+          from: z.string(),
+          to: z.string(),
+          san: z.string(),
+        }),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       // Implementation
     }),
 
   getGame: publicProcedure
     .input(z.object({ gameId: z.string() }))
-    .output(z.object({
-      id: z.string(),
-      fen: z.string(),
-      pgn: z.string(),
-      moves: z.array(z.object({
-        from: z.string(),
-        to: z.string(),
-        san: z.string(),
-      })),
-    }))
+    .output(
+      z.object({
+        id: z.string(),
+        fen: z.string(),
+        pgn: z.string(),
+        moves: z.array(
+          z.object({
+            from: z.string(),
+            to: z.string(),
+            san: z.string(),
+          })
+        ),
+      })
+    )
     .query(async ({ input, ctx }) => {
       // Implementation
     }),
@@ -117,8 +155,8 @@ export const gameRouter = router({
 
 ```typescript
 // apps/web/src/lib/trpc.ts
-import { createTRPCReact } from '@trpc/react-query';
-import type { AppRouter } from '@repo/api/src/routers/_app';
+import { createTRPCReact } from "@trpc/react-query";
+import type { AppRouter } from "@repo/api/src/routers/_app";
 
 export const trpc = createTRPCReact<AppRouter>();
 ```
@@ -127,7 +165,7 @@ export const trpc = createTRPCReact<AppRouter>();
 
 ```typescript
 // apps/web/src/components/GameBoard.tsx
-import { trpc } from '@/lib/trpc';
+import { trpc } from "@/lib/trpc";
 
 export function GameBoard({ gameId }: { gameId: string }) {
   const { data: game } = trpc.game.getGame.useQuery({ gameId });
@@ -162,9 +200,14 @@ packages/
 
 ```typescript
 // packages/types/src/game.ts
-export type GameStatus = 'in_progress' | 'checkmate' | 'stalemate' | 'draw' | 'resigned';
+export type GameStatus =
+  | "in_progress"
+  | "checkmate"
+  | "stalemate"
+  | "draw"
+  | "resigned";
 
-export type GameColor = 'white' | 'black';
+export type GameColor = "white" | "black";
 
 export interface Game {
   id: string;

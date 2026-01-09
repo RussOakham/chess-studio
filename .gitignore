@@ -33,3 +33,19 @@ build/
 # Logs
 *.log
 logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.tmp.*
+*.temp.*
+*.tmp.*.*
+*.temp.*.*
+*.tmp.*.*.*
+*.temp.*.*.*
+
+# Husky
+.husky/_
+
+# Turbo
+.turbo/
