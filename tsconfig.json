@@ -27,6 +27,5 @@
       "@repo/*": ["./packages/*/src"]
     }
   },
-  "include": [],
   "exclude": ["node_modules", "dist", "build", ".next", ".turbo"]
 }
