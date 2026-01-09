@@ -1,12 +1,36 @@
 // @ts-nocheck
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import sonarjs from "eslint-plugin-sonarjs";
+import unicorn from "eslint-plugin-unicorn";
+import json from "eslint-plugin-json";
+import yml from "eslint-plugin-yml";
+import prettierConfig from "eslint-config-prettier";
 
 /** @type {import("typescript-eslint").Config} */
 export default [
-  js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
   {
+    files: ["**/*.json"],
+    plugins: {
+      json: json,
+    },
+    processor: json.processors[".json"],
+    rules: {
+      "json/duplicate-key": "error",
+      "json/trailing-comma": "error",
+    },
+  },
+  ...yml.configs["flat/recommended"],
+  js.configs.recommended,
+  {
+    ignores: ["**/*.json", "**/*.{yml,yaml}"],
+  },
+  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
+  sonarjs.configs.recommended,
+  unicorn.configs.recommended,
+  {
+    files: ["**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -38,6 +62,10 @@ export default [
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-call": "warn",
+      "unicorn/no-null": "off",
+      "unicorn/prevent-abbreviations": "off",
+      "sonarjs/prefer-read-only-props": "off",
     },
   },
+  prettierConfig,
 ];

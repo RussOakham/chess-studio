@@ -26,6 +26,7 @@ dist/
 build/
 .next/
 .turbo/
+.pnpm-store/
 *.egg-info/
 *.tsbuildinfo
 

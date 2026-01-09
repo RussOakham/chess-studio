@@ -41,9 +41,9 @@ export default function RegisterPage() {
       // Redirect to home page on success
       router.push("/");
       router.refresh();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        const validationError = fromError(err);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const validationError = fromError(error);
         setFormError("root", {
           message: validationError.message || "An unexpected error occurred",
         });
@@ -58,10 +58,10 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md p-6">
-        <h1 className="text-2xl font-bold mb-6">Create Account</h1>
+        <h1 className="mb-6 text-2xl font-bold">Create Account</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errors.root && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+            <div className="text-destructive bg-destructive/10 rounded-md p-3 text-sm">
               {errors.root.message}
             </div>
           )}
@@ -107,7 +107,7 @@ export default function RegisterPage() {
             {isSubmitting ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
-        <p className="mt-4 text-sm text-muted-foreground text-center">
+        <p className="text-muted-foreground mt-4 text-center text-sm">
           Already have an account?{" "}
           <a href="/login" className="text-primary hover:underline">
             Sign in
