@@ -1,100 +1,114 @@
-# Chess Game
+# Chess Studio
 
-A chess game application driven by AI/Chess Engine.
+AI-driven chess game application built with Next.js 16, React 19, and modern web technologies.
 
-## Project Status
+## Status
 
-🚧 In Planning Phase
+🚧 **In Development** - Initial setup phase
 
-See the `docs/planning/` directory for project planning documents.
+## Features
+
+- 🎮 Play chess against AI engine (Stockfish)
+- 🧠 AI-powered move hints and game analysis
+- 📊 Engine evaluation and game review
+- 📜 Game history and replay
+- 🎯 Pre-moves and planned move mode
+- 🎨 Modern UI with ShadCN Base UI and Tailwind CSS
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, ShadCN Base UI
+- **Backend**: Next.js API Routes, Express.js/Go (planned)
+- **Database**: PostgreSQL (Neon DB) with Drizzle ORM
+- **Chess Engine**: Stockfish
+- **AI**: OpenAI/Anthropic for hints and summaries
+- **Authentication**: Better Auth
+- **Type Safety**: End-to-end type safety with tRPC (planned)
+- **Monorepo**: Turbo Repo with pnpm workspaces
 
 ## Project Structure
 
+This is a monorepo managed with Turbo Repo and pnpm.
+
 ```text
 chess-game/
-├── docs/
-│   └── planning/
-│       ├── tech-stack.md
-│       ├── architecture.md
-│       ├── project-plan.md
-│       ├── mvp-features.md
-│       ├── deployment.md
-│       ├── terraform-infrastructure.md
-│       ├── doppler-secrets.md
-│       ├── ci-cd-strategy.md
-│       ├── database-strategy.md
-│       └── type-safety-strategy.md
-└── README.md
+├── apps/
+│   └── web/              # Next.js web application
+├── packages/
+│   ├── types/            # Shared TypeScript types
+│   ├── chess/            # Chess logic and utilities
+│   ├── db/               # Database schema and client
+│   └── config/           # Shared configurations
+└── docs/                 # Documentation
 ```
-
-## Prerequisites
-
-- **Node.js**: 24.12.0 (LTS) - Managed via [nvm](https://github.com/nvm-sh/nvm)
-- **pnpm**: 10.27.0+
-- **Homebrew**: For installing nvm (Linux/WSL)
 
 ## Getting Started
 
-### 1. Install Node.js
+### Prerequisites
 
-You can install Node.js 24.12.0 (LTS) either via Homebrew or nvm:
+- **Node.js**: 24.12.0 (LTS) - Use `nvm` to manage versions
+- **pnpm**: 10.27.0 or higher
 
-**Option A: Via Homebrew (Recommended for system-wide installation)**
+### Installation
 
-```bash
-brew install node@24
-```
+1. **Clone the repository**
 
-**Option B: Via nvm (Recommended for per-project version management)**
+   ```bash
+   git clone <repository-url>
+   cd chess-game
+   ```
 
-If you don't have nvm installed:
+2. **Install Node.js version**
 
-```bash
-# Install nvm via Homebrew
-brew install nvm
+   ```bash
+   nvm install
+   nvm use
+   ```
 
-# Add to your shell profile (~/.zshrc or ~/.bashrc)
-export NVM_DIR="$HOME/.nvm"
-[ -s "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh"
-[ -s "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm"
+3. **Install dependencies**
 
-# Reload your shell
-source ~/.zshrc  # or source ~/.bashrc
-```
+   ```bash
+   pnpm install
+   ```
 
-Then install and use the project's Node.js version:
+4. **Set up environment variables**
 
-```bash
-# Install Node.js 24.12.0 (LTS)
-nvm install 24.12.0
+   ```bash
+   cp .env.example .env
+   cp apps/web/.env.example apps/web/.env
+   cp packages/db/.env.example packages/db/.env
+   ```
 
-# Use the project's Node.js version (automatically reads .nvmrc)
-nvm use
+   Fill in the required values in each `.env` file.
 
-# Set as default (optional)
-nvm alias default 24.12.0
-```
+5. **Start development server**
 
-**Verify installation:**
+   ```bash
+   pnpm dev
+   ```
 
-```bash
-node --version  # Should output v24.12.0
-```
+   The Next.js app will be available at `http://localhost:3000`
 
-### 2. Install pnpm
+### Available Scripts
 
-```bash
-npm install -g pnpm@10.27.0
-```
+- `pnpm dev` - Start all development servers
+- `pnpm build` - Build all packages and apps
+- `pnpm lint` - Lint all packages
+- `pnpm type-check` - Type check all packages
+- `pnpm format` - Format all files with Prettier
+- `pnpm clean` - Clean all build artifacts
 
-### 3. Install Dependencies
+## Development
 
-```bash
-pnpm install
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed development guidelines.
 
-### 4. Development
+## Documentation
 
-```bash
-pnpm dev
-```
+- **Planning Documents**: See `docs/planning/` for detailed planning documents
+- **Architecture**: See `docs/planning/architecture.md`
+- **Tech Stack**: See `docs/planning/tech-stack.md`
+- **MVP Features**: See `docs/planning/mvp-features.md`
+
+## License
+
+[To be determined]
