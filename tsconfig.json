@@ -27,5 +27,13 @@
       "@repo/*": ["./packages/*/src"]
     }
   },
-  "exclude": ["node_modules", "dist", "build", ".next", ".turbo"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    ".turbo",
+    "packages/config/**/*.js",
+    "packages/config/**/*.mjs"
+  ]
 }
