@@ -8,6 +8,7 @@ import {
   integer,
   pgEnum,
   real,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // Game status enum
@@ -25,22 +26,25 @@ export const gameResultEnum = pgEnum("game_result", [
   "draw",
 ]);
 
-// Users table
-// Note: Better Auth may handle user management, but we'll define a basic structure
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  email: text("email").notNull().unique(),
-  name: text("name"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+// Better Auth user table (for reference only - managed by Better Auth)
+// This allows us to create foreign keys to Better Auth's user table
+export const betterAuthUser = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  emailVerified: boolean("emailVerified").notNull(),
+  image: text("image"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull(),
 });
 
 // Games table
+// References Better Auth's "user" table
 export const games = pgTable("games", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+  userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => betterAuthUser.id, { onDelete: "cascade" }),
   status: gameStatusEnum("status").notNull().default("waiting"),
   result: gameResultEnum("result"),
   fen: text("fen").notNull(), // Current position in FEN notation
@@ -79,7 +83,6 @@ export const gameReviews = pgTable("game_reviews", {
 
 // Export schema object for Drizzle
 export const schema = {
-  users,
   games,
   moves,
   gameReviews,
