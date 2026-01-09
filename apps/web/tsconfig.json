@@ -4,9 +4,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "@repo/types": ["../../packages/types/src/index.ts"],
       "@repo/types/*": ["../../packages/types/src/*"],
+      "@repo/chess": ["../../packages/chess/src/index.ts"],
       "@repo/chess/*": ["../../packages/chess/src/*"],
+      "@repo/db": ["../../packages/db/src/index.ts"],
       "@repo/db/*": ["../../packages/db/src/*"]
     },
     "plugins": [
@@ -23,5 +25,16 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../packages/types"
+    },
+    {
+      "path": "../../packages/chess"
+    },
+    {
+      "path": "../../packages/db"
+    }
+  ]
 }
