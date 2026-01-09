@@ -148,10 +148,10 @@ api/
 2. User creates new game → Frontend calls Backend API → Creates game record in DB
 3. User makes move → Frontend validates with chess.js
 4. Move sent to Backend API → API stores move in DB
-5. Backend API requests Stockfish evaluation → Returns position eval
+5. **Client-side**: Stockfish WASM evaluates position (quick eval, depth 5-8) → Updates evaluation bar
 6. Frontend updates board and evaluation display
-7. Engine move (if playing vs engine) → Backend API → Stockfish calculates best move
-8. Engine move stored → Cycle continues
+7. **Server-side**: Engine move (if playing vs engine) → Frontend calls `POST /api/games/[gameId]/engine/move` → Backend API uses Stockfish WASM to calculate best move (depth 10-20+ based on difficulty)
+8. Engine move stored in DB → Frontend receives move → Board updates → Cycle continues
 
 ### Game Review Flow
 
@@ -187,11 +187,12 @@ api/
 - `POST /api/games/:id/moves` - Submit move
 - `GET /api/games/:id/moves` - Get all moves for game
 
-#### Analysis
+#### Engine & Analysis
 
-- `POST /api/analysis/evaluate` - Evaluate position (Stockfish)
-- `POST /api/analysis/hint` - Get AI move hint
-- `POST /api/games/:id/review` - Generate game review
+- `POST /api/games/:id/engine/move` - Get engine move (uses Stockfish WASM server-side)
+- `POST /api/analysis/evaluate` - Deep position evaluation (optional, for game reviews)
+- `POST /api/analysis/hint` - Get AI move hint (Stockfish + LLM)
+- `POST /api/games/:id/review` - Generate game review (Stockfish analysis + LLM)
 
 #### History
 
@@ -206,11 +207,44 @@ api/
 
 ## Integration Points
 
-### Chess Engine (Stockfish)
+### Chess Engine (Stockfish) - Hybrid Approach
 
-- **Client-side**: Use stockfish.js or stockfish-nnue.wasm for real-time evaluation
-- **Server-side**: Spawn Stockfish process for deeper analysis, move generation
-- **Communication**: UCI protocol or JavaScript API
+We use `stockfish.wasm` (WebAssembly) in both client and server environments for optimal performance and flexibility.
+
+**Client-Side (Browser):**
+
+- **Purpose**: Real-time position evaluation, move hints, legal move highlighting
+- **Library**: `stockfish.wasm` runs directly in the browser
+- **Use Cases**:
+  - Quick position evaluation (depth 5-8) for UI feedback
+  - Highlighting legal moves on hover
+  - Showing evaluation bar in real-time
+  - Move suggestions/hints (shallow analysis)
+- **Benefits**: Instant feedback, no network latency, better UX
+- **Limitations**: Limited depth to avoid blocking UI, uses user's CPU
+
+**Server-Side (API):**
+
+- **Purpose**: Engine moves, deeper analysis, game reviews, controlled difficulty
+- **Library**: `stockfish.wasm` runs in Node.js API routes
+- **Use Cases**:
+  - Calculating engine moves (depth 10-20+ based on difficulty)
+  - Deep position analysis for game reviews
+  - Post-game analysis and evaluation
+  - AI integration (LLM hints, game summaries)
+- **Benefits**:
+  - Controlled difficulty levels
+  - Rate limiting and cost control
+  - Consistent performance
+  - Server CPU resources
+  - Integration with AI services
+- **API Endpoint**: `POST /api/games/[gameId]/engine/move`
+
+**Communication:**
+
+- Client-side: Direct JavaScript API calls to WASM module
+- Server-side: JavaScript API calls to WASM module in Node.js
+- Client ↔ Server: HTTP REST API for engine moves
 
 ### AI Integration
 
@@ -236,13 +270,16 @@ game_reviews (id, game_id, summary, key_moments, created_at)
 
 ## Performance Considerations
 
-- Cache Stockfish evaluations for common positions
-- Debounce evaluation requests during rapid moves
+- **Hybrid Engine Approach**: Client-side for quick evaluations (no network latency), server-side for deep analysis
+- Cache Stockfish evaluations for common positions (both client and server)
+- Debounce client-side evaluation requests during rapid moves
+- Limit client-side depth to 5-8 to avoid blocking UI thread
+- Server-side engine moves use deeper analysis (10-20+ depth) based on difficulty
 - Paginate game history
 - Index database on user_id, game_id for fast queries
 - Consider WebSocket for real-time updates (future enhancement)
-- Go backend provides better performance for CPU-intensive engine operations
 - Docker containers allow independent scaling of services
+- Client-side WASM reduces server load for common operations
 
 ## Deployment Architecture
 
