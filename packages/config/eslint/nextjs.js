@@ -4,7 +4,7 @@ import nextPlugin from "eslint-config-next/core-web-vitals";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
-/** @type {import("eslint").Linter.Config[]} */
+/** @type {import("typescript-eslint").Config} */
 export default [
   ...baseConfig,
   ...nextPlugin,

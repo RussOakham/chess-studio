@@ -2,7 +2,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
-/** @type {import("eslint").Linter.Config[]} */
+/** @type {import("typescript-eslint").Config} */
 export default [
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

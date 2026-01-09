@@ -23,6 +23,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "incremental": true,
+    "preserveSymlinks": true,
     "paths": {
       "@repo/*": ["./packages/*/src"]
     }
