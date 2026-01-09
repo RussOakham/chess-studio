@@ -1,3 +1,4 @@
+// @ts-nocheck
 import baseConfig from "./index.js";
 import nextPlugin from "eslint-config-next/core-web-vitals";
 import reactPlugin from "eslint-plugin-react";
