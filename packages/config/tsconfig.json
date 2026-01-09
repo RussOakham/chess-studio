@@ -1,8 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "allowJs": false
   },
   "include": [],
-  "exclude": ["**/*.js", "**/*.mjs", "node_modules", "dist"]
+  "exclude": [
+    "**/*.js",
+    "**/*.mjs",
+    "node_modules",
+    "dist",
+    "eslint/**",
+    "prettier/**"
+  ]
 }
