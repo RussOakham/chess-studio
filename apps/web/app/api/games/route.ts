@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { db } from "@repo/db";
-import { games } from "@repo/db/schema";
-import { eq, desc, and, or } from "drizzle-orm";
+import { db, games, eq, desc, and, or } from "@repo/db";
 
 export async function GET() {
   try {

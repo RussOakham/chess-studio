@@ -7,9 +7,6 @@
     "nextjs.json",
     "node.json"
   ],
-  "scripts": {
-    "type-check": "tsc --noEmit"
-  },
   "dependencies": {
     "typescript": "5.9.3"
   }

@@ -2,10 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { db } from "@repo/db";
-import { games } from "@repo/db/schema";
-import { eq, desc, and, or } from "drizzle-orm";
-import type { InferSelectModel } from "drizzle-orm";
+import { db, games, eq, desc, and, or, type InferSelectModel } from "@repo/db";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
