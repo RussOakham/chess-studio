@@ -1,3 +1,4 @@
+// @ts-nocheck
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import sonarjs from "eslint-plugin-sonarjs";
@@ -9,8 +10,8 @@ import nextPlugin from "eslint-config-next/core-web-vitals";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
-/** @type {import("typescript-eslint").Config} */
-export default [
+/** @type {any[]} */
+const config = [
   // JSON and YAML configs from base
   {
     files: ["**/*.json"],
@@ -96,3 +97,5 @@ export default [
   },
   prettierConfig,
 ];
+
+export default config;

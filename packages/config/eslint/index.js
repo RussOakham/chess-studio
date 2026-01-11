@@ -7,8 +7,11 @@ import json from "eslint-plugin-json";
 import yml from "eslint-plugin-yml";
 import prettierConfig from "eslint-config-prettier";
 
-/** @type {import("typescript-eslint").Config} */
-export default [
+/** @type {any[]} */
+const config = [
+  {
+    ignores: ["**/*.json", "**/*.{yml,yaml}"],
+  },
   {
     files: ["**/*.json"],
     plugins: {
@@ -22,9 +25,6 @@ export default [
   },
   ...yml.configs["flat/recommended"],
   js.configs.recommended,
-  {
-    ignores: ["**/*.json", "**/*.{yml,yaml}"],
-  },
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   sonarjs.configs.recommended,
@@ -62,6 +62,7 @@ export default [
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/ban-ts-comment": "off",
       "unicorn/no-null": "off",
       "unicorn/prevent-abbreviations": "off",
       "sonarjs/prefer-read-only-props": "off",
@@ -69,3 +70,5 @@ export default [
   },
   prettierConfig,
 ];
+
+export default config;

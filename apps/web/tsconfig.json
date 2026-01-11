@@ -24,7 +24,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"],
+  "exclude": [
+    "node_modules",
+    "../../packages/config/**/*.js",
+    "../../packages/config/**/*.mjs"
+  ],
   "references": [
     {
       "path": "../../packages/types"

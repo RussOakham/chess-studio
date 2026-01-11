@@ -5,6 +5,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { db } from "@repo/db";
 import { games } from "@repo/db/schema";
 import { eq, desc, and, or } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,16 +61,16 @@ export default async function Home() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold">Chess Studio</h1>
+          <h1 className="text-4xl font-bold">Chess Studio</h1>
             <p className="text-muted-foreground mt-1">
-              Welcome back, {session.user.name || session.user.email}!
-            </p>
-          </div>
+            Welcome back, {session.user.name || session.user.email}!
+          </p>
+        </div>
           <div className="flex items-center gap-4">
             <Link href="/game/new">
               <Button size="lg">New Game</Button>
             </Link>
-            <SignOutButton />
+        <SignOutButton />
           </div>
         </div>
 
@@ -97,7 +98,7 @@ export default async function Home() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {activeGames.map((game) => (
+              {activeGames.map((game: InferSelectModel<typeof games>) => (
                 <Link key={game.id} href={`/game/${game.id}`}>
                   <Card className="hover:ring-2 hover:ring-primary transition-all cursor-pointer">
                     <CardHeader>
@@ -159,7 +160,7 @@ export default async function Home() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {recentGames.map((game) => (
+              {recentGames.map((game: InferSelectModel<typeof games>) => (
                 <Link key={game.id} href={`/game/${game.id}`}>
                   <Card className="hover:ring-2 hover:ring-primary transition-all cursor-pointer">
                     <CardHeader>
@@ -183,7 +184,7 @@ export default async function Home() {
                             {game.result
                               ? game.result
                                   .replace("_", " ")
-                                  .replace(/\b\w/g, (l) => l.toUpperCase())
+                                  .replace(/\b\w/g, (l: string) => l.toUpperCase())
                               : game.status === "completed"
                                 ? "Draw"
                                 : "Abandoned"}
