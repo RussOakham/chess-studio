@@ -56,21 +56,21 @@ export default async function Home() {
     .limit(5);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <main className="container mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-          <h1 className="text-4xl font-bold">Chess Studio</h1>
+            <h1 className="text-4xl font-bold">Chess Studio</h1>
             <p className="text-muted-foreground mt-1">
-            Welcome back, {session.user.name || session.user.email}!
-          </p>
-        </div>
+              Welcome back, {session.user.name || session.user.email}!
+            </p>
+          </div>
           <div className="flex items-center gap-4">
             <Link href="/game/new">
               <Button size="lg">New Game</Button>
             </Link>
-        <SignOutButton />
+            <SignOutButton />
           </div>
         </div>
 
@@ -79,7 +79,10 @@ export default async function Home() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Active Games</h2>
             {activeGames.length > 0 && (
-              <Link href="/games" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link
+                href="/games"
+                className="text-muted-foreground hover:text-foreground text-sm"
+              >
                 View all →
               </Link>
             )}
@@ -100,7 +103,7 @@ export default async function Home() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activeGames.map((game: InferSelectModel<typeof games>) => (
                 <Link key={game.id} href={`/game/${game.id}`}>
-                  <Card className="hover:ring-2 hover:ring-primary transition-all cursor-pointer">
+                  <Card className="hover:ring-primary cursor-pointer transition-all hover:ring-2">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
@@ -127,9 +130,8 @@ export default async function Home() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-xs text-muted-foreground">
-                        Updated:{" "}
-                        {new Date(game.updatedAt).toLocaleDateString()}
+                      <div className="text-muted-foreground text-xs">
+                        Updated: {new Date(game.updatedAt).toLocaleDateString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -144,7 +146,10 @@ export default async function Home() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Recent Games</h2>
             {recentGames.length > 0 && (
-              <Link href="/games" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link
+                href="/games"
+                className="text-muted-foreground hover:text-foreground text-sm"
+              >
                 View all →
               </Link>
             )}
@@ -160,48 +165,55 @@ export default async function Home() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {recentGames.map((game: InferSelectModel<typeof games>) => (
-                <Link key={game.id} href={`/game/${game.id}`}>
-                  <Card className="hover:ring-2 hover:ring-primary transition-all cursor-pointer">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle>Game {game.id.slice(0, 8)}</CardTitle>
-                          <CardDescription>
-                            {game.status === "completed"
-                              ? "Completed"
-                              : "Abandoned"}
-                          </CardDescription>
-                        </div>
-                        <CardAction>
-                          <Badge
-                            variant={
-                              game.status === "completed"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {game.result
-                              ? game.result
-                                  .replace("_", " ")
-                                  .replace(/\b\w/g, (l: string) => l.toUpperCase())
-                              : game.status === "completed"
-                                ? "Draw"
+              {recentGames.map((game: InferSelectModel<typeof games>) => {
+                let badgeText: string;
+                if (game.result) {
+                  badgeText = game.result
+                    .replace("_", " ")
+                    .replaceAll(/\b\w/g, (l: string) => l.toUpperCase());
+                } else if (game.status === "completed") {
+                  badgeText = "Draw";
+                } else {
+                  badgeText = "Abandoned";
+                }
+
+                return (
+                  <Link key={game.id} href={`/game/${game.id}`}>
+                    <Card className="hover:ring-primary cursor-pointer transition-all hover:ring-2">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle>Game {game.id.slice(0, 8)}</CardTitle>
+                            <CardDescription>
+                              {game.status === "completed"
+                                ? "Completed"
                                 : "Abandoned"}
-                          </Badge>
-                        </CardAction>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-xs text-muted-foreground">
-                        {game.status === "completed"
-                          ? `Completed: ${new Date(game.updatedAt).toLocaleDateString()}`
-                          : `Abandoned: ${new Date(game.updatedAt).toLocaleDateString()}`}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                            </CardDescription>
+                          </div>
+                          <CardAction>
+                            <Badge
+                              variant={
+                                game.status === "completed"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                            >
+                              {badgeText}
+                            </Badge>
+                          </CardAction>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-muted-foreground text-xs">
+                          {game.status === "completed"
+                            ? `Completed: ${new Date(game.updatedAt).toLocaleDateString()}`
+                            : `Abandoned: ${new Date(game.updatedAt).toLocaleDateString()}`}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>

@@ -7,6 +7,8 @@ import json from "eslint-plugin-json";
 import yml from "eslint-plugin-yml";
 import prettierConfig from "eslint-config-prettier";
 
+// Type overridden as any[] due to TS language server issues
+/** @type {import("eslint").Linter.Config[]} */
 /** @type {any[]} */
 const config = [
   {

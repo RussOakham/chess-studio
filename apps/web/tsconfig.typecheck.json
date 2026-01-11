@@ -1,6 +1,7 @@
 {
   "extends": "../../packages/config/typescript/nextjs.json",
   "compilerOptions": {
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
       "@repo/types": ["../../packages/types/src/index.ts"],

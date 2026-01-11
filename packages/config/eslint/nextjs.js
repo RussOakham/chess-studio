@@ -10,6 +10,8 @@ import nextPlugin from "eslint-config-next/core-web-vitals";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
+// Type overridden as any[] due to TS language server issues
+/** @type {import("eslint").Linter.Config[]} */
 /** @type {any[]} */
 const config = [
   // JSON and YAML configs from base

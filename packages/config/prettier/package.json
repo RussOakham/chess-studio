@@ -11,6 +11,6 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
-    "prettier": "catalog:"
+    "prettier": "3.7.4"
   }
 }
