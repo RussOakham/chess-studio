@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "doppler run --project chess-studio --config prd -- next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "doppler run --project chess-studio --config prd -- next build",
+    "start": "doppler run --project chess-studio --config prd -- next start",
     "lint": "eslint .",
     "type-check": "tsgo --noEmit --project tsconfig.typecheck.json"
   },

@@ -12,7 +12,7 @@ This document outlines the high-level implementation plan for building the core 
 - Authentication system (login/register)
 - Database schema (games, moves, gameReviews tables)
 - Basic chess utilities package
-- Code quality tooling (ESLint, Prettier)
+- Code quality tooling (oxlint with type-aware linting, oxfmt)
 
 🔄 **Next Steps:**
 

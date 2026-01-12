@@ -58,7 +58,7 @@ chess-game/
 │   ├── types/            # Shared TypeScript types
 │   ├── chess/            # Chess logic and utilities
 │   ├── db/               # Database schema and client (Drizzle ORM)
-│   └── config/           # Shared configurations (ESLint, Prettier, TypeScript)
+│   └── config/           # Shared configurations (TypeScript)
 └── docs/                 # Documentation
 ```
 
@@ -68,9 +68,9 @@ chess-game/
 
 - `pnpm dev` - Start all development servers
 - `pnpm build` - Build all packages and apps
-- `pnpm lint` - Lint all packages
+- `pnpm lint` - Lint all packages (oxlint with type-aware linting + ESLint for JSON/YAML)
 - `pnpm type-check` - Type check all packages
-- `pnpm format` - Format all files with Prettier
+- `pnpm format` - Format all files with oxfmt
 - `pnpm clean` - Clean all build artifacts
 
 ### Package-Specific Scripts
@@ -86,7 +86,10 @@ pnpm --filter @repo/types build
 
 #### Linting
 
-We use ESLint 9 with flat config. Linting runs automatically on commit via Husky.
+We use **oxlint** with type-aware linting for all TypeScript/JavaScript files, and **ESLint** for JSON/YAML files. Linting runs automatically on commit via Husky.
+
+- **oxlint**: High-performance Rust-based linter with type-aware rules (via `oxlint-tsgolint`)
+- **ESLint**: Only used for JSON and YAML file validation
 
 ```bash
 pnpm lint
@@ -94,7 +97,7 @@ pnpm lint
 
 #### Formatting
 
-We use Prettier for code formatting. Formatting runs automatically on commit.
+We use **oxfmt** for code formatting. oxfmt is a high-performance Rust-based formatter with Prettier-compatible configuration, including experimental import sorting and Tailwind CSS class sorting. Formatting runs automatically on commit.
 
 ```bash
 pnpm format
@@ -172,7 +175,7 @@ Testing setup will be added in a future phase. For now, focus on:
 
 - Manual testing of features
 - Type safety (TypeScript)
-- Linting and formatting
+- Linting (oxlint with type-aware rules) and formatting (oxfmt)
 
 ## Documentation
 

@@ -93,9 +93,9 @@ chess-game/
 
 - `pnpm dev` - Start all development servers
 - `pnpm build` - Build all packages and apps
-- `pnpm lint` - Lint all packages
+- `pnpm lint` - Lint all packages (oxlint with type-aware linting + ESLint for JSON/YAML)
 - `pnpm type-check` - Type check all packages
-- `pnpm format` - Format all files with Prettier
+- `pnpm format` - Format all files with oxfmt
 - `pnpm clean` - Clean all build artifacts
 
 ## Development

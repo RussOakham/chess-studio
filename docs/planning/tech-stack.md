@@ -175,12 +175,31 @@ This document outlines the technology stack for the chess game project.
 - **8x faster** editor load times
 - **50% less memory** usage
 - Still compiles TypeScript → JavaScript (same output)
-- **Linting**: Use `tsgolint` (ESLint equivalent for Go-based compiler)
-  - `typescript-eslint` for TypeScript 6.x
-  - `tsgolint` for TypeScript 7.0 (when available)
+- **Linting**: Use `oxlint-tsgolint` (already in use for type-aware linting)
+  - `oxlint` with `oxlint-tsgolint` for type-aware linting (current setup)
+  - `tsgolint` for TypeScript 7.0 (when available, will integrate with oxlint)
 - **Timeline**: Preview mid-2025, stable release end of 2025
 - **No code changes needed** - just faster tooling
 - See `docs/planning/typescript-go-strategy.temp.md` for detailed strategy
+
+### Code Quality Tools
+
+**Linting**: **oxlint** ✅ **Selected**
+
+- High-performance Rust-based linter
+- Type-aware linting via `oxlint-tsgolint` (Go-based TypeScript type checker)
+- Built-in plugins: unicorn, typescript, jsx-a11y, react, react-perf, import, nextjs, promise, node
+- ESLint only used for JSON/YAML file validation
+- Replaces ESLint for all TypeScript/JavaScript linting
+
+**Formatting**: **oxfmt** ✅ **Selected**
+
+- High-performance Rust-based formatter
+- Prettier-compatible configuration
+- Experimental features:
+  - Import sorting (automatic import organization)
+  - Tailwind CSS class sorting (automatic class ordering)
+- Replaces Prettier entirely
 
 ### Styling
 
