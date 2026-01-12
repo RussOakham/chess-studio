@@ -29,7 +29,7 @@ export const auth = betterAuth({
   basePath: "/api/auth",
   secret: process.env.BETTER_AUTH_SECRET,
   plugins: [
-    // nextCookies must be the last plugin in the array
+    // NextCookies must be the last plugin in the array
     nextCookies(),
   ],
 });

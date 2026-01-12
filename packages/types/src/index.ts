@@ -1,20 +1,20 @@
 // Shared TypeScript types for the chess game application
 
 // User types
-export type User = {
+interface User {
   id: string;
   email: string;
   name: string | null;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 // Game types
-export type GameStatus = "waiting" | "in_progress" | "completed" | "abandoned";
+type GameStatus = "waiting" | "in_progress" | "completed" | "abandoned";
 
-export type GameResult = "white_wins" | "black_wins" | "draw" | null;
+type GameResult = "white_wins" | "black_wins" | "draw" | null;
 
-export type Game = {
+interface Game {
   id: string;
   userId: string;
   status: GameStatus;
@@ -23,37 +23,48 @@ export type Game = {
   pgn: string | null;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 // Move types
-export type Move = {
+interface Move {
   from: string;
   to: string;
   promotion?: string;
   san: string;
   timestamp: Date;
-};
+}
 
 // Engine evaluation types
-export type Evaluation = {
+interface Evaluation {
   score: number;
   depth: number;
   bestMove: string | null;
   pv: string[];
-};
+}
 
 // AI hint types
-export type AIHint = {
+interface AIHint {
   move: string;
   explanation: string;
   evaluation: number;
-};
+}
 
 // Game review types
-export type GameReview = {
+interface GameReview {
   gameId: string;
   summary: string;
   keyMoments: string[];
   suggestions: string[];
   createdAt: Date;
+}
+
+export {
+  type User,
+  type GameStatus,
+  type GameResult,
+  type Game,
+  type Move,
+  type Evaluation,
+  type AIHint,
+  type GameReview,
 };

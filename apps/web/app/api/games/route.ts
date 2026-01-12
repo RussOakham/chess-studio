@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { db, games, eq, desc, and, or } from "@repo/db";
+import { and, db, desc, eq, games, or } from "@repo/db";
 
 export async function GET() {
   try {
@@ -22,8 +22,8 @@ export async function GET() {
       .where(
         and(
           eq(games.userId, userId),
-          or(eq(games.status, "in_progress"), eq(games.status, "waiting")),
-        ),
+          or(eq(games.status, "in_progress"), eq(games.status, "waiting"))
+        )
       )
       .orderBy(desc(games.updatedAt))
       .limit(10);
@@ -35,8 +35,8 @@ export async function GET() {
       .where(
         and(
           eq(games.userId, userId),
-          or(eq(games.status, "completed"), eq(games.status, "abandoned")),
-        ),
+          or(eq(games.status, "completed"), eq(games.status, "abandoned"))
+        )
       )
       .orderBy(desc(games.updatedAt))
       .limit(5);
@@ -47,6 +47,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching games:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

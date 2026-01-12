@@ -2,16 +2,17 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { db, games, eq, desc, and, or, type InferSelectModel } from "@repo/db";
+import { and, db, desc, eq, games, or } from "@repo/db";
+import type { InferSelectModel } from "@repo/db";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardAction,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -163,11 +164,14 @@ export default async function Home() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {recentGames.map((game: InferSelectModel<typeof games>) => {
+                // oxlint-disable-next-line init-declarations
                 let badgeText: string;
                 if (game.result) {
                   badgeText = game.result
                     .replace("_", " ")
-                    .replaceAll(/\b\w/g, (l: string) => l.toUpperCase());
+                    .replaceAll(/\b\w/g, (letter: string) =>
+                      letter.toUpperCase()
+                    );
                 } else if (game.status === "completed") {
                   badgeText = "Draw";
                 } else {

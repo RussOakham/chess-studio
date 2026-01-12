@@ -4,12 +4,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
+// oxlint-disable-next-line import/group-exports
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
   const publicRoutes = ["/login", "/register", "/api/auth"];
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
   // If it's a public route, allow access
   if (isPublicRoute) {
@@ -31,6 +34,7 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// oxlint-disable-next-line import/group-exports
 export const config = {
   matcher: [
     /*
@@ -40,6 +44,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
+    // oxlint-disable-next-line unicorn/prefer-string-raw
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

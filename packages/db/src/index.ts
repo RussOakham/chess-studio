@@ -8,7 +8,7 @@ export type { InferSelectModel, InferInsertModel } from "drizzle-orm";
 
 // Re-export commonly used Drizzle query functions
 // This ensures all Drizzle functions come from the same module instance,
-// preventing TypeScript type incompatibility issues in monorepos
+// Preventing TypeScript type incompatibility issues in monorepos
 export {
   eq,
   ne,

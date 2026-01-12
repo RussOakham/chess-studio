@@ -5,11 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fromError } from "zod-validation-error";
 import { signUp } from "@/lib/auth-client";
-import { registerSchema, type RegisterFormData } from "@/lib/validations/auth";
+import { registerSchema } from "@/lib/validations/auth";
+import type { RegisterFormData } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -109,9 +111,9 @@ export default function RegisterPage() {
         </form>
         <p className="text-muted-foreground mt-4 text-center text-sm">
           Already have an account?{" "}
-          <a href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             Sign in
-          </a>
+          </Link>
         </p>
       </Card>
     </div>

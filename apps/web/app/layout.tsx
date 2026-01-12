@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
+// oxlint-disable-next-line import/no-unassigned-import
 import "./globals.css";
 
+// oxlint-disable-next-line new-cap
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

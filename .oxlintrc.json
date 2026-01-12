@@ -1,6 +1,17 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["unicorn", "typescript", "jsx-a11y", "react", "react-perf", "oxc"],
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "jsx-a11y",
+    "react",
+    "react-perf",
+    "oxc",
+    "import",
+    "nextjs",
+    "promise",
+    "node"
+  ],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -11,7 +22,23 @@
   },
   "rules": {
     "unicorn/no-null": "off",
-    "unicorn/prevent-abbreviations": "off"
+    "unicorn/prevent-abbreviations": "off",
+    "react-in-jsx-scope": "off",
+    "jsx-max-depth": "off",
+    "func-style": "off",
+    "jsx-props-no-spreading": "off",
+    "no-magic-numbers": "off",
+    "sort-keys": "off",
+    "no-ternary": "off",
+    "no-named-export": "off",
+    "prefer-default-export": "off",
+    "no-namespace": "off",
+    "sort-imports": "off",
+    "img-redundant-alt": "off",
+    "jsx-no-jsx-as-prop": "off",
+    "jsx-no-new-function-as-prop": "off",
+    "no-duplicate-imports": "off",
+    "max-statements": "off"
   },
   "overrides": [
     {

@@ -44,6 +44,7 @@ const config = [
   ...yml.configs["flat/recommended"],
 
   // eslint-plugin-oxlint to disable rules handled by Oxlint (only for JS/JSX, not TS/TSX)
+  // oxlint-disable-next-line oxc/no-map-spread
   ...oxlint.configs["flat/recommended"].map((cfg) => ({
     ...cfg,
     files: ["**/*.{js,jsx}"],

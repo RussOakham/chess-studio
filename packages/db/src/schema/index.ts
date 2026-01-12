@@ -1,18 +1,18 @@
 // Drizzle ORM schema definitions
 
 import {
+  boolean,
+  integer,
+  pgEnum,
   pgTable,
+  real,
   text,
   timestamp,
   uuid,
-  integer,
-  pgEnum,
-  real,
-  boolean,
 } from "drizzle-orm/pg-core";
 
 // Game status enum
-export const gameStatusEnum = pgEnum("game_status", [
+const gameStatusEnum = pgEnum("game_status", [
   "waiting",
   "in_progress",
   "completed",
@@ -20,11 +20,15 @@ export const gameStatusEnum = pgEnum("game_status", [
 ]);
 
 // Game result enum
-export const gameResultEnum = pgEnum("game_result", ["white_wins", "black_wins", "draw"]);
+const gameResultEnum = pgEnum("game_result", [
+  "white_wins",
+  "black_wins",
+  "draw",
+]);
 
 // Better Auth user table (for reference only - managed by Better Auth)
 // This allows us to create foreign keys to Better Auth's user table
-export const betterAuthUser = pgTable("user", {
+const betterAuthUser = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
@@ -36,7 +40,7 @@ export const betterAuthUser = pgTable("user", {
 
 // Games table
 // References Better Auth's "user" table
-export const games = pgTable("games", {
+const games = pgTable("games", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
@@ -50,7 +54,7 @@ export const games = pgTable("games", {
 });
 
 // Moves table
-export const moves = pgTable("moves", {
+const moves = pgTable("moves", {
   id: uuid("id").primaryKey().defaultRandom(),
   gameId: uuid("game_id")
     .notNull()
@@ -65,7 +69,7 @@ export const moves = pgTable("moves", {
 });
 
 // Game reviews table (for AI-generated summaries)
-export const gameReviews = pgTable("game_reviews", {
+const gameReviews = pgTable("game_reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
   gameId: uuid("game_id")
     .notNull()
@@ -78,8 +82,18 @@ export const gameReviews = pgTable("game_reviews", {
 });
 
 // Export schema object for Drizzle
-export const schema = {
+const schema = {
   games,
   moves,
   gameReviews,
+};
+
+export {
+  gameStatusEnum,
+  gameResultEnum,
+  betterAuthUser,
+  games,
+  moves,
+  gameReviews,
+  schema,
 };
