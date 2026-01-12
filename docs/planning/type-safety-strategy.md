@@ -91,14 +91,14 @@ export const gameRouter = router({
       z.object({
         difficulty: z.enum(["easy", "medium", "hard"]),
         color: z.enum(["white", "black"]).optional(),
-      })
+      }),
     )
     .output(
       z.object({
         gameId: z.string(),
         fen: z.string(),
         turn: z.enum(["white", "black"]),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       // Implementation
@@ -112,7 +112,7 @@ export const gameRouter = router({
         from: z.string(),
         to: z.string(),
         promotion: z.string().optional(),
-      })
+      }),
     )
     .output(
       z.object({
@@ -123,7 +123,7 @@ export const gameRouter = router({
           to: z.string(),
           san: z.string(),
         }),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       // Implementation
@@ -141,9 +141,9 @@ export const gameRouter = router({
             from: z.string(),
             to: z.string(),
             san: z.string(),
-          })
+          }),
         ),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       // Implementation
@@ -200,12 +200,7 @@ packages/
 
 ```typescript
 // packages/types/src/game.ts
-export type GameStatus =
-  | "in_progress"
-  | "checkmate"
-  | "stalemate"
-  | "draw"
-  | "resigned";
+export type GameStatus = "in_progress" | "checkmate" | "stalemate" | "draw" | "resigned";
 
 export type GameColor = "white" | "black";
 

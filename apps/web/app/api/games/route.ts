@@ -22,8 +22,8 @@ export async function GET() {
       .where(
         and(
           eq(games.userId, userId),
-          or(eq(games.status, "in_progress"), eq(games.status, "waiting"))
-        )
+          or(eq(games.status, "in_progress"), eq(games.status, "waiting")),
+        ),
       )
       .orderBy(desc(games.updatedAt))
       .limit(10);
@@ -35,8 +35,8 @@ export async function GET() {
       .where(
         and(
           eq(games.userId, userId),
-          or(eq(games.status, "completed"), eq(games.status, "abandoned"))
-        )
+          or(eq(games.status, "completed"), eq(games.status, "abandoned")),
+        ),
       )
       .orderBy(desc(games.updatedAt))
       .limit(5);
@@ -47,9 +47,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching games:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

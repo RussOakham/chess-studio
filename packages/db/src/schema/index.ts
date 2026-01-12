@@ -20,11 +20,7 @@ export const gameStatusEnum = pgEnum("game_status", [
 ]);
 
 // Game result enum
-export const gameResultEnum = pgEnum("game_result", [
-  "white_wins",
-  "black_wins",
-  "draw",
-]);
+export const gameResultEnum = pgEnum("game_result", ["white_wins", "black_wins", "draw"]);
 
 // Better Auth user table (for reference only - managed by Better Auth)
 // This allows us to create foreign keys to Better Auth's user table

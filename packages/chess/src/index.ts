@@ -6,8 +6,7 @@ import type { Move, Evaluation } from "@repo/types";
  * Chess board utilities
  */
 export const CHESS_BOARD_SIZE = 8;
-export const INITIAL_FEN =
-  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+export const INITIAL_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 /**
  * Validates a chess move notation
