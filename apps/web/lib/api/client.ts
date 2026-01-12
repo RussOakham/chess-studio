@@ -2,7 +2,7 @@
 
 import type { AxiosInstance } from "axios";
 
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 
 // Error response type
 interface ApiErrorResponse {
@@ -19,7 +19,7 @@ const apiClient: AxiosInstance = axios.create({
 
 // Helper to extract error message from axios error
 function getApiErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+  if (isAxiosError<ApiErrorResponse>(error)) {
     const axiosError = error as {
       response?: { data?: ApiErrorResponse };
       message?: string;

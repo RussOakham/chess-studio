@@ -20,11 +20,11 @@
     "lint": "eslint .",
     "type-check": "tsgo --noEmit",
     "clean": "rm -rf dist",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:introspect": "drizzle-kit introspect"
+    "db:generate": "doppler run --project chess-studio --config prd -- drizzle-kit generate",
+    "db:migrate": "doppler run --project chess-studio --config prd -- drizzle-kit migrate",
+    "db:push": "doppler run --project chess-studio --config prd -- drizzle-kit push",
+    "db:studio": "doppler run --project chess-studio --config prd -- drizzle-kit studio",
+    "db:introspect": "doppler run --project chess-studio --config prd -- drizzle-kit introspect"
   },
   "dependencies": {
     "@repo/types": "workspace:*",

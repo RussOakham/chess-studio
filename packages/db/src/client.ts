@@ -16,4 +16,5 @@ const connectionString = process.env.DATABASE_URL;
 const client = postgres(connectionString, { prepare: false });
 
 // Create Drizzle client instance
+// The schema includes all tables (Better Auth + custom tables)
 export const db = drizzle(client, { schema });

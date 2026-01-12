@@ -7,7 +7,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const config: Config = defineConfig({
-  schema: "./src/schema/index.ts",
+  schema: ["./src/schema/index.ts", "./src/schema/auth.ts"],
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
