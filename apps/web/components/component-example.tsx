@@ -260,7 +260,7 @@ function FormExample() {
                     onCheckedChange={(checked) => {
                       setNotifications({
                         ...notifications,
-                        email: checked === true,
+                        email: checked,
                       });
                     }}
                   >
@@ -272,7 +272,7 @@ function FormExample() {
                     onCheckedChange={(checked) =>
                       setNotifications({
                         ...notifications,
-                        sms: checked === true,
+                        sms: checked,
                       })
                     }
                   >
@@ -355,7 +355,7 @@ function FormExample() {
                                     onCheckedChange={(checked) =>
                                       setNotifications({
                                         ...notifications,
-                                        push: checked === true,
+                                        push: checked,
                                       })
                                     }
                                   >
@@ -367,7 +367,7 @@ function FormExample() {
                                     onCheckedChange={(checked) =>
                                       setNotifications({
                                         ...notifications,
-                                        email: checked === true,
+                                        email: checked,
                                       })
                                     }
                                   >
@@ -457,6 +457,7 @@ function FormExample() {
                     <ComboboxEmpty>No frameworks found.</ComboboxEmpty>
                     <ComboboxList>
                       {(item) => (
+                        // oxlint-disable-next-line typescript/no-unsafe-assignment
                         <ComboboxItem key={item} value={item}>
                           {item}
                         </ComboboxItem>

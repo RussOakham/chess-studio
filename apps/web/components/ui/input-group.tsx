@@ -57,6 +57,7 @@ function InputGroupAddon({
       className={cn(inputGroupAddonVariants({ align }), className)}
       // oxlint-disable-next-line jsx-a11y/click-events-have-key-events
       onClick={(event) => {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((event.target as HTMLElement).closest("button")) {
           return;
         }

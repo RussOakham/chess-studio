@@ -1,8 +1,8 @@
-// @ts-nocheck
+// oxlint-disable typescript/no-unsafe-member-access
+// oxlint-disable typescript/no-unsafe-assignment
 import json from "eslint-plugin-json";
 import oxlint from "eslint-plugin-oxlint";
 import yml from "eslint-plugin-yml";
-import tseslint from "typescript-eslint";
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
@@ -48,81 +48,9 @@ const config = [
   // YAML linting
   ...yml.configs["flat/recommended"],
 
-  // eslint-plugin-oxlint to disable rules handled by Oxlint (only for JS/JSX, not TS/TSX)
-  // oxlint-disable-next-line oxc/no-map-spread
-  ...oxlint.configs["flat/recommended"].map((cfg) => ({
-    ...cfg,
-    files: ["**/*.{js,jsx}"],
-  })),
-
-  // Type-aware linting for TS/TSX files only (after oxlint to ensure rules aren't disabled)
-  ...tseslint.configs.recommendedTypeChecked.map((cfg) => ({
-    ...cfg,
-    files: ["**/*.{ts,tsx}"],
-    ignores: [
-      "**/*.config.{ts,js}",
-      "**/dist/**",
-      "**/.next/**",
-      "**/node_modules/**",
-      "**/package.json",
-    ],
-  })),
-  ...tseslint.configs.stylisticTypeChecked.map((cfg) => ({
-    ...cfg,
-    files: ["**/*.{ts,tsx}"],
-    ignores: [
-      "**/*.config.{ts,js}",
-      "**/dist/**",
-      "**/.next/**",
-      "**/node_modules/**",
-      "**/package.json",
-    ],
-  })),
-  {
-    files: ["**/*.{ts,tsx}"],
-    ignores: [
-      "**/*.config.{ts,js}",
-      "**/dist/**",
-      "**/.next/**",
-      "**/node_modules/**",
-      "**/package.json",
-    ],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module",
-        project: true,
-      },
-    },
-    plugins: {
-      "@typescript-eslint": tseslint.plugin,
-    },
-    rules: {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-        },
-      ],
-      "@typescript-eslint/no-misused-promises": [
-        "error",
-        {
-          checksVoidReturn: {
-            attributes: false,
-          },
-        },
-      ],
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unsafe-assignment": "warn",
-      "@typescript-eslint/no-unsafe-member-access": "warn",
-      "@typescript-eslint/no-unsafe-call": "warn",
-      "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/require-await": "off",
-      "@typescript-eslint/consistent-type-definitions": "off",
-    },
-  },
+  // eslint-plugin-oxlint to disable rules handled by Oxlint (for all files)
+  // Type-aware linting is now handled by oxlint --type-aware
+  ...oxlint.configs["flat/recommended"],
 ];
 
 export default config;

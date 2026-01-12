@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "oxlint . && eslint .",
-    "lint:fix": "oxlint --fix . && eslint --fix .",
+    "lint": "oxlint --type-aware --type-check . && eslint .",
+    "lint:fix": "oxlint --type-aware --type-check --fix . && eslint --fix .",
     "lint:md": "markdownlint '**/*.md' --ignore .markdownlintignore",
     "lint:md:fix": "markdownlint '**/*.md' --ignore .markdownlintignore --fix",
     "format": "oxfmt --check .",
@@ -16,8 +16,6 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.52.0",
-    "@typescript-eslint/parser": "^8.52.0",
     "@typescript/native-preview": "7.0.0-dev.20260109.1",
     "eslint": "^9.39.2",
     "eslint-plugin-json": "^4.0.1",
@@ -28,21 +26,21 @@
     "markdownlint-cli": "^0.47.0",
     "oxfmt": "^0.24.0",
     "oxlint": "^1.39.0",
+    "oxlint-tsgolint": "^0.11.0",
     "turbo": "^2.7.3",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.52.0"
+    "typescript": "^5.9.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md}": [
-      "oxlint --fix",
-      "eslint --fix",
+      "oxlint --type-aware --type-check",
+      "eslint",
       "oxfmt"
     ],
     "*.{json,yml,yaml}": [
-      "eslint --fix"
+      "eslint"
     ],
     "*.md": [
-      "markdownlint --fix",
+      "markdownlint",
       "oxfmt"
     ]
   },

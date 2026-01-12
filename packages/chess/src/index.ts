@@ -37,6 +37,7 @@ function parseFEN(fen: string): {
   const parts = fen.split(" ");
   return {
     board: parts[0] ?? "",
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     activeColor: (parts[1] as "w" | "b") ?? "w",
     castling: parts[2] ?? "-",
     enPassant: parts[3] ?? "-",
