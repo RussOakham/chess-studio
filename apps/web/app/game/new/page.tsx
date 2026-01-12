@@ -2,7 +2,7 @@
 
 import type { NewGameFormData } from "@/lib/validations/game";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -174,14 +174,15 @@ export default function NewGamePage() {
                   Cancel
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  asChild
+                <Link
+                  href="/"
+                  className={buttonVariants({
+                    variant: "outline",
+                    className: "flex-1",
+                  })}
                 >
-                  <Link href="/">Cancel</Link>
-                </Button>
+                  Cancel
+                </Link>
               )}
               <Button type="submit" className="flex-1" disabled={isSubmitting}>
                 {isSubmitting ? "Creating game..." : "Start Game"}
