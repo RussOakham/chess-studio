@@ -71,6 +71,12 @@
       "rules": {
         "no-console": "off"
       }
+    },
+    {
+      "files": ["**/api/**/route.ts", "**/app/**/page.tsx"],
+      "rules": {
+        "import/group-exports": "off"
+      }
     }
   ]
 }

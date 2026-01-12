@@ -11,14 +11,29 @@ This document outlines the high-level implementation plan for building the core 
 - Project setup and configuration
 - Authentication system (login/register)
 - Database schema (games, moves, gameReviews tables)
-- Basic chess utilities package
+- Basic chess utilities package (`packages/chess`)
 - Code quality tooling (oxlint with type-aware linting, oxfmt)
+- **Phase 1.1: Home/Dashboard Page Enhancement** ✅
+  - "New Game" button (prominent CTA)
+  - Active games list (displays in_progress/waiting games)
+  - Recent games preview (last 5 completed/abandoned games)
+  - Navigation to game history (link to `/games`)
+  - Empty states for no games
+  - Styled with ShadCN components
+- **Phase 1.2: New Game Creation Flow** ✅
+  - `/game/new` page with difficulty and color selectors
+  - Form validation with Zod
+  - Error handling and loading states
+  - Redirect to game page on success
+- **API Endpoints:**
+  - `GET /api/games` ✅ - Lists user's active and recent games
+  - `POST /api/games` ✅ - Creates new game with initial FEN position
 
 🔄 **Next Steps:**
 
-- Core game flow implementation
-- Chessboard UI component (using `react-chessboard` library)
-- Game mechanics and engine integration
+- Phase 1.3: Game Page Route (dynamic route for `/game/[gameId]`)
+- Phase 1.4: Basic Chessboard Component (install libraries + create component)
+- Phase 2: Game Mechanics (move validation, engine integration)
 
 ## Library Decision: react-chessboard
 
@@ -48,56 +63,62 @@ This document outlines the high-level implementation plan for building the core 
 
 **Goal:** Enable users to create a new game and see a basic chessboard.
 
-#### 1.1 Home/Dashboard Page Enhancement
+#### 1.1 Home/Dashboard Page Enhancement ✅ **COMPLETE**
 
 **Location:** `apps/web/app/page.tsx`
 
 **Tasks:**
 
-- [ ] Enhance existing home page with:
-  - "New Game" button (prominent CTA)
-  - Active games list (if user has games in progress)
-  - Recent games preview (last 3-5 games)
-  - Navigation to game history
-- [ ] Add loading states
-- [ ] Add empty states (no games yet)
-- [ ] Style with ShadCN components
+- [x] Enhance existing home page with:
+  - "New Game" button (prominent CTA) ✅
+  - Active games list (if user has games in progress) ✅
+  - Recent games preview (last 3-5 games) ✅
+  - Navigation to game history ✅
+- [x] Add loading states ✅ (handled by Next.js server components)
+- [x] Add empty states (no games yet) ✅
+- [x] Style with ShadCN components ✅
 
 **Dependencies:** None
 
 **Estimated Time:** 2-3 hours
 
+**Status:** ✅ Complete - All tasks implemented. Home page displays active games, recent games, and includes navigation to create new games and view game history.
+
 ---
 
-#### 1.2 New Game Creation Flow
+#### 1.2 New Game Creation Flow ✅ **COMPLETE**
 
-**Location:** `apps/web/app/game/new/page.tsx` (or modal component)
+**Location:** `apps/web/app/game/new/page.tsx`
+
+**Status:** ✅ **Complete** - Page and API endpoint implemented.
 
 **Tasks:**
 
-- [ ] Create new game setup page/modal with:
-  - **Difficulty selector:**
+- [x] Create new game setup page/modal with:
+  - **Difficulty selector:** ✅
     - Easy (Engine depth: 5-8)
     - Medium (Engine depth: 10-12)
     - Hard (Engine depth: 15+)
-  - **Color selector:**
+  - **Color selector:** ✅
     - Play as White
     - Play as Black
     - Random (default)
-  - **Start Game** button
-- [ ] Create API endpoint: `POST /api/games`
-  - Validate user session
-  - Create game record in database
-  - Initialize with starting FEN position
-  - Return game ID
-- [ ] Handle game creation:
-  - Show loading state
-  - Redirect to `/game/[gameId]` on success
-  - Handle errors gracefully
+  - **Start Game** button ✅
+- [x] Create API endpoint: `POST /api/games` ✅
+  - Validate user session ✅
+  - Create game record in database ✅
+  - Initialize with starting FEN position ✅
+  - Return game ID ✅
+- [x] Handle game creation: ✅
+  - Show loading state ✅
+  - Redirect to `/game/[gameId]` on success ✅
+  - Handle errors gracefully ✅
 
 **Dependencies:** Database schema (already exists)
 
 **Estimated Time:** 3-4 hours
+
+**Status:** ✅ Complete - New game page with difficulty and color selectors, POST API endpoint for game creation, form validation with Zod, error handling, and redirect to game page on success. Note: Difficulty and color preferences are accepted but not yet stored in database (will be used when implementing engine in Phase 2).
 
 ---
 
@@ -578,13 +599,13 @@ await db.insert(moves).values({
 
 ### API Endpoints Needed
 
-1. `POST /api/games` - Create new game
-2. `GET /api/games` - List user's games
-3. `GET /api/games/[gameId]` - Get game details
-4. `POST /api/games/[gameId]/moves` - Make a move
-5. `POST /api/games/[gameId]/engine/move` - Get engine move
-6. `POST /api/games/[gameId]/resign` - Resign game
-7. `POST /api/games/[gameId]/draw` - Offer/accept draw
+1. `POST /api/games` - Create new game ✅ **Implemented**
+2. `GET /api/games` - List user's games ✅ **Implemented**
+3. `GET /api/games/[gameId]` - Get game details ❌ **Not implemented**
+4. `POST /api/games/[gameId]/moves` - Make a move ❌ **Not implemented**
+5. `POST /api/games/[gameId]/engine/move` - Get engine move ❌ **Not implemented**
+6. `POST /api/games/[gameId]/resign` - Resign game ❌ **Not implemented**
+7. `POST /api/games/[gameId]/draw` - Offer/accept draw ❌ **Not implemented**
 
 ### State Management Strategy
 
@@ -651,10 +672,15 @@ Phase 3 is complete when:
 
 ## Next Steps
 
-1. **Start with Phase 1.1**: Enhance home page with "New Game" button
-2. **Then Phase 1.2**: Create new game flow
-3. **Then Phase 1.4**: Build basic chessboard component
+1. ✅ **Phase 1.1**: Enhance home page with "New Game" button - **COMPLETE**
+2. ✅ **Phase 1.2**: Create new game flow - **COMPLETE**
+3. **Next: Phase 1.4**: Build basic chessboard component
+   - Install `react-chessboard` and `chess.js`
+   - Create chessboard wrapper component
 4. **Then Phase 1.3**: Create game page to tie it together
+   - Create `/game/[gameId]` dynamic route
+   - Integrate chessboard component
+   - Set up page layout
 
 This creates a complete user journey early, even if moves aren't validated yet.
 
