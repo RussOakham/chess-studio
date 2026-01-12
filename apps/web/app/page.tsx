@@ -1,10 +1,7 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { and, db, desc, eq, games, or } from "@repo/db";
 import type { InferSelectModel } from "@repo/db";
-import Link from "next/link";
+
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { auth } from "@/lib/auth";
+import { and, db, desc, eq, games, or } from "@repo/db";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -54,13 +55,13 @@ export default async function Home() {
     .limit(5);
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <main className="container mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold">Chess Studio</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="mt-1 text-muted-foreground">
               Welcome back, {session.user.name || session.user.email}!
             </p>
           </div>
@@ -79,7 +80,7 @@ export default async function Home() {
             {activeGames.length > 0 && (
               <Link
                 href="/games"
-                className="text-muted-foreground hover:text-foreground text-sm"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 View all →
               </Link>
@@ -89,7 +90,7 @@ export default async function Home() {
           {activeGames.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground mb-4">
+                <p className="mb-4 text-muted-foreground">
                   No active games. Start a new game to begin playing!
                 </p>
                 <Link href="/game/new">
@@ -101,7 +102,7 @@ export default async function Home() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activeGames.map((game: InferSelectModel<typeof games>) => (
                 <Link key={game.id} href={`/game/${game.id}`}>
-                  <Card className="hover:ring-primary cursor-pointer transition-all hover:ring-2">
+                  <Card className="cursor-pointer transition-all hover:ring-2 hover:ring-primary">
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
@@ -128,7 +129,7 @@ export default async function Home() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-muted-foreground text-xs">
+                      <div className="text-xs text-muted-foreground">
                         Updated: {new Date(game.updatedAt).toLocaleDateString()}
                       </div>
                     </CardContent>
@@ -146,7 +147,7 @@ export default async function Home() {
             {recentGames.length > 0 && (
               <Link
                 href="/games"
-                className="text-muted-foreground hover:text-foreground text-sm"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 View all →
               </Link>
@@ -180,7 +181,7 @@ export default async function Home() {
 
                 return (
                   <Link key={game.id} href={`/game/${game.id}`}>
-                    <Card className="hover:ring-primary cursor-pointer transition-all hover:ring-2">
+                    <Card className="cursor-pointer transition-all hover:ring-2 hover:ring-primary">
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div>
@@ -205,7 +206,7 @@ export default async function Home() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-muted-foreground text-xs">
+                        <div className="text-xs text-muted-foreground">
                           {game.status === "completed"
                             ? `Completed: ${new Date(game.updatedAt).toLocaleDateString()}`
                             : `Abandoned: ${new Date(game.updatedAt).toLocaleDateString()}`}

@@ -1,8 +1,8 @@
 // @ts-nocheck
 import json from "eslint-plugin-json";
+import oxlint from "eslint-plugin-oxlint";
 import yml from "eslint-plugin-yml";
 import tseslint from "typescript-eslint";
-import oxlint from "eslint-plugin-oxlint";
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
@@ -29,7 +29,12 @@ const config = [
   // JSON linting (explicitly only for JSON files, not package.json)
   {
     files: ["**/*.json"],
-    ignores: ["**/package.json", "**/package-lock.json", "**/yarn.lock", "**/pnpm-lock.yaml"],
+    ignores: [
+      "**/package.json",
+      "**/package-lock.json",
+      "**/yarn.lock",
+      "**/pnpm-lock.yaml",
+    ],
     plugins: {
       json: json,
     },

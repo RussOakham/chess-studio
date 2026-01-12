@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "experimentalSortImports": {
+    "order": "asc",
+    "ignoreCase": true,
+    "newlinesBetween": true,
+    "internalPattern": ["@/**", "@repo/**"]
+  },
+  "experimentalTailwindcss": {
+    "stylesheet": "./apps/web/app/globals.css",
+    "functions": ["cn", "clsx", "cva", "tw"],
+    "attributes": ["class", "className"]
+  }
+}

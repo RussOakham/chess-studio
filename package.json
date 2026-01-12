@@ -9,8 +9,8 @@
     "lint:fix": "oxlint --fix . && eslint --fix .",
     "lint:md": "markdownlint '**/*.md' --ignore .markdownlintignore",
     "lint:md:fix": "markdownlint '**/*.md' --ignore .markdownlintignore --fix",
-    "format": "oxfmt --check . && prettier --check \"**/*.{tsx,jsx}\" --ignore-path .prettierignore",
-    "format:fix": "oxfmt . && prettier --write \"**/*.{tsx,jsx}\" --ignore-path .prettierignore",
+    "format": "oxfmt --check .",
+    "format:fix": "oxfmt .",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean",
     "prepare": "husky"
@@ -28,23 +28,18 @@
     "markdownlint-cli": "^0.47.0",
     "oxfmt": "^0.24.0",
     "oxlint": "^1.39.0",
-    "prettier": "^3.7.4",
-    "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.7.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
+    "*.{ts,tsx,js,jsx,json,css,md}": [
       "oxlint --fix",
       "eslint --fix",
-      "prettier --write"
+      "oxfmt"
     ],
     "*.{json,yml,yaml}": [
       "eslint --fix"
-    ],
-    "*.{css,md}": [
-      "oxfmt"
     ],
     "*.md": [
       "markdownlint --fix",
@@ -70,8 +65,6 @@
       "eslint-plugin-json": "^4.0.1",
       "eslint-plugin-yml": "^1.19.1",
       "eslint-config-prettier": "^10.1.8",
-      "prettier": "3.7.4",
-      "prettier-plugin-tailwindcss": "^0.7.2",
       "typescript": "5.9.3",
       "@typescript/native-preview": "7.0.0-dev.20260109.1",
       "turbo": "2.7.3",

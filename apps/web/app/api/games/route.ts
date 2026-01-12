@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { and, db, desc, eq, games, or } from "@repo/db";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {

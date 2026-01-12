@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+
 import { Roboto } from "next/font/google";
+
 // oxlint-disable-next-line import/no-unassigned-import
 import "./globals.css";
 

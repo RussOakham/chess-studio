@@ -1,17 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { fromError } from "zod-validation-error";
-import { signIn } from "@/lib/auth-client";
-import { loginSchema } from "@/lib/validations/auth";
 import type { LoginFormData } from "@/lib/validations/auth";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { signIn } from "@/lib/auth-client";
+import { loginSchema } from "@/lib/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { fromError } from "zod-validation-error";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,7 +63,7 @@ export default function LoginPage() {
         <h1 className="mb-6 text-2xl font-bold">Sign In</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errors.root && (
-            <div className="text-destructive bg-destructive/10 rounded-md p-3 text-sm">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {errors.root.message}
             </div>
           )}
@@ -96,7 +97,7 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-        <p className="text-muted-foreground mt-4 text-center text-sm">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="text-primary hover:underline">
             Sign up
