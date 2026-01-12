@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { type VariantProps, cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -54,6 +54,9 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 const fieldVariants = cva(
   "data-[invalid=true]:text-destructive gap-2 group/field flex w-full",
   {
+    defaultVariants: {
+      orientation: "vertical",
+    },
     variants: {
       orientation: {
         vertical: "flex-col [&>*]:w-full [&>.sr-only]:w-auto",
@@ -62,9 +65,6 @@ const fieldVariants = cva(
         responsive:
           "flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto @md/field-group:[&>[data-slot=field-label]]:flex-auto @md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
       },
-    },
-    defaultVariants: {
-      orientation: "vertical",
     },
   }
 );
@@ -153,7 +153,7 @@ function FieldSeparator({
   return (
     <div
       data-slot="field-separator"
-      data-content={!!children}
+      data-content={Boolean(children)}
       className={cn(
         "relative -my-2 h-5 text-xs/relaxed group-data-[variant=outline]/field-group:-mb-2",
         className
@@ -181,7 +181,6 @@ function FieldError({
 }: React.ComponentProps<"div"> & {
   errors?: ({ message?: string } | undefined)[];
 }) {
-  // eslint-disable-next-line sonarjs/function-return-type
   const content = useMemo<React.ReactNode>(() => {
     if (children) {
       return <>{children}</>;

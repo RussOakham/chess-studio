@@ -6,33 +6,29 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "oxlint . && eslint .",
+    "lint:fix": "oxlint --fix . && eslint --fix .",
     "lint:md": "markdownlint '**/*.md' --ignore .markdownlintignore",
     "lint:md:fix": "markdownlint '**/*.md' --ignore .markdownlintignore --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\" --ignore-path .prettierignore",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\" --ignore-path .prettierignore",
+    "format": "oxfmt --check . && prettier --check \"**/*.{tsx,jsx}\" --ignore-path .prettierignore",
+    "format:fix": "oxfmt . && prettier --write \"**/*.{tsx,jsx}\" --ignore-path .prettierignore",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean",
     "prepare": "husky"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.52.0",
     "@typescript/native-preview": "7.0.0-dev.20260109.1",
     "eslint": "^9.39.2",
-    "eslint-config-next": "^16.1.1",
-    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-json": "^4.0.1",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-sonarjs": "^3.0.5",
-    "eslint-plugin-unicorn": "^62.0.0",
+    "eslint-plugin-oxlint": "^1.39.0",
     "eslint-plugin-yml": "^1.19.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "markdownlint-cli": "^0.47.0",
+    "oxfmt": "^0.24.0",
+    "oxlint": "^1.39.0",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.7.3",
@@ -89,15 +85,19 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
+      "oxlint --fix",
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,css}": [
-      "prettier --write"
+    "*.{json,yml,yaml}": [
+      "eslint --fix"
+    ],
+    "*.{css,md}": [
+      "oxfmt"
     ],
     "*.md": [
       "markdownlint --fix",
-      "prettier --write"
+      "oxfmt"
     ]
   }
 }
