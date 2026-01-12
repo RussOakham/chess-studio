@@ -1,7 +1,9 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": [
+    "eslint",
     "unicorn",
+    "jsdoc",
     "typescript",
     "jsx-a11y",
     "react",
@@ -10,7 +12,9 @@
     "import",
     "nextjs",
     "promise",
-    "node"
+    "node",
+    "jest",
+    "vitest"
   ],
   "categories": {
     "correctness": "error",
