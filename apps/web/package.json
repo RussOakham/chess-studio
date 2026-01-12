@@ -13,7 +13,7 @@
     "@base-ui/react": "^1.0.0",
     "@hookform/resolvers": "^5.2.2",
     "@repo/db": "workspace:*",
-    "better-auth": "^1.4.10",
+    "better-auth": "^1.4.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.36.4",
@@ -30,7 +30,7 @@
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
-    "@better-auth/cli": "^1.4.10",
+    "@better-auth/cli": "^1.4.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",

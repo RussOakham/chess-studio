@@ -1,9 +1,10 @@
-// Next.js middleware for route protection
+// Next.js proxy for route protection
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
-export function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
@@ -17,11 +18,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for session cookie
-  const sessionToken = request.cookies.get("better-auth.session_token");
+  // Check for session cookie using Better Auth helper
+  // Note: This is an optimistic check for redirects only.
+  // Always validate sessions on protected pages/routes.
+  const sessionCookie = getSessionCookie(request);
 
-  // If no session token and trying to access protected route, redirect to login
-  if (!sessionToken) {
+  // If no session cookie and trying to access protected route, redirect to login
+  if (!sessionCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
@@ -39,6 +42,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    String.raw`/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)`,
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
