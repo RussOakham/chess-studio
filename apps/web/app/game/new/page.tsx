@@ -1,5 +1,6 @@
 "use client";
 
+import type { CreateGameResponse } from "@/lib/types/api";
 import type { NewGameFormData } from "@/lib/validations/game";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -18,13 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiClient, getApiErrorMessage } from "@/lib/api/client";
 import { newGameSchema } from "@/lib/validations/game";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { fromError } from "zod-validation-error";
 
 export default function NewGamePage() {
   const router = useRouter();
@@ -49,41 +50,16 @@ export default function NewGamePage() {
   const onSubmit = async (data: NewGameFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/games", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        // oxlint-disable-next-line typescript/no-unsafe-assignment
-        const errorData = (await response.json()) as { error?: string };
-        setFormError("root", {
-          message: errorData.error || "Failed to create game",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // oxlint-disable-next-line typescript/no-unsafe-assignment
-      const gameData = (await response.json()) as { id: string };
+      const response = await apiClient.post<CreateGameResponse>("/games", data);
 
       // Redirect to game page
-      router.push(`/game/${gameData.id}`);
+      router.push(`/game/${response.data.id}`);
       router.refresh();
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        const validationError = fromError(error);
-        setFormError("root", {
-          message: validationError.message || "An unexpected error occurred",
-        });
-      } else {
-        setFormError("root", {
-          message: "An unexpected error occurred",
-        });
-      }
+      const errorMessage = getApiErrorMessage(error);
+      setFormError("root", {
+        message: errorMessage,
+      });
       setIsSubmitting(false);
     }
   };
@@ -110,9 +86,14 @@ export default function NewGamePage() {
               <Select
                 value={difficulty}
                 onValueChange={(value) => {
-                  setValue("difficulty", value as "easy" | "medium" | "hard", {
-                    shouldValidate: true,
-                  });
+                  if (
+                    value &&
+                    (value === "easy" || value === "medium" || value === "hard")
+                  ) {
+                    setValue("difficulty", value, {
+                      shouldValidate: true,
+                    });
+                  }
                 }}
                 disabled={isSubmitting}
               >
@@ -141,9 +122,16 @@ export default function NewGamePage() {
               <Select
                 value={color}
                 onValueChange={(value) => {
-                  setValue("color", value as "white" | "black" | "random", {
-                    shouldValidate: true,
-                  });
+                  if (
+                    value &&
+                    (value === "white" ||
+                      value === "black" ||
+                      value === "random")
+                  ) {
+                    setValue("color", value, {
+                      shouldValidate: true,
+                    });
+                  }
                 }}
                 disabled={isSubmitting}
               >
