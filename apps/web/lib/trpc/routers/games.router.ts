@@ -29,7 +29,7 @@ export const gamesRouter = router({
 
   // Get game by ID
   getById: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .query(async ({ ctx, input }) => {
       const game = await repository.findById(input.gameId);
 
@@ -53,7 +53,7 @@ export const gamesRouter = router({
 
   // Get moves for a game
   getMoves: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .query(async ({ ctx, input }) => {
       // First verify game exists and user owns it
       const game = await repository.findById(input.gameId);
@@ -81,7 +81,7 @@ export const gamesRouter = router({
   makeMove: protectedProcedure
     .input(
       z.object({
-        gameId: z.string().uuid(),
+        gameId: z.uuidv7(),
         from: z.string(),
         to: z.string(),
         promotion: z.string().optional(),
@@ -118,6 +118,7 @@ export const gamesRouter = router({
             });
           }
           if (
+            // oxlint-disable-next-line typescript/prefer-optional-chain
             error.message === "Game is not in progress" ||
             error.message === "Invalid move" ||
             error?.message === "Invalid game position"
@@ -139,7 +140,7 @@ export const gamesRouter = router({
 
   // Get engine move (future - Phase 2.3)
   getEngineMove: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .mutation(async ({ ctx, input }) => {
       console.log({
         input: input,
@@ -154,7 +155,7 @@ export const gamesRouter = router({
 
   // Resign game (future - Phase 3.2)
   resign: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .mutation(async ({ ctx, input }) => {
       console.log({
         input: input,
@@ -169,7 +170,7 @@ export const gamesRouter = router({
 
   // Offer draw (future - Phase 3.2)
   offerDraw: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .mutation(async ({ ctx, input }) => {
       console.log({
         input: input,
@@ -184,7 +185,7 @@ export const gamesRouter = router({
 
   // Accept draw (future - Phase 3.2)
   acceptDraw: protectedProcedure
-    .input(z.object({ gameId: z.string().uuid() }))
+    .input(z.object({ gameId: z.uuidv7() }))
     .mutation(async ({ ctx, input }) => {
       console.log({
         input: input,
