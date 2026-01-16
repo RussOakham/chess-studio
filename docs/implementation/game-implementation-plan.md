@@ -13,6 +13,14 @@ This document outlines the high-level implementation plan for building the core 
 - Database schema (games, moves, gameReviews tables)
 - Basic chess utilities package (`packages/chess`)
 - Code quality tooling (oxlint with type-aware linting, oxfmt)
+- **tRPC Migration** ✅
+  - Complete migration from axios to tRPC for end-to-end type safety
+  - All game endpoints migrated to tRPC procedures
+  - React Query integration for data fetching
+- **UUID v7 Migration** ✅
+  - Database migrated to use UUID v7 (time-ordered UUIDs)
+  - pg_uuidv7 extension enabled
+  - All UUID columns now generate UUID v7
 - **Phase 1.1: Home/Dashboard Page Enhancement** ✅
   - "New Game" button (prominent CTA)
   - Active games list (displays in_progress/waiting games)
@@ -25,15 +33,48 @@ This document outlines the high-level implementation plan for building the core 
   - Form validation with Zod
   - Error handling and loading states
   - Redirect to game page on success
-- **API Endpoints:**
-  - `GET /api/games` ✅ - Lists user's active and recent games
-  - `POST /api/games` ✅ - Creates new game with initial FEN position
+- **Phase 1.3: Game Page Route** ✅
+  - Dynamic route for `/game/[gameId]`
+  - Server-side authentication and authorization checks
+  - Game data fetching with tRPC
+  - Page layout with chessboard, game info, controls, and move history
+  - Client component wrapper for interactive features
+- **Phase 1.4: Basic Chessboard Component** ✅
+  - Installed `react-chessboard` and `chess.js`
+  - Created `ChessboardWrapper` component
+  - Integrated drag-and-drop functionality
+  - FEN position management
+  - Move validation with chess.js
+  - Responsive design and styling
+- **Phase 2.1: Move Validation & Execution** ✅
+  - Full move validation (client and server-side)
+  - `makeMove` tRPC mutation implemented
+  - Moves saved to database with full metadata
+  - Game FEN and PGN updated after moves
+  - Game end detection (checkmate, stalemate, draw)
+  - Automatic game status and result updates
+  - Comprehensive error handling
+- **Phase 2.2: Game State Management** ✅
+  - Created `useGame` hook for centralized state management
+  - Real-time updates via polling (2s interval when in progress)
+  - Turn indicator showing current player
+  - Check/checkmate/stalemate/draw indicators
+  - Move history display with proper formatting
+  - Automatic UI updates after moves
+  - Optimistic updates for instant visual feedback
+- **Optimistic Updates** ✅
+  - Instant visual feedback when moving pieces
+  - Optimistic cache updates
+  - Automatic rollback on errors
+- **React Query DevTools** ✅
+  - Development tools for debugging queries and mutations
+  - Integrated into TRPCProvider
 
 🔄 **Next Steps:**
 
-- Phase 1.3: Game Page Route (dynamic route for `/game/[gameId]`)
-- Phase 1.4: Basic Chessboard Component (install libraries + create component)
-- Phase 2: Game Mechanics (move validation, engine integration)
+- Phase 2.3: Stockfish Engine Integration (engine moves)
+- Phase 2.4: Game Status Detection (enhanced UI for game end)
+- Phase 3: Game Features & Polish
 
 ## Library Decision: react-chessboard
 
@@ -122,28 +163,32 @@ This document outlines the high-level implementation plan for building the core 
 
 ---
 
-#### 1.3 Game Page Route
+#### 1.3 Game Page Route ✅ **COMPLETE**
 
 **Location:** `apps/web/app/game/[gameId]/page.tsx`
 
+**Status:** ✅ **Complete** - Dynamic route implemented with server-side authentication, game data fetching, and full page layout.
+
 **Tasks:**
 
-- [ ] Create dynamic route for game page
-- [ ] Fetch game data from database
-- [ ] Handle game not found / unauthorized access
-- [ ] Set up page layout:
-  - Chessboard (main area)
-  - Move history sidebar
-  - Game info panel (status, turn, etc.)
-  - Game controls (Resign, etc.)
+- [x] Create dynamic route for game page ✅
+- [x] Fetch game data from database ✅
+- [x] Handle game not found / unauthorized access ✅
+- [x] Set up page layout: ✅
+  - Chessboard (main area) ✅
+  - Move history sidebar ✅
+  - Game info panel (status, turn, etc.) ✅
+  - Game controls (Resign, etc.) ✅
 
 **Dependencies:** 1.2 (game creation)
 
 **Estimated Time:** 2-3 hours
 
+**Status:** ✅ Complete - Game page route created with server-side authentication checks, tRPC integration for data fetching, and full layout with chessboard, game info, controls, and move history. Client component wrapper (`GamePageClient`) handles all interactive features with real-time updates.
+
 ---
 
-#### 1.4 Basic Chessboard Component
+#### 1.4 Basic Chessboard Component ✅ **COMPLETE**
 
 **Location:** `apps/web/components/chess/chessboard.tsx`
 
@@ -154,32 +199,36 @@ This document outlines the high-level implementation plan for building the core 
 - [Getting Started Guide](https://react-chessboard.vercel.app/?path=/docs/get-started--docs)
 - [Advanced Examples](https://react-chessboard.vercel.app/?path=/docs/how-to-use-advanced-examples--docs) (includes Stockfish WASM integration)
 
+**Status:** ✅ **Complete** - Chessboard component fully implemented with react-chessboard and chess.js integration.
+
 **Tasks:**
 
-- [ ] Install `react-chessboard` and `chess.js`:
+- [x] Install `react-chessboard` and `chess.js` ✅
 
   ```bash
   pnpm add react-chessboard chess.js
   ```
 
-- [ ] Create chessboard wrapper component:
-  - Integrate `react-chessboard` component
-  - Pass FEN position from game state
-  - Configure board options (styling, coordinates, etc.)
-  - Handle piece drop events (for move attempts)
-- [ ] Basic setup:
-  - Display board with starting position
-  - Enable drag and drop (built-in)
-  - Show board coordinates (built-in option)
-  - Responsive design (built-in)
-- [ ] Integration with chess.js:
-  - Use chess.js to validate moves
-  - Update board position from FEN
-  - Handle move callbacks
+- [x] Create chessboard wrapper component: ✅
+  - Integrate `react-chessboard` component ✅
+  - Pass FEN position from game state ✅
+  - Configure board options (styling, coordinates, etc.) ✅
+  - Handle piece drop events (for move attempts) ✅
+- [x] Basic setup: ✅
+  - Display board with starting position ✅
+  - Enable drag and drop (built-in) ✅
+  - Show board coordinates (built-in option) ✅
+  - Responsive design (built-in) ✅
+- [x] Integration with chess.js: ✅
+  - Use chess.js to validate moves ✅
+  - Update board position from FEN ✅
+  - Handle move callbacks ✅
 
 **Dependencies:** None (can be built in parallel)
 
 **Estimated Time:** 2-3 hours (significantly reduced with library)
+
+**Status:** ✅ Complete - `ChessboardWrapper` component created with full react-chessboard integration, chess.js for move validation, FEN position management, and proper error handling. Component is responsive and styled with custom colors.
 
 **Technical Notes:**
 
@@ -221,73 +270,84 @@ This document outlines the high-level implementation plan for building the core 
 
 **Goal:** Enable actual chess gameplay with move validation and engine integration.
 
-#### 2.1 Move Validation & Execution
+#### 2.1 Move Validation & Execution ✅ **COMPLETE**
 
 **Location:**
 
-- `apps/web/components/chess/chessboard.tsx` (UI)
-- `apps/web/app/api/games/[gameId]/moves/route.ts` (API)
+- `apps/web/components/chess/game-chessboard.tsx` (UI)
+- `apps/web/lib/trpc/routers/games.router.ts` (tRPC mutation)
+- `apps/web/lib/services/games.service.ts` (business logic)
+- `apps/web/lib/data-access/moves.repository.ts` (data access)
+
+**Status:** ✅ **Complete** - Full move validation and execution implemented with tRPC, database persistence, and optimistic updates.
 
 **Tasks:**
 
-- [ ] Install and integrate `chess.js`:
-  - Add to `packages/chess` or use directly
-  - Create game instance from FEN
-  - Validate moves
-  - Generate legal moves for a square
-- [ ] Implement move validation:
-  - Check if move is legal
-  - Handle special moves (castling, en passant, promotion)
-  - Prevent illegal moves
-- [ ] Update chessboard component (using react-chessboard):
-  - Use `customSquareStyles` prop to highlight legal moves
-  - Use `onPieceDrop` callback for move validation
-  - Use `position` prop to update board from FEN
-  - Use `areArrowsAllowed` and `onArrowsChange` for move hints (optional)
-- [ ] Create move API endpoint:
-  - `POST /api/games/[gameId]/moves`
-  - Validate move server-side
-  - Save move to database
-  - Update game FEN and PGN
-  - Return updated game state
-- [ ] Handle move errors:
-  - Show error messages for invalid moves
-  - Handle network errors
-  - Optimistic updates with rollback
+- [x] Install and integrate `chess.js`: ✅
+  - Add to `packages/chess` or use directly ✅
+  - Create game instance from FEN ✅
+  - Validate moves ✅
+  - Generate legal moves for a square ✅
+- [x] Implement move validation: ✅
+  - Check if move is legal ✅
+  - Handle special moves (castling, en passant, promotion) ✅
+  - Prevent illegal moves ✅
+- [x] Update chessboard component (using react-chessboard): ✅
+  - Use `onPieceDrop` callback for move validation ✅
+  - Use `position` prop to update board from FEN ✅
+  - Optimistic updates for instant visual feedback ✅
+- [x] Create move API endpoint: ✅
+  - `makeMove` tRPC mutation ✅
+  - Validate move server-side ✅
+  - Save move to database ✅
+  - Update game FEN and PGN ✅
+  - Return updated game state ✅
+- [x] Handle move errors: ✅
+  - Show error messages for invalid moves ✅
+  - Handle network errors ✅
+  - Optimistic updates with rollback ✅
 
 **Dependencies:** 1.4 (chessboard component)
 
 **Estimated Time:** 4-5 hours (reduced with react-chessboard handling UI)
 
+**Status:** ✅ Complete - Full move validation implemented on both client and server. Moves are validated using chess.js, saved to database with full metadata (SAN, UCI, FEN before/after), and game state is automatically updated. Game end detection (checkmate, stalemate, draw) is implemented. Optimistic updates provide instant visual feedback.
+
 ---
 
-#### 2.2 Game State Management
+#### 2.2 Game State Management ✅ **COMPLETE**
 
 **Location:**
 
 - `apps/web/app/game/[gameId]/page.tsx`
 - `apps/web/lib/hooks/use-game.ts` (custom hook)
+- `apps/web/components/game/game-page-client.tsx` (client component)
+
+**Status:** ✅ **Complete** - Comprehensive game state management with real-time updates, turn indicators, and game status display.
 
 **Tasks:**
 
-- [ ] Create game state hook:
-  - Fetch game data
-  - Manage current position (FEN)
-  - Track move history
-  - Handle turn indicator
-  - Game status (in_progress, completed, etc.)
-- [ ] Implement real-time updates:
-  - Polling for engine moves (MVP approach)
+- [x] Create game state hook: ✅
+  - Fetch game data ✅
+  - Manage current position (FEN) ✅
+  - Track move history ✅
+  - Handle turn indicator ✅
+  - Game status (in_progress, completed, etc.) ✅
+- [x] Implement real-time updates: ✅
+  - Polling for engine moves (MVP approach) ✅
+  - 2-second polling interval when game is in progress ✅
   - Or WebSocket connection (future enhancement)
-- [ ] Update UI based on game state:
-  - Show whose turn it is
-  - Display game status
-  - Disable moves when not user's turn
-  - Show check/checkmate indicators
+- [x] Update UI based on game state: ✅
+  - Show whose turn it is ✅
+  - Display game status ✅
+  - Disable moves when not user's turn ✅
+  - Show check/checkmate indicators ✅
 
 **Dependencies:** 2.1 (move validation)
 
 **Estimated Time:** 4-5 hours
+
+**Status:** ✅ Complete - `useGame` hook created for centralized game state management. Real-time updates via polling (2s interval when in progress). Turn indicator, check/checkmate/stalemate/draw indicators implemented. Move history displayed with proper formatting. Client component (`GamePageClient`) handles all interactive features with automatic UI updates.
 
 ---
 
@@ -597,15 +657,17 @@ await db.insert(moves).values({
 });
 ```
 
-### API Endpoints Needed
+### API Endpoints (tRPC Procedures)
 
-1. `POST /api/games` - Create new game ✅ **Implemented**
-2. `GET /api/games` - List user's games ✅ **Implemented**
-3. `GET /api/games/[gameId]` - Get game details ❌ **Not implemented**
-4. `POST /api/games/[gameId]/moves` - Make a move ❌ **Not implemented**
-5. `POST /api/games/[gameId]/engine/move` - Get engine move ❌ **Not implemented**
-6. `POST /api/games/[gameId]/resign` - Resign game ❌ **Not implemented**
-7. `POST /api/games/[gameId]/draw` - Offer/accept draw ❌ **Not implemented**
+1. `games.create` - Create new game ✅ **Implemented**
+2. `games.list` - List user's games ✅ **Implemented**
+3. `games.getById` - Get game details ✅ **Implemented**
+4. `games.getMoves` - Get moves for a game ✅ **Implemented**
+5. `games.makeMove` - Make a move ✅ **Implemented**
+6. `games.getEngineMove` - Get engine move ⏳ **Stub created, not implemented**
+7. `games.resign` - Resign game ⏳ **Stub created, not implemented**
+8. `games.offerDraw` - Offer draw ⏳ **Stub created, not implemented**
+9. `games.acceptDraw` - Accept draw ⏳ **Stub created, not implemented**
 
 ### State Management Strategy
 
@@ -657,12 +719,16 @@ Phase 1 is complete when:
 - ✅ User can see a chessboard with pieces
 - ✅ Basic UI is functional
 
+**Status:** ✅ **Phase 1 Complete** - All core game flow implemented.
+
 Phase 2 is complete when:
 
 - ✅ User can make valid moves
-- ✅ Engine responds with moves
+- ⏳ Engine responds with moves (Phase 2.3 - Next)
 - ✅ Game state is saved to database
 - ✅ Game end is detected correctly
+
+**Status:** 🔄 **Phase 2 In Progress** - Move validation and game state management complete. Engine integration (Phase 2.3) is next.
 
 Phase 3 is complete when:
 
@@ -674,15 +740,21 @@ Phase 3 is complete when:
 
 1. ✅ **Phase 1.1**: Enhance home page with "New Game" button - **COMPLETE**
 2. ✅ **Phase 1.2**: Create new game flow - **COMPLETE**
-3. **Next: Phase 1.4**: Build basic chessboard component
-   - Install `react-chessboard` and `chess.js`
-   - Create chessboard wrapper component
-4. **Then Phase 1.3**: Create game page to tie it together
-   - Create `/game/[gameId]` dynamic route
-   - Integrate chessboard component
-   - Set up page layout
+3. ✅ **Phase 1.3**: Create game page route - **COMPLETE**
+4. ✅ **Phase 1.4**: Build basic chessboard component - **COMPLETE**
+5. ✅ **Phase 2.1**: Move validation & execution - **COMPLETE**
+6. ✅ **Phase 2.2**: Game state management - **COMPLETE**
+7. **Next: Phase 2.3**: Stockfish Engine Integration
+   - Install `stockfish.wasm`
+   - Set up client-side engine for quick evaluations
+   - Implement server-side engine API for actual moves
+   - Auto-play engine moves after user moves
+8. **Then Phase 2.4**: Enhanced game status detection UI
+   - Game end modals/alerts
+   - Check indicator improvements
+   - Result display enhancements
 
-This creates a complete user journey early, even if moves aren't validated yet.
+**Current Status:** Core game mechanics are fully functional. Users can create games, make moves, and see real-time game state updates. Engine integration is the next major milestone.
 
 ## Notes
 
