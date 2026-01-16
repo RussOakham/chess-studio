@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { TRPCProvider } from "@/lib/trpc/provider";
 import { Roboto } from "next/font/google";
 
 // oxlint-disable-next-line import/no-unassigned-import
@@ -24,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={roboto.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <TRPCProvider>{children}</TRPCProvider>
+      </body>
     </html>
   );
 }
