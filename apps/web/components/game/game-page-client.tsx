@@ -1,5 +1,7 @@
 "use client";
 
+import type { DifficultyLevel } from "@repo/chess";
+
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useGame } from "@/lib/hooks/use-game";
+import { useStockfish } from "@/lib/hooks/use-stockfish";
+import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
+import { useEffect } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -43,7 +48,102 @@ export function GamePageClient({
     isDraw,
     isLoading,
     refetch,
+    chess,
   } = useGame(gameId);
+
+  const utils = trpc.useUtils();
+
+  // Stockfish engine hook (client-side only)
+  const {
+    isReady: isStockfishReady,
+    isCalculating,
+    getBestMove,
+  } = useStockfish();
+
+  // Make move mutation (used for both user and engine moves)
+  const makeMove = trpc.games.makeMove.useMutation({
+    onSuccess: () => {
+      // Refetch game data after move (fire-and-forget)
+      // eslint-disable-next-line typescript/no-floating-promises
+      utils.games.getById.invalidate({ gameId });
+      // eslint-disable-next-line typescript/no-floating-promises
+      utils.games.getMoves.invalidate({ gameId });
+      refetch();
+    },
+    onError: (error) => {
+      console.error("Move error:", error);
+      refetch();
+    },
+  });
+
+  // Check if it's an engine game and engine's turn
+  const isEngineGame = Boolean(game?.difficulty);
+  const isEngineTurn = (() => {
+    if (!game || !chess || !isEngineGame) {
+      return false;
+    }
+
+    const userColor = game.color === "random" ? "white" : game.color;
+    const engineColor = userColor === "white" ? "black" : "white";
+    const currentTurnColor = chess.turn() === "w" ? "white" : "black";
+
+    return currentTurnColor === engineColor;
+  })();
+
+  // Auto-trigger engine move when it's engine's turn
+  useEffect(() => {
+    if (
+      isEngineGame &&
+      isEngineTurn &&
+      game?.status === "in_progress" &&
+      isStockfishReady &&
+      !isCalculating &&
+      !makeMove.isPending &&
+      !isCheckmate &&
+      !isStalemate &&
+      !isDraw &&
+      game?.difficulty &&
+      game?.fen
+    ) {
+      // Small delay to ensure UI updates after user move
+      const timeout = setTimeout(() => {
+        // Calculate engine move client-side and execute
+        void (async () => {
+          try {
+            const engineMove = await getBestMove(
+              game.fen,
+              game.difficulty as DifficultyLevel
+            );
+            // Execute the engine move via tRPC
+            makeMove.mutate({
+              gameId,
+              from: engineMove.from,
+              to: engineMove.to,
+              promotion: engineMove.promotion,
+            });
+          } catch (error) {
+            console.error("Failed to calculate engine move:", error);
+          }
+        })();
+      }, 500);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [
+    isEngineGame,
+    isEngineTurn,
+    game?.status,
+    game?.difficulty,
+    game?.fen,
+    gameId,
+    isStockfishReady,
+    isCalculating,
+    getBestMove,
+    makeMove,
+    isCheckmate,
+    isStalemate,
+    isDraw,
+  ]);
 
   if (isLoading || !game) {
     return (
@@ -116,15 +216,27 @@ export function GamePageClient({
               <CardHeader>
                 <CardTitle>Chessboard</CardTitle>
                 <CardDescription>
-                  {getStatusDescription(game.status)}
+                  {isCalculating || makeMove.isPending
+                    ? "Engine is thinking..."
+                    : getStatusDescription(game.status)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  {(isCalculating || makeMove.isPending) && (
+                    <div className="text-sm text-muted-foreground">
+                      Engine is calculating the best move...
+                    </div>
+                  )}
                   <GameChessboard
                     position={game.fen}
                     orientation={boardOrientation}
-                    draggable={game.status === "in_progress"}
+                    draggable={
+                      game.status === "in_progress" &&
+                      !isEngineTurn &&
+                      !isCalculating &&
+                      !makeMove.isPending
+                    }
                     status={game.status}
                     gameId={game.id}
                     onMoveSuccess={refetch}

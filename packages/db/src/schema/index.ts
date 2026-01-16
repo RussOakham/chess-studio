@@ -37,6 +37,16 @@ const gameResultEnum = pgEnum("game_result", [
   "draw",
 ]);
 
+// Game difficulty enum
+const gameDifficultyEnum = pgEnum("game_difficulty", [
+  "easy",
+  "medium",
+  "hard",
+]);
+
+// Game color enum
+const gameColorEnum = pgEnum("game_color", ["white", "black", "random"]);
+
 // Games table
 // References Better Auth's "user" table
 const games = pgTable("games", {
@@ -48,6 +58,8 @@ const games = pgTable("games", {
     .references(() => user.id, { onDelete: "cascade" }),
   status: gameStatusEnum("status").notNull().default("waiting"),
   result: gameResultEnum("result"),
+  difficulty: gameDifficultyEnum("difficulty").notNull().default("medium"), // Engine difficulty level
+  color: gameColorEnum("color").notNull().default("random"), // User's color preference
   fen: text("fen").notNull(), // Current position in FEN notation
   pgn: text("pgn"), // Game notation in PGN format
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -113,6 +125,8 @@ export {
   // Game enums
   gameStatusEnum,
   gameResultEnum,
+  gameDifficultyEnum,
+  gameColorEnum,
   // Custom tables
   games,
   moves,

@@ -62,3 +62,13 @@ export {
   parseFEN,
   formatEvaluation,
 };
+
+// Engine utilities
+export {
+  type DifficultyLevel,
+  type StockfishInstance,
+  DIFFICULTY_DEPTH,
+  getEngineDepth,
+  calculateBestMove,
+  getPositionEvaluation,
+} from "./engine";

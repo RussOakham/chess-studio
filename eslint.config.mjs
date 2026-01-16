@@ -23,6 +23,8 @@ const config = [
       "**/package-lock.json",
       "apps/web/.next/**",
       "**/.next/**",
+      "**/public/engine/**",
+      "**/public/**/*.{js,wasm}",
     ],
   },
 

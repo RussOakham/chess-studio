@@ -37,3 +37,11 @@ yarn.lock
 
 # Generated files
 *.tsbuildinfo
+
+# Stockfish engine files (binary/minified, not meant to be linted)
+public/engine
+public/engine/**
+apps/web/public/engine
+apps/web/public/engine/**
+*.wasm
+**/*.wasm

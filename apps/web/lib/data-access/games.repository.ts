@@ -39,6 +39,8 @@ export class GamesRepository {
     userId: string;
     fen: string;
     status: "waiting" | "in_progress" | "completed" | "abandoned";
+    difficulty?: "easy" | "medium" | "hard";
+    color?: "white" | "black" | "random";
   }): Promise<Game> {
     const [newGame] = await db
       .insert(games)
@@ -46,6 +48,9 @@ export class GamesRepository {
         userId: data.userId,
         status: data.status,
         fen: data.fen,
+        // Use provided values or defaults (schema has defaults: "medium" and "random")
+        difficulty: data.difficulty ?? "medium",
+        color: data.color ?? "random",
       })
       .returning();
 

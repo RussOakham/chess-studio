@@ -3,6 +3,7 @@ import { MovesRepository } from "@/lib/data-access/moves.repository";
 import { GamesService } from "@/lib/services/games.service";
 import { newGameSchema } from "@/lib/validations/game";
 import { TRPCError } from "@trpc/server";
+import { Chess } from "chess.js";
 import { z } from "zod";
 
 import { router, protectedProcedure } from "../init";
@@ -138,18 +139,69 @@ export const gamesRouter = router({
       }
     }),
 
-  // Get engine move (future - Phase 2.3)
+  // Get and execute engine move
   getEngineMove: protectedProcedure
     .input(z.object({ gameId: z.uuidv7() }))
     .mutation(async ({ ctx, input }) => {
-      console.log({
-        input: input,
-        ctx: ctx,
-      });
-      // TODO: Implement when Phase 2.3 is ready
+      // Verify game exists and user owns it
+      const game = await repository.findById(input.gameId);
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Game not found",
+        });
+      }
+
+      if (game.userId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this game",
+        });
+      }
+
+      if (game.status !== "in_progress") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in progress",
+        });
+      }
+
+      // Check if it's the engine's turn
+      const chess = new Chess();
+      try {
+        chess.load(game.fen);
+      } catch {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid game position",
+        });
+      }
+
+      // Determine if it's engine's turn
+      // If user is playing white, engine plays black (turn === 'b')
+      // If user is playing black, engine plays white (turn === 'w')
+      const currentTurn = chess.turn();
+      const userColor = game.color === "random" ? "white" : game.color;
+      const engineColor = userColor === "white" ? "black" : "white";
+      const isEngineTurn =
+        (currentTurn === "w" && engineColor === "white") ||
+        (currentTurn === "b" && engineColor === "black");
+
+      if (!isEngineTurn) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "It is not the engine's turn",
+        });
+      }
+
+      // Engine moves are calculated client-side using the useStockfish hook
+      // The client calculates the move and calls makeMove endpoint directly
+      // This endpoint is kept for future server-side engine support if needed
       throw new TRPCError({
         code: "NOT_IMPLEMENTED",
-        message: "Engine move endpoint not implemented yet",
+        message:
+          "Engine moves are calculated client-side. Use the makeMove endpoint with the engine's calculated move.",
       });
     }),
 

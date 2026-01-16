@@ -30,16 +30,47 @@ The database includes the following tables:
 
 ### Running Migrations
 
+#### Development Workflow
+
+For active development, use `db:push` to sync schema directly:
+
 ```bash
-# Generate migrations from schema changes
+# Sync schema directly to database (fast, no migration files)
+pnpm db:push
+```
+
+**Use `db:push` when:**
+
+- Actively developing and iterating on schema
+- Working on feature branches
+- Need quick schema updates
+
+#### Production Workflow
+
+For production and version control, use migrations:
+
+```bash
+# 1. Generate migration from schema changes
 pnpm db:generate
 
-# Apply migrations to database
-pnpm db:push
+# 2. Review the generated migration file in drizzle/
 
-# Or use migrations (recommended for production)
+# 3. Apply migration to database
 pnpm db:migrate
 ```
+
+**Use `db:generate` + `db:migrate` when:**
+
+- Committing schema changes to version control
+- Deploying to production
+- Working with a team (migrations are tracked in git)
+
+#### Important Notes
+
+- **Never manually edit migration files** - always use `db:generate`
+- Edit schema files (`src/schema/*.ts`) instead of migration SQL
+- Migration files are auto-generated and should not be modified
+- See `@.cursor/rules/database-migrations.mdc` for detailed guidelines
 
 ### Drizzle Studio
 

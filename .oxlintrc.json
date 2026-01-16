@@ -1,5 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "dist/**",
+    "build/**",
+    ".next/**",
+    ".turbo/**",
+    "node_modules/**",
+    "**/public/engine/**",
+    "**/*.wasm"
+  ],
   "plugins": [
     "eslint",
     "unicorn",
@@ -27,6 +36,7 @@
   "rules": {
     "unicorn/no-null": "off",
     "unicorn/prevent-abbreviations": "off",
+    "unicorn/numeric-separators-style": "off",
     "react-in-jsx-scope": "off",
     "jsx-max-depth": "off",
     "func-style": "off",
@@ -77,6 +87,29 @@
       "files": ["**/api/**/route.ts", "**/app/**/page.tsx"],
       "rules": {
         "import/group-exports": "off"
+      }
+    },
+    {
+      "files": ["**/packages/chess/src/engine.ts"],
+      "rules": {
+        "promise/avoid-new": "off",
+        "unicorn/require-post-message-target-origin": "off"
+      }
+    },
+    {
+      "files": ["**/apps/web/lib/services/engine.service.ts"],
+      "rules": {
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "new-cap": "off"
+      }
+    },
+    {
+      "files": ["**/apps/web/lib/hooks/use-stockfish.ts"],
+      "rules": {
+        "typescript/no-unsafe-type-assertion": "off"
       }
     }
   ]

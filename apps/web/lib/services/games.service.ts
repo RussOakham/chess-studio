@@ -24,7 +24,7 @@ export class GamesService {
 
   async createGame(
     userId: string,
-    _options: CreateGameRequest
+    options: CreateGameRequest
   ): Promise<Pick<Game, "id" | "status" | "fen">> {
     // Business logic: determine initial state, validate rules
     // For engine games, start immediately (no waiting for opponent)
@@ -32,10 +32,9 @@ export class GamesService {
       userId,
       fen: INITIAL_FEN,
       status: "in_progress", // Start game immediately for engine games
+      difficulty: options.difficulty,
+      color: options.color,
     });
-
-    // TODO: Store difficulty/color when schema is extended
-    // For now, we'll use these when implementing the engine in Phase 2
 
     return {
       id: game.id,

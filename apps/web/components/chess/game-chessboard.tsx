@@ -85,13 +85,7 @@ export function GameChessboard({
     try {
       const optimisticChess = new Chess();
       optimisticChess.load(position);
-      const promotion =
-        move.promotion === "q" ||
-        move.promotion === "r" ||
-        move.promotion === "b" ||
-        move.promotion === "n"
-          ? move.promotion
-          : undefined;
+      const promotion = move.promotion === "n" ? move.promotion : undefined;
       const chessMove = optimisticChess.move({
         from: move.from,
         to: move.to,

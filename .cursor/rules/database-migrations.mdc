@@ -1,0 +1,152 @@
+---
+description: "Database migrations: Drizzle ORM migration workflow and best practices"
+globs: ["**/packages/db/**/*.ts", "**/packages/db/**/*.sql"]
+alwaysApply: false
+---
+
+# Database Migrations
+
+This project uses Drizzle ORM for database schema management and migrations.
+
+## Migration Workflow
+
+### Development Workflow
+
+**Use `db:push` for development:**
+
+```bash
+cd packages/db
+pnpm db:push
+```
+
+- **Purpose**: Syncs schema directly to database without migration files
+- **When to use**: During active development when schema changes frequently
+- **Benefits**: Fast iteration, no migration file management
+- **Limitations**: Not suitable for production or team collaboration
+
+### Production Workflow
+
+**Use `db:generate` + `db:migrate` for production:**
+
+```bash
+cd packages/db
+# 1. Generate migration from schema changes
+pnpm db:generate
+
+# 2. Review the generated migration file
+
+# 3. Apply migration to database
+pnpm db:migrate
+```
+
+- **Purpose**: Creates versioned migration files for production deployment
+- **When to use**: Before committing schema changes, for production deployments
+- **Benefits**: Version control, rollback capability, team collaboration
+
+## Critical Rules
+
+### ⚠️ NEVER Manually Edit Migration Files
+
+**DO NOT:**
+- Manually edit SQL files in `packages/db/drizzle/*.sql`
+- Add custom SQL to migration files
+- Modify generated migration files
+- Create migration files manually
+
+**DO:**
+- Always use `pnpm db:generate` to create migrations
+- Edit the schema files (`packages/db/src/schema/*.ts`) instead
+- Let Drizzle generate the migration SQL automatically
+- Review generated migrations before applying
+
+### Why This Matters
+
+- Migration files are generated from schema diffs
+- Manual edits break the migration tracking system
+- Drizzle uses snapshots to track schema state
+- Manual edits cause migration state to become out of sync
+- Can lead to "enum already exists" and other errors
+
+## Schema Changes Workflow
+
+1. **Edit Schema Files**
+   - Modify `packages/db/src/schema/index.ts` or `packages/db/src/schema/auth.ts`
+   - Add/remove tables, columns, enums, constraints, etc.
+
+2. **Generate Migration**
+   ```bash
+   pnpm db:generate
+   ```
+   - Creates new migration file in `packages/db/drizzle/`
+   - Updates snapshot in `packages/db/drizzle/meta/`
+   - Updates journal in `packages/db/drizzle/meta/_journal.json`
+
+3. **Review Generated Migration**
+   - Check the SQL file in `packages/db/drizzle/`
+   - Verify it matches your intended changes
+   - If incorrect, fix the schema file and regenerate
+
+4. **Apply Migration**
+   ```bash
+   pnpm db:migrate
+   ```
+   - Applies migration to database
+   - Updates `__drizzle_migrations` table
+
+## Common Issues and Solutions
+
+### Issue: "Enum already exists" error
+
+**Cause**: Migration tracking is out of sync with database state
+
+**Solution**:
+- Use `pnpm db:push` to sync schema directly (development only)
+- Or check `__drizzle_migrations` table and mark existing migrations as applied
+- Never manually edit migration files to "fix" this
+
+### Issue: Migration state out of sync
+
+**Cause**: Database was modified outside of migrations
+
+**Solution**:
+- Use `pnpm db:push` to sync current schema (development)
+- Then generate new migrations going forward
+- For production: restore from backup or manually sync state
+
+### Issue: Need to modify a migration
+
+**Solution**:
+- **DO NOT** edit the migration file
+- Instead, create a new migration that fixes the issue
+- Or revert the migration, fix the schema, and regenerate
+
+## Migration File Structure
+
+```
+packages/db/drizzle/
+├── 0000_initial.sql          # Generated migration files
+├── 0001_add_feature.sql
+├── meta/
+│   ├── _journal.json         # Migration journal (auto-managed)
+│   ├── 0000_snapshot.json    # Schema snapshots (auto-managed)
+│   └── 0001_snapshot.json
+```
+
+**Never manually edit files in `drizzle/` directory** - they are auto-generated.
+
+## Schema Definition
+
+Edit schema in:
+- `packages/db/src/schema/index.ts` - Main schema (games, moves, etc.)
+- `packages/db/src/schema/auth.ts` - Auth schema (user, session, etc.)
+
+After editing schema:
+1. Run `pnpm build` in `packages/db` to rebuild types
+2. Run `pnpm db:generate` to create migration
+3. Run `pnpm db:migrate` to apply (or `pnpm db:push` for dev)
+
+## References
+
+- Drizzle Migrations: https://orm.drizzle.team/docs/migrations
+- Schema definition: `@packages/db/src/schema/index.ts`
+- Migration config: `@packages/db/drizzle.config.ts`
