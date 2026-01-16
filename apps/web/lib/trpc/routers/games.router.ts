@@ -51,6 +51,32 @@ export const gamesRouter = router({
       return game;
     }),
 
+  // Get moves for a game
+  getMoves: protectedProcedure
+    .input(z.object({ gameId: z.uuidv7() }))
+    .query(async ({ ctx, input }) => {
+      // First verify game exists and user owns it
+      const game = await repository.findById(input.gameId);
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Game not found",
+        });
+      }
+
+      if (game.userId !== ctx.userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this game",
+        });
+      }
+
+      // Get moves for the game
+      const gameMoves = await movesRepository.findByGameId(input.gameId);
+      return gameMoves;
+    }),
+
   // Make a move
   makeMove: protectedProcedure
     .input(
@@ -94,7 +120,7 @@ export const gamesRouter = router({
           if (
             error.message === "Game is not in progress" ||
             error.message === "Invalid move" ||
-            error.message === "Invalid game position"
+            error?.message === "Invalid game position"
           ) {
             throw new TRPCError({
               code: "BAD_REQUEST",

@@ -1,7 +1,6 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ChessboardWrapper } from "./chessboard";
@@ -17,6 +16,8 @@ interface GameChessboardProps {
   status: string;
   /** Game ID */
   gameId: string;
+  /** Optional callback to refetch game data after move */
+  onMoveSuccess?: () => void;
 }
 
 export function GameChessboard({
@@ -25,14 +26,20 @@ export function GameChessboard({
   draggable = true,
   status,
   gameId,
+  onMoveSuccess,
 }: GameChessboardProps) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const utils = trpc.useUtils();
 
   const makeMove = trpc.games.makeMove.useMutation({
     onSuccess: () => {
-      // Refresh the page to show updated game state
-      router.refresh();
+      // Invalidate and refetch game queries to update UI
+      void utils.games.getById.invalidate({ gameId });
+      void utils.games.getMoves.invalidate({ gameId });
+      // Call optional callback
+      if (onMoveSuccess) {
+        onMoveSuccess();
+      }
       setError(null);
     },
     onError: (error) => {
