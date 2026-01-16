@@ -62,4 +62,7 @@ logs/
 .husky/_
 
 # Turbo
-.turbo/
+.turbo
+
+# Large binary files (should be copied from node_modules)
+apps/web/public/engine/*.wasm/
