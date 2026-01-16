@@ -1,4 +1,5 @@
 import { GamesRepository } from "@/lib/data-access/games.repository";
+import { MovesRepository } from "@/lib/data-access/moves.repository";
 import { GamesService } from "@/lib/services/games.service";
 import { newGameSchema } from "@/lib/validations/game";
 import { TRPCError } from "@trpc/server";
@@ -8,7 +9,8 @@ import { router, protectedProcedure } from "../init";
 
 // Initialize service layer (reuse existing)
 const repository = new GamesRepository();
-const service = new GamesService(repository);
+const movesRepository = new MovesRepository();
+const service = new GamesService(repository, movesRepository);
 
 export const gamesRouter = router({
   // List user's games
@@ -49,7 +51,7 @@ export const gamesRouter = router({
       return game;
     }),
 
-  // Make a move (future - Phase 2.1)
+  // Make a move
   makeMove: protectedProcedure
     .input(
       z.object({
@@ -60,15 +62,53 @@ export const gamesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      console.log({
-        input: input,
-        ctx: ctx,
-      });
-      // TODO: Implement when Phase 2.1 is ready
-      throw new TRPCError({
-        code: "NOT_IMPLEMENTED",
-        message: "Make move endpoint not implemented yet",
-      });
+      try {
+        const result = await service.makeMove(
+          ctx.userId,
+          input.gameId,
+          input.from,
+          input.to,
+          input.promotion
+        );
+
+        return {
+          success: result.success,
+          game: result.game,
+          move: result.move,
+        };
+      } catch (error) {
+        // Handle specific error types
+        if (error instanceof Error) {
+          if (error.message === "Game not found") {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: error.message,
+            });
+          }
+          if (error.message === "You do not have access to this game") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: error.message,
+            });
+          }
+          if (
+            error.message === "Game is not in progress" ||
+            error.message === "Invalid move" ||
+            error.message === "Invalid game position"
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: error.message,
+            });
+          }
+        }
+
+        // Generic error
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to make move",
+        });
+      }
     }),
 
   // Get engine move (future - Phase 2.3)

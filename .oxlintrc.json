@@ -43,6 +43,7 @@
     "jsx-no-new-function-as-prop": "off",
     "no-duplicate-imports": "off",
     "max-statements": "off",
+    "max-params": "off",
     "typescript/no-floating-promises": "error",
     "typescript/no-unsafe-assignment": "warn",
     "typescript/no-unsafe-member-access": "warn",

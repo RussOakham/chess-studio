@@ -91,6 +91,7 @@ export default async function GamePage({ params }: GamePageProps) {
                     orientation={boardOrientation}
                     draggable={game.status === "in_progress"}
                     status={game.status}
+                    gameId={game.id}
                   />
                 </div>
               </CardContent>
