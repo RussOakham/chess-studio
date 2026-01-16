@@ -1,6 +1,7 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
+import { Chess } from "chess.js";
 import { useState } from "react";
 
 import { ChessboardWrapper } from "./chessboard";
@@ -29,11 +30,34 @@ export function GameChessboard({
   onMoveSuccess,
 }: GameChessboardProps) {
   const [error, setError] = useState<string | null>(null);
+  const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
   const utils = trpc.useUtils();
 
   const makeMove = trpc.games.makeMove.useMutation({
+    onMutate: async () => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await utils.games.getById.cancel({ gameId });
+      await utils.games.getMoves.cancel({ gameId });
+
+      // Snapshot the previous value
+      const previousGame = utils.games.getById.getData({ gameId });
+
+      return { previousGame };
+    },
+    onError: (error, _variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousGame) {
+        utils.games.getById.setData({ gameId }, context.previousGame);
+      }
+      setOptimisticFen(null);
+      setError(error.message || "Failed to make move");
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    },
     onSuccess: () => {
-      // Invalidate and refetch game queries to update UI
+      // Clear optimistic state
+      setOptimisticFen(null);
+      // Invalidate and refetch game queries to get server state
       void utils.games.getById.invalidate({ gameId });
       void utils.games.getMoves.invalidate({ gameId });
       // Call optional callback
@@ -42,10 +66,10 @@ export function GameChessboard({
       }
       setError(null);
     },
-    onError: (error) => {
-      setError(error.message || "Failed to make move");
-      // Clear error after 3 seconds
-      setTimeout(() => setError(null), 3000);
+    onSettled: () => {
+      // Always refetch after mutation settles
+      void utils.games.getById.invalidate({ gameId });
+      void utils.games.getMoves.invalidate({ gameId });
     },
   });
 
@@ -56,6 +80,46 @@ export function GameChessboard({
     }
 
     setError(null);
+
+    // Calculate optimistic FEN immediately before mutation
+    try {
+      const optimisticChess = new Chess();
+      optimisticChess.load(position);
+      const promotion =
+        move.promotion === "q" ||
+        move.promotion === "r" ||
+        move.promotion === "b" ||
+        move.promotion === "n"
+          ? move.promotion
+          : undefined;
+      const chessMove = optimisticChess.move({
+        from: move.from,
+        to: move.to,
+        promotion,
+      });
+
+      if (chessMove) {
+        const newFen = optimisticChess.fen();
+        setOptimisticFen(newFen);
+
+        // Optimistically update the cache
+        const previousGame = utils.games.getById.getData({ gameId });
+        if (previousGame) {
+          utils.games.getById.setData(
+            { gameId },
+            {
+              ...previousGame,
+              fen: newFen,
+              pgn: optimisticChess.pgn(),
+            }
+          );
+        }
+      }
+    } catch {
+      // If optimistic update fails, continue with server call anyway
+    }
+
+    // Trigger the mutation
     makeMove.mutate({
       gameId,
       from: move.from,
@@ -63,6 +127,9 @@ export function GameChessboard({
       promotion: move.promotion,
     });
   }
+
+  // Use optimistic FEN if available, otherwise use server position
+  const displayPosition = optimisticFen ?? position;
 
   return (
     <div className="space-y-2">
@@ -72,7 +139,7 @@ export function GameChessboard({
         </div>
       )}
       <ChessboardWrapper
-        position={position}
+        position={displayPosition}
         orientation={orientation}
         draggable={draggable && status === "in_progress" && !makeMove.isPending}
         onMove={handleMove}
