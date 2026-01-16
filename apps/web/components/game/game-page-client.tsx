@@ -213,21 +213,59 @@ export function GamePageClient({
           {/* Main Chessboard Area */}
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
+              <CardHeader className="relative">
                 <CardTitle>Chessboard</CardTitle>
                 <CardDescription>
-                  {isCalculating || makeMove.isPending
-                    ? "Engine is thinking..."
-                    : getStatusDescription(game.status)}
+                  {getStatusDescription(game.status)}
                 </CardDescription>
+                {/* Fixed-size status indicator (always rendered to prevent CLS) */}
+                {game.status === "in_progress" &&
+                  (() => {
+                    const getStatusColor = () => {
+                      if (makeMove.isError) {
+                        return "bg-red-500";
+                      }
+                      if (isCalculating || makeMove.isPending) {
+                        return "bg-yellow-500";
+                      }
+                      return "bg-green-500";
+                    };
+
+                    const getStatusLabel = () => {
+                      if (makeMove.isError) {
+                        return "Server error";
+                      }
+                      if (isCalculating || makeMove.isPending) {
+                        return "Engine calculating move";
+                      }
+                      return "Player turn";
+                    };
+
+                    const getStatusText = () => {
+                      if (makeMove.isError) {
+                        return "Error";
+                      }
+                      if (isCalculating || makeMove.isPending) {
+                        return "Engine thinking";
+                      }
+                      return "Your turn";
+                    };
+
+                    return (
+                      <div className="absolute top-4 right-4 flex h-5 items-center gap-2">
+                        <div
+                          className={`h-3 w-3 shrink-0 rounded-full ${getStatusColor()}`}
+                          aria-label={getStatusLabel()}
+                        />
+                        <span className="text-xs whitespace-nowrap text-muted-foreground">
+                          {getStatusText()}
+                        </span>
+                      </div>
+                    );
+                  })()}
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center gap-4">
-                  {(isCalculating || makeMove.isPending) && (
-                    <div className="text-sm text-muted-foreground">
-                      Engine is calculating the best move...
-                    </div>
-                  )}
                   <GameChessboard
                     position={game.fen}
                     orientation={boardOrientation}
