@@ -1,0 +1,98 @@
+---
+description: "Code quality: linting, formatting, type checking, and code style conventions"
+alwaysApply: true
+---
+
+# Code Quality Standards
+
+This project enforces code quality through automated tooling and conventions.
+
+## Linting
+
+### oxlint (Primary Linter)
+
+- **Type-aware linting** enabled via `oxlint-tsgolint`
+- **Runs on**: All TypeScript/JavaScript files
+- **Command**: `pnpm lint`
+- **Auto-fix**: `pnpm lint:fix`
+
+**Key Rules:**
+
+- TypeScript strict mode compliance
+- No floating promises
+- No unsafe assignments/calls
+- No unused variables (prefix with `_` if intentionally unused)
+
+### ESLint
+
+- **Runs on**: JSON and YAML files only
+- **Command**: `pnpm lint`
+- **Auto-fix**: `pnpm lint:fix`
+
+### Markdown Linting
+
+- **Tool**: markdownlint
+- **Command**: `pnpm lint:md`
+- **Auto-fix**: `pnpm lint:md:fix`
+- **Always run** `pnpm lint:md` or `pnpm lint:md:fix` if changed files include any markdown files (`.md`, `.mdc`)
+
+## Formatting
+
+### oxfmt
+
+- **Tool**: oxfmt (Rust-based, Prettier-compatible)
+- **Features**: Import sorting, Tailwind CSS class sorting
+- **Command**: `pnpm format` (check) or `pnpm format:fix` (fix)
+
+**Runs automatically on commit** via lint-staged.
+
+## Type Checking
+
+- **Tool**: TypeScript 7.0 (Go-based compiler)
+- **Command**: `pnpm type-check`
+- **Strict mode**: Enabled
+- **Runs**: As part of build process
+
+## Pre-commit Hooks
+
+Husky + lint-staged runs:
+
+- oxlint (type-aware)
+- ESLint (JSON/YAML)
+- oxfmt (formatting)
+- markdownlint (markdown files)
+
+**All checks must pass before commit.**
+
+**Note**: For detailed git workflow guidelines (commits, branching, merge requests), see `@.cursor/rules/git-workflow.mdc`.
+
+## Code Style
+
+### TypeScript
+
+- Use explicit types (avoid `any`)
+- Use type imports: `import type { ... }`
+- Handle promises properly (no floating promises)
+- Prefix unused variables with `_`: `_unusedParam`
+
+### React/Next.js
+
+- Functional components with hooks
+- Server Components by default
+- Client Components only when needed (`"use client"`)
+- Use path aliases consistently
+
+### File Naming
+
+- Components: `kebab-case.tsx`
+- Utilities: `kebab-case.ts`
+- Types: `kebab-case.types.ts` or `types.ts`
+- Config: `kebab-case.config.js`
+
+## References
+
+- Lint config: `@.oxlintrc.json`
+- Format config: `@.oxfmtrc.json`
+- ESLint config: `@eslint.config.mjs`
+- Pre-commit: `@.husky/` (if exists)
+- Contributing guide: `@CONTRIBUTING.md`

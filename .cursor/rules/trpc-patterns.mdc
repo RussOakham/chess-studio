@@ -1,0 +1,213 @@
+---
+description: "tRPC patterns: router structure, error handling, validation, and React Query integration"
+globs: ["**/trpc/**/*.ts", "**/trpc/**/*.tsx"]
+alwaysApply: false
+---
+
+# tRPC Patterns
+
+This project uses tRPC for end-to-end type safety between frontend and backend.
+
+## Router Structure
+
+### Router Organization
+
+```text
+lib/trpc/
+├── init.ts              # tRPC initialization, procedures
+├── context.ts           # Context creation
+├── client.ts            # React Query client
+├── server.ts            # Server-side caller
+├── provider.tsx         # React Query provider
+└── routers/
+    ├── _app.ts          # Root router (exports AppRouter type)
+    └── games.router.ts   # Feature routers
+```
+
+### Creating a New Router
+
+1. **Create router file**: `lib/trpc/routers/[feature].router.ts`
+2. **Export router**: Use `router()` from `init.ts`
+3. **Add to app router**: Import and add to `routers/_app.ts`
+
+**Example:**
+
+```typescript
+// routers/games.router.ts
+import { router, protectedProcedure } from "../init";
+
+export const gamesRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    // Implementation
+  }),
+});
+```
+
+## Procedures
+
+### Procedure Types
+
+- **`publicProcedure`**: Public endpoints (no auth required)
+- **`protectedProcedure`**: Requires authentication (adds `ctx.userId`)
+
+### Procedure Patterns
+
+**Query (read operations):**
+
+```typescript
+getById: protectedProcedure
+  .input(z.object({ gameId: z.uuidv7() }))
+  .query(async ({ ctx, input }) => {
+    // Return data
+  })
+```
+
+**Mutation (write operations):**
+
+```typescript
+create: protectedProcedure
+  .input(newGameSchema)
+  .mutation(async ({ ctx, input }) => {
+    // Perform mutation, return result
+  })
+```
+
+## Input Validation
+
+- **Use Zod schemas** from `@apps/web/lib/validations/`
+- **Validate UUIDs** with `z.uuidv7()` (not `z.string().uuid()`)
+- **Reuse schemas** - Don't duplicate validation logic
+
+**Example:**
+
+```typescript
+import { newGameSchema } from "@/lib/validations/game";
+
+create: protectedProcedure
+  .input(newGameSchema)
+  .mutation(async ({ ctx, input }) => {
+    // input is typed based on newGameSchema
+  })
+```
+
+## Error Handling
+
+### TRPCError Codes
+
+Use appropriate error codes:
+
+- **`NOT_FOUND`**: Resource doesn't exist
+- **`FORBIDDEN`**: User lacks permission
+- **`BAD_REQUEST`**: Invalid input or business rule violation
+- **`UNAUTHORIZED`**: Not authenticated (usually handled by protectedProcedure)
+- **`INTERNAL_SERVER_ERROR`**: Unexpected errors
+
+**Pattern:**
+
+```typescript
+if (!game) {
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: "Game not found",
+  });
+}
+
+if (game.userId !== ctx.userId) {
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message: "You do not have access to this game",
+  });
+}
+```
+
+### Error Handling in Mutations
+
+Catch service errors and convert to TRPCError:
+
+```typescript
+try {
+  const result = await service.makeMove(/* ... */);
+  return result;
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message === "Game not found") {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: error.message,
+      });
+    }
+    // Handle other specific errors...
+  }
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Failed to make move",
+  });
+}
+```
+
+## Service Integration
+
+**Initialize services at module level** (reuse instances):
+
+```typescript
+// At top of router file
+const repository = new GamesRepository();
+const service = new GamesService(repository, movesRepository);
+
+export const gamesRouter = router({
+  // Use service in procedures
+});
+```
+
+## Client Usage
+
+### Server Components
+
+Use server-side caller:
+
+```typescript
+import { createCaller } from "@/lib/trpc/server";
+
+const trpc = await createCaller();
+const game = await trpc.games.getById({ gameId });
+```
+
+### Client Components
+
+Use React Query hooks:
+
+```typescript
+"use client";
+
+import { trpc } from "@/lib/trpc/client";
+
+const { data: game } = trpc.games.getById.useQuery({ gameId });
+const createGame = trpc.games.create.useMutation();
+```
+
+### Custom Hooks
+
+Create custom hooks for complex queries:
+
+```typescript
+// lib/hooks/use-game.ts
+export function useGame(gameId: string) {
+  const { data: game } = trpc.games.getById.useQuery({ gameId });
+  const { data: moves } = trpc.games.getMoves.useQuery({ gameId });
+  // ... combine and return
+}
+```
+
+## Type Safety
+
+- **AppRouter type**: Exported from `routers/_app.ts`
+- **Client types**: Automatically inferred from AppRouter
+- **No code generation needed** - Types are inferred at compile time
+
+## References
+
+- Router example: `@apps/web/lib/trpc/routers/games.router.ts`
+- Init file: `@apps/web/lib/trpc/init.ts`
+- Server caller: `@apps/web/lib/trpc/server.ts`
+- Client setup: `@apps/web/lib/trpc/client.ts`
+- Custom hook: `@apps/web/lib/hooks/use-game.ts`

@@ -1,0 +1,132 @@
+---
+description: "TypeScript conventions: type imports, strict mode, UUID v7, and type safety patterns"
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Conventions
+
+Follow these TypeScript conventions for consistency and type safety.
+
+## Type Imports
+
+**Always use type imports for types, interfaces, and type-only exports:**
+
+```typescript
+// ✅ Correct
+import type { Game } from "@/lib/data-access/games.repository";
+import type { Context } from "./context";
+import { db, games } from "@repo/db"; // Value imports
+
+// ❌ Incorrect
+import { Game, GamesRepository } from "@/lib/data-access/games.repository";
+```
+
+**Exception**: When importing both types and values from the same module, you can use regular imports, but prefer type imports when possible.
+
+## UUID v7
+
+**All IDs use UUID v7 (time-ordered UUIDs):**
+
+- Database schema uses `uuid_generate_v7()` for default values
+- Zod schemas use `z.uuidv7()` for validation
+- Type definitions should use `string` type (UUIDs are strings)
+
+**Example:**
+
+```typescript
+// Schema
+id: uuid("id").primaryKey().default(sql`uuid_generate_v7()`)
+
+// Validation
+z.object({ gameId: z.uuidv7() })
+
+// Type
+type Game = { id: string; /* ... */ }
+```
+
+## Type Safety Patterns
+
+### 1. Infer Types from Drizzle Schema
+
+```typescript
+import type { InferSelectModel } from "@repo/db";
+import { games } from "@repo/db";
+
+export type Game = InferSelectModel<typeof games>;
+```
+
+### 2. Use Zod for Runtime Validation
+
+```typescript
+import { z } from "zod";
+
+export const newGameSchema = z.object({
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  color: z.enum(["white", "black", "random"]),
+});
+```
+
+### 3. Type tRPC Router
+
+```typescript
+// routers/_app.ts
+export type AppRouter = typeof appRouter;
+
+// client.ts
+import type { AppRouter } from "./routers/_app";
+```
+
+## Strict Mode
+
+TypeScript strict mode is enabled. Follow these rules:
+
+- **No `any` types** - Use `unknown` or proper types instead
+- **Explicit return types** - Prefer explicit return types for functions
+- **No unused variables** - Prefix with `_` if intentionally unused: `_unusedParam`
+- **Handle promises** - Use `await` or `.then()`, never ignore promises
+
+## Error Handling
+
+Use proper error types:
+
+```typescript
+// ✅ Correct
+if (error instanceof Error) {
+  // Handle error
+}
+
+// ✅ Correct - tRPC errors
+throw new TRPCError({
+  code: "NOT_FOUND",
+  message: "Game not found",
+});
+```
+
+## Path Aliases
+
+Use path aliases consistently:
+
+- `@/` - `apps/web/` (web app root)
+- `@repo/db` - `packages/db`
+- `@repo/chess` - `packages/chess`
+- `@repo/types` - `packages/types`
+
+## Type Definitions
+
+### API Types
+
+- Location: `apps/web/lib/types/api.ts`
+- Define request/response types for API boundaries
+
+### Domain Types
+
+- Infer from database schema using `InferSelectModel`
+- Export from repository files
+
+## References
+
+- Schema example: `@packages/db/src/schema/index.ts`
+- Type inference: `@apps/web/lib/data-access/games.repository.ts`
+- Validation schemas: `@apps/web/lib/validations/`
+- tRPC types: `@apps/web/lib/trpc/routers/_app.ts`

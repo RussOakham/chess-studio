@@ -1,0 +1,93 @@
+---
+description: "Architecture patterns: Repository, Service, and tRPC layer separation"
+globs: ["**/lib/**/*.ts", "**/lib/**/*.tsx"]
+alwaysApply: false
+---
+
+# Architecture Patterns
+
+This project follows a layered architecture pattern with clear separation of concerns.
+
+## Layer Structure
+
+### 1. Data Access Layer (Repository Pattern)
+
+- **Location**: `apps/web/lib/data-access/`
+- **Purpose**: All database operations using Drizzle ORM
+- **Pattern**: Repository classes with methods for CRUD operations
+- **Example**: `@apps/web/lib/data-access/games.repository.ts`
+
+**Guidelines:**
+
+- Repository classes should only contain database queries
+- Use Drizzle ORM query builders (`db.select()`, `db.insert()`, etc.)
+- Export types using `InferSelectModel` from Drizzle
+- No business logic in repositories
+
+### 2. Service Layer (Business Logic)
+
+- **Location**: `apps/web/lib/services/`
+- **Purpose**: Business logic, validation, and orchestration
+- **Pattern**: Service classes that use repositories
+- **Example**: `@apps/web/lib/services/games.service.ts`
+
+**Guidelines:**
+
+- Services orchestrate multiple repositories when needed
+- Handle business rules and validation
+- Use chess.js for game logic validation
+- Return domain objects, not raw database models
+
+### 3. API Layer (tRPC Routers)
+
+- **Location**: `apps/web/lib/trpc/routers/`
+- **Purpose**: API endpoints with input validation and error handling
+- **Pattern**: tRPC routers with procedures
+- **Example**: `@apps/web/lib/trpc/routers/games.router.ts`
+
+**Guidelines:**
+
+- Use `protectedProcedure` for authenticated endpoints
+- Use `publicProcedure` for public endpoints
+- Validate inputs with Zod schemas from `@apps/web/lib/validations/`
+- Initialize services/repositories at module level (reuse instances)
+- Handle errors with appropriate TRPCError codes:
+  - `NOT_FOUND` - Resource doesn't exist
+  - `FORBIDDEN` - User lacks permission
+  - `BAD_REQUEST` - Invalid input or business rule violation
+  - `UNAUTHORIZED` - Not authenticated (handled by protectedProcedure)
+  - `INTERNAL_SERVER_ERROR` - Unexpected errors
+
+## Flow Example
+
+```text
+tRPC Router → Service Layer → Repository Layer → Database
+     ↓              ↓                ↓
+  Validation   Business Logic   Database Queries
+  Error Handle  Orchestration    Drizzle ORM
+```
+
+## When Creating New Features
+
+1. **Create Repository** (if new data access needed)
+   - Add methods to existing repository or create new one
+   - Use Drizzle query builders
+   - Export types with `InferSelectModel`
+
+2. **Create/Update Service** (if business logic needed)
+   - Add methods to existing service or create new one
+   - Inject repositories via constructor
+   - Implement business rules
+
+3. **Create/Update tRPC Router** (if new API endpoint needed)
+   - Add procedure to existing router or create new router
+   - Use Zod for input validation
+   - Call service methods
+   - Handle errors appropriately
+
+## References
+
+- Repository example: `@apps/web/lib/data-access/games.repository.ts`
+- Service example: `@apps/web/lib/services/games.service.ts`
+- Router example: `@apps/web/lib/trpc/routers/games.router.ts`
+- tRPC init: `@apps/web/lib/trpc/init.ts`

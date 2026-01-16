@@ -1,0 +1,162 @@
+---
+description: "Git workflow: commits, branching, merge requests, and version control behavior"
+alwaysApply: true
+---
+
+# Git Workflow
+
+This project follows strict git workflow guidelines to ensure code quality and user control.
+
+## Commits
+
+### Pre-commit Requirements
+
+**Always run these before committing:**
+
+1. **Lint code**: `pnpm lint` or `pnpm lint:fix`
+2. **Format code**: `pnpm format:fix`
+3. **Lint markdown** (if markdown files changed): `pnpm lint:md` or `pnpm lint:md:fix`
+4. **Type check** (recommended): `pnpm type-check`
+
+**Note**: Pre-commit hooks (Husky + lint-staged) will also run automatically, but always run manually first to catch issues early.
+
+### Commit Permissions
+
+- **Never commit code without explicit user permission**
+- **Never push code without explicit user permission**
+- Always show a summary of changes and ask for approval before committing
+- Allow user to review code changes before committing
+
+### Commit Message Format
+
+**Use [Conventional Commits](https://www.conventionalcommits.org/) format:**
+
+```text
+<type>(<scope>): <short description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, missing semicolons, etc.)
+- `refactor`: Code refactoring
+- `perf`: Performance improvements
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks (dependencies, build config, etc.)
+
+**Examples:**
+
+```text
+feat(games): add move validation
+fix(auth): resolve session expiration issue
+docs: update API documentation
+refactor(trpc): simplify error handling
+chore: update dependencies
+```
+
+**Guidelines:**
+
+- Keep first line ≤ 50 characters
+- Use imperative mood ("add" not "added" or "adds")
+- Be concise and descriptive
+- Optional body for additional context (separated by blank line)
+
+## Branching
+
+### Branch Naming Conventions
+
+**Format:** `<type>/<short-description>`
+
+**Types:**
+
+- `feature/` - New features or enhancements
+- `bugfix/` or `fix/` - Bug fixes
+- `hotfix/` - Critical production fixes
+- `release/` - Release preparation
+- `chore/` - Maintenance tasks
+- `docs/` - Documentation updates
+- `refactor/` - Code refactoring
+- `test/` - Test-related changes
+
+**Naming Rules:**
+
+- Use **kebab-case** (lowercase with hyphens)
+- No spaces or uppercase letters
+- Keep descriptions concise and descriptive
+- Avoid generic names like "update" or "temp"
+
+**Examples:**
+
+```text
+feature/add-stockfish-integration
+bugfix/fix-move-validation-edge-case
+hotfix/resolve-game-state-sync
+chore/update-dependencies
+docs/update-api-documentation
+refactor/simplify-service-layer
+```
+
+**When Creating Branches:**
+
+- Always create from the latest `main` or `develop` branch
+- Use descriptive names that indicate the purpose
+- If branch scope changes, rename it to reflect the new purpose
+
+## Merge Requests
+
+### Creation Rules
+
+- **Only create merge requests when expressly asked by the user**
+- **Never create merge requests automatically**
+- Always ask for user approval before creating
+
+### Merge Request Settings
+
+- **Always create in draft mode** initially
+- **Use MR templates** if available in the repository (check `.gitlab/merge_request_templates/` or `.github/pull_request_template.md`)
+- **Be concise** in MR descriptions
+- Include relevant context and testing notes
+
+### MR Description Guidelines
+
+- Summarize changes concisely
+- Reference related issues/tickets if applicable
+- List key changes in bullet points
+- Note any breaking changes
+- Include testing instructions if needed
+
+## Workflow Summary
+
+### Before Committing
+
+1. ✅ Run `pnpm lint:fix` and `pnpm format:fix`
+2. ✅ Run `pnpm lint:md:fix` if markdown files were changed
+3. ✅ Review all changes
+4. ✅ Ask user for permission to commit
+5. ✅ Use conventional commit format
+6. ✅ Keep commit message concise
+
+### Before Pushing
+
+1. ✅ Ask user for explicit permission
+2. ✅ Confirm branch name follows conventions
+3. ✅ Ensure all commits are properly formatted
+
+### Before Creating MR
+
+1. ✅ Only when user explicitly requests
+2. ✅ Create in draft mode
+3. ✅ Use MR template if available
+4. ✅ Write concise description
+
+## References
+
+- Conventional Commits: https://www.conventionalcommits.org/
+- Branch naming guide: https://medium.com/@abhay.pixolo/naming-conventions-for-git-branches-a-cheatsheet-8549feca2534
+- Contributing guide: `@CONTRIBUTING.md`

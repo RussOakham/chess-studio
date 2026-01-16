@@ -1,0 +1,128 @@
+---
+description: "Monorepo structure: workspace organization, package dependencies, and build patterns"
+globs: ["**/package.json", "**/tsconfig.json", "turbo.json"]
+alwaysApply: false
+---
+
+# Monorepo Structure
+
+This project uses a pnpm workspace with Turbo for monorepo management.
+
+## Workspace Structure
+
+```text
+chess-studio/
+├── apps/
+│   └── web/              # Next.js application
+├── packages/
+│   ├── db/              # Database schema and client (Drizzle ORM)
+│   ├── chess/           # Chess logic and utilities
+│   ├── types/           # Shared TypeScript types
+│   └── config/          # Shared configurations
+└── docs/                # Documentation
+```
+
+## Package Naming
+
+- **Apps**: `@repo/web` (e.g., `apps/web`)
+- **Packages**: `@repo/db`, `@repo/chess`, `@repo/types`
+
+## Dependencies
+
+### Adding Dependencies
+
+**Root dependencies** (dev tools, shared configs):
+
+```bash
+pnpm add -D <package> -w
+```
+
+**App/package dependencies**:
+
+```bash
+pnpm add <package> --filter @repo/web
+pnpm add <package> --filter @repo/db
+```
+
+**Workspace dependencies** (internal packages):
+
+```bash
+pnpm add @repo/db --filter @repo/web
+```
+
+### Dependency Rules
+
+- **Shared dev tools** go in root `package.json` (oxlint, oxfmt, turbo, etc.)
+- **App-specific dependencies** go in app's `package.json`
+- **Package dependencies** go in package's `package.json`
+- **Internal packages** reference each other with `workspace:*`
+
+## Scripts
+
+### Root Scripts
+
+- `pnpm dev` - Start all development servers (Turbo)
+- `pnpm build` - Build all packages (Turbo)
+- `pnpm lint` - Lint all packages (oxlint + ESLint)
+- `pnpm type-check` - Type check all packages (Turbo)
+- `pnpm format` - Format all files (oxfmt)
+
+### Package-Specific Scripts
+
+Run with filter:
+
+```bash
+pnpm --filter @repo/web dev
+pnpm --filter @repo/db build
+```
+
+## TypeScript Configuration
+
+- **Root**: Base `tsconfig.json` with shared compiler options
+- **Packages**: Extend root config, add package-specific paths
+- **Apps**: Extend root config, add app-specific paths and Next.js config
+
+## Build System
+
+Turbo handles:
+
+- Task caching
+- Parallel execution
+- Dependency graph management
+
+Configure in `turbo.json` at root.
+
+## Code Sharing
+
+### Shared Types
+
+- Define in `packages/types/`
+- Import: `import type { ... } from "@repo/types"`
+
+### Shared Utilities
+
+- Chess logic: `packages/chess/`
+- Database: `packages/db/`
+
+### Shared Config
+
+- TypeScript configs: `packages/config/typescript/`
+
+## Import Patterns
+
+```typescript
+// Internal workspace packages
+import { games } from "@repo/db";
+import { INITIAL_FEN } from "@repo/chess";
+
+// App-specific (path aliases)
+import { useGame } from "@/lib/hooks/use-game";
+import { Button } from "@/components/ui/button";
+```
+
+## References
+
+- Root package.json: `@package.json`
+- Workspace config: `@pnpm-workspace.yaml`
+- Turbo config: `@turbo.json`
+- Web app package: `@apps/web/package.json`

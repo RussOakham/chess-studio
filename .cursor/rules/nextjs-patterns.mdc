@@ -1,0 +1,106 @@
+---
+description: "Next.js App Router patterns: Server Components, Client Components, and file conventions"
+globs: ["**/app/**/*.tsx", "**/components/**/*.tsx"]
+alwaysApply: false
+---
+
+# Next.js App Router Patterns
+
+This project uses Next.js 16 with the App Router. Follow these patterns for consistency.
+
+## Component Types
+
+### Server Components (Default)
+
+- **No directive needed** - components are Server Components by default
+- **Use for**: Data fetching, static content, SEO-friendly pages
+- **Can use**: Direct database access, tRPC server caller, file system, etc.
+- **Cannot use**: React hooks, browser APIs, event handlers
+
+**Example:**
+
+```tsx
+// app/game/[gameId]/page.tsx
+import { createCaller } from "@/lib/trpc/server";
+
+export default async function GamePage({ params }: { params: { gameId: string } }) {
+  const trpc = await createCaller();
+  const game = await trpc.games.getById({ gameId: params.gameId });
+  
+  return <GamePageClient gameId={params.gameId} initialGame={game} />;
+}
+```
+
+### Client Components
+
+- **Requires**: `"use client"` directive at the top
+- **Use for**: Interactivity, hooks, browser APIs, event handlers
+- **Can use**: All React features, tRPC React Query hooks
+- **Pattern**: Create wrapper components for interactive features
+
+**Example:**
+
+```tsx
+// components/game/game-page-client.tsx
+"use client";
+
+import { useGame } from "@/lib/hooks/use-game";
+
+export function GamePageClient({ gameId }: { gameId: string }) {
+  const { game, moves } = useGame(gameId);
+  // ... interactive UI
+}
+```
+
+## File Naming Conventions
+
+- **Pages**: `page.tsx` (App Router convention)
+- **Layouts**: `layout.tsx`
+- **Components**: `PascalCase.tsx` (e.g., `GamePageClient.tsx`)
+- **Utilities**: `camelCase.ts` (e.g., `use-game.ts`)
+- **Types**: `camelCase.ts` or `types.ts`
+
+## Route Structure
+
+- **Dynamic routes**: `app/game/[gameId]/page.tsx`
+- **Route groups**: `app/(auth)/login/page.tsx` (parentheses don't affect URL)
+- **API routes**: `app/api/.../route.ts`
+
+## Data Fetching Patterns
+
+### Server Components
+
+- Use `createCaller()` from `@/lib/trpc/server` for server-side tRPC calls
+- Fetch data directly in page components
+- Pass data as props to Client Components
+
+### Client Components
+
+- Use `trpc` hooks from `@/lib/trpc/client` with React Query
+- Use custom hooks like `useGame()` for complex state management
+- Implement optimistic updates for better UX
+
+## Component Organization
+
+```text
+components/
+  ├── ui/              # ShadCN UI components
+  ├── chess/           # Chess-specific components
+  ├── game/            # Game-related components
+  └── auth/            # Authentication components
+```
+
+## Best Practices
+
+1. **Default to Server Components** - Only use Client Components when needed
+2. **Minimize Client Component boundaries** - Keep Client Components small and focused
+3. **Use path aliases**: `@/components`, `@/lib`, `@repo/db`, etc.
+4. **Type props explicitly** - Use TypeScript interfaces for component props
+5. **Extract reusable logic** - Create custom hooks for complex state management
+
+## References
+
+- Server component example: `@apps/web/app/game/[gameId]/page.tsx`
+- Client component example: `@apps/web/components/game/game-page-client.tsx`
+- Custom hook example: `@apps/web/lib/hooks/use-game.ts`
+- tRPC server caller: `@apps/web/lib/trpc/server.ts`

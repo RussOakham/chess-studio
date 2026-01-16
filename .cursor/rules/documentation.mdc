@@ -1,0 +1,234 @@
+---
+description: "Documentation standards: tone, structure, linking, and code examples"
+globs: ["**/*.md", "**/README.md", "**/docs/**/*.md"]
+alwaysApply: false
+---
+
+# Documentation Standards
+
+This project follows industry best practices for technical documentation, inspired by companies like Stripe, Google, and DigitalOcean.
+
+## Core Principles
+
+### 1. Helpful and Encouraging (The "Mentor")
+
+Write like a competent partner helping finish a task, not a cold machine or condescending expert.
+
+**Examples:**
+
+- ❌ "The user must ensure the API key is valid or the request will fail."
+- ✅ "Make sure your API key is valid so your requests can go through smoothly."
+
+### 2. Active and Direct
+
+Use the **imperative mood** (giving commands). It's shorter, clearer, and more authoritative.
+
+**Examples:**
+
+- ❌ "The `Save` button should be clicked to record the move."
+- ✅ "Click **Save** to record the move."
+
+### 3. Objective and Neutral
+
+Avoid marketing "fluff" or subjective adjectives like "easy," "simple," or "powerful." If a user finds a task difficult and you call it "easy," they will feel frustrated.
+
+**Examples:**
+
+- ❌ "Just use our incredibly simple UUID generator to quickly fix your database."
+- ✅ "Use the UUID generator to organize your database."
+
+### 4. Concise and Scannable
+
+Developers rarely read documentation word-for-word. They "grep" for the answer.
+
+**Use:**
+
+- **Bold text** for UI elements or key terms
+- Code blocks for anything technical
+- Lists to break up complex steps
+
+## Tone by Scenario
+
+| Scenario | Tone | Example |
+| --- | --- | --- |
+| **Tutorials** | Educational & Warm | "In this guide, we'll build a chess engine..." |
+| **API Reference** | Precise & Technical | "Returns a `Game` object with a 200 OK status." |
+| **Error Messages** | Empathetic & Solution-oriented | "Game ID not found. Please check the ID and try again." |
+| **Troubleshooting** | Direct & Fact-based | "If the move fails to sync, check your connection." |
+
+## Golden Rules
+
+### 1. Don't Use "We"
+
+Documentation is about what the *user* is doing, not what *you* (the developer) did.
+
+- ❌ "We built this library to be installed..."
+- ✅ "Install the library..."
+
+### 2. Avoid "Just" and "Simply"
+
+These are "diminutive" words. If the user is struggling, these words make them feel like the problem is their fault.
+
+- ❌ "Just run this command..."
+- ✅ "Run this command..."
+
+### 3. Define Acronyms
+
+Even if it feels obvious, define it the first time.
+
+- ✅ "FEN (Forsyth-Edwards Notation)"
+- ✅ "tRPC (TypeScript Remote Procedure Call)"
+
+## Structure Requirements
+
+### 1. Be Concise
+
+- Get to the point quickly
+- Remove unnecessary words
+- Use bullet points and lists
+- Break up long paragraphs
+
+### 2. Link to Online Documentation
+
+Reference official documentation and best practices:
+
+- Link to library documentation (e.g., Next.js, tRPC, Drizzle)
+- Link to standards (e.g., Conventional Commits, REST API best practices)
+- Link to relevant blog posts or guides
+
+**Example:**
+
+```markdown
+For more information, see the [Next.js App Router documentation](https://nextjs.org/docs/app).
+```
+
+### 3. Show Code Examples
+
+Always include relevant code examples from the repository:
+
+- Use file references: `@apps/web/lib/trpc/routers/games.router.ts`
+- Show complete, working examples
+- Explain what the code does
+- Link to the actual file in the repo
+
+**Example:**
+
+```markdown
+The tRPC router uses the service layer pattern:
+
+@apps/web/lib/trpc/routers/games.router.ts
+```
+
+### 4. Source of Truth
+
+Documentation must reflect the **current state** of the codebase:
+
+- ✅ Reference only current, active code
+- ❌ Do not reference legacy code or deprecated patterns
+- ❌ Do not document past migrations or historical changes
+- ✅ Update documentation when code changes
+- ✅ Remove outdated information immediately
+
+**Examples:**
+
+- ❌ "Previously, we used axios, but now we use tRPC..."
+- ✅ "Use tRPC for type-safe API calls..."
+
+- ❌ "After migrating from UUID v4 to UUID v7..."
+- ✅ "All IDs use UUID v7 (time-ordered UUIDs)..."
+
+### 5. Temporary Documentation
+
+Temporary documentation (implementation plans, migration notes, etc.) must use the `.temp.*` extension:
+
+- Use `.temp.md` or `.temp.mdc` for temporary markdown files
+- These files are gitignored and won't be committed
+- Use for work-in-progress documentation that shouldn't be part of commit history
+
+**Examples:**
+
+- ✅ `docs/implementation/game-implementation-plan.temp.md`
+- ✅ `docs/migration-notes.temp.mdc`
+- ❌ `docs/implementation/game-implementation-plan.md` (if temporary)
+
+**When to use temporary docs:**
+
+- Implementation plans that are actively being worked on
+- Migration notes that are no longer relevant after migration completes
+- Scratch notes or brainstorming documents
+- Any documentation that shouldn't be part of the permanent codebase
+
+## Writing Style
+
+### Pro-Tip
+
+Write as if you are explaining the code to a friend who is a junior developer. Be clear, don't assume they know everything, but don't talk down to them.
+
+### Formatting Guidelines
+
+- **Bold** for UI elements, buttons, menu items
+- `code` for file names, function names, variables
+- Code blocks for multi-line examples
+- Lists for step-by-step instructions
+- Tables for comparing options or scenarios
+
+### Example Structure
+
+```markdown
+# Feature Name
+
+Brief description of what this feature does.
+
+## Overview
+
+High-level explanation of the feature.
+
+## Usage
+
+Step-by-step instructions:
+
+1. First step
+2. Second step
+3. Third step
+
+## Code Example
+
+Reference the implementation:
+
+@path/to/example.ts
+
+## See Also
+
+- [Related Documentation](link)
+- [External Best Practices](link)
+```
+
+## Documentation Types
+
+### README Files
+
+- Start with a brief overview
+- Include quick start instructions
+- Link to detailed documentation
+- Show code examples
+
+### API Documentation
+
+- Describe what the endpoint does
+- Show request/response examples
+- List parameters and return types
+- Include error cases
+
+### Architecture Documentation
+
+- Explain the design decisions
+- Show the flow with diagrams or code references
+- Link to related components
+- Reference external best practices
+
+## References
+
+- [Stripe API Documentation](https://stripe.com/docs/api)
+- [Google Technical Writing](https://developers.google.com/tech-writing)
+- [DigitalOcean Technical Writing](https://www.digitalocean.com/community/tutorials)
+- [Write the Docs](https://www.writethedocs.org/)
