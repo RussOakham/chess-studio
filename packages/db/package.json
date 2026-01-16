@@ -24,7 +24,8 @@
     "db:migrate": "doppler run --project chess-studio --config prd -- drizzle-kit migrate",
     "db:push": "doppler run --project chess-studio --config prd -- drizzle-kit push",
     "db:studio": "doppler run --project chess-studio --config prd -- drizzle-kit studio",
-    "db:introspect": "doppler run --project chess-studio --config prd -- drizzle-kit introspect"
+    "db:introspect": "doppler run --project chess-studio --config prd -- drizzle-kit introspect",
+    "db:migrate:uuidv7": "doppler run --project chess-studio --config prd -- tsx scripts/migrate-uuidv7.ts"
   },
   "dependencies": {
     "@repo/types": "workspace:*",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@types/node": "^20.19.27",
     "drizzle-kit": "^0.30.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

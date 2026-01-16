@@ -1,5 +1,6 @@
 // Drizzle ORM schema definitions
 
+import { sql } from "drizzle-orm";
 import {
   integer,
   pgEnum,
@@ -39,7 +40,9 @@ const gameResultEnum = pgEnum("game_result", [
 // Games table
 // References Better Auth's "user" table
 const games = pgTable("games", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuid_generate_v7()`),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -53,7 +56,9 @@ const games = pgTable("games", {
 
 // Moves table
 const moves = pgTable("moves", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuid_generate_v7()`),
   gameId: uuid("game_id")
     .notNull()
     .references(() => games.id, { onDelete: "cascade" }),
@@ -68,7 +73,9 @@ const moves = pgTable("moves", {
 
 // Game reviews table (for AI-generated summaries)
 const gameReviews = pgTable("game_reviews", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`uuid_generate_v7()`),
   gameId: uuid("game_id")
     .notNull()
     .references(() => games.id, { onDelete: "cascade" })

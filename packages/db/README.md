@@ -59,4 +59,5 @@ pnpm db:studio
 
 ## Extensions
 
+- **pg_uuidv7**: Enabled for UUID v7 generation (time-ordered UUIDs)
 - **pgvector**: Enabled for future vector search features
