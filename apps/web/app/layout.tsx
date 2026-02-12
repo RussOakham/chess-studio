@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { ConvexClientProvider } from "@/app/convex-client-provider";
+import { getToken } from "@/lib/auth-server";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { Roboto } from "next/font/google";
 
@@ -18,15 +20,18 @@ export const metadata: Metadata = {
   description: "AI-driven chess game application",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const token = await getToken();
   return (
     <html lang="en" className={roboto.variable}>
       <body className="font-sans antialiased">
-        <TRPCProvider>{children}</TRPCProvider>
+        <ConvexClientProvider initialToken={token}>
+          <TRPCProvider>{children}</TRPCProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

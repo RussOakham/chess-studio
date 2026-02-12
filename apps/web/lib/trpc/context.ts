@@ -1,11 +1,7 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth-server";
 
-export async function createContext(opts?: { req?: Request }) {
-  const session = await auth.api.getSession({
-    headers: opts?.req?.headers ?? (await headers()),
-  });
-
+export async function createContext() {
+  const session = await getSession();
   return {
     session,
     userId: session?.user.id,

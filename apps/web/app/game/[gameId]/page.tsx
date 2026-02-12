@@ -1,7 +1,6 @@
 import { GamePageClient } from "@/components/game/game-page-client";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth-server";
 import { GamesRepository } from "@/lib/data-access/games.repository";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 interface GamePageProps {
@@ -12,9 +11,7 @@ export default async function GamePage({ params }: GamePageProps) {
   const { gameId } = await params;
 
   // Check authentication
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");

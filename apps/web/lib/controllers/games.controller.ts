@@ -1,22 +1,19 @@
 // Controller layer for games - request/response orchestration
 
-import type { auth } from "@/lib/auth";
 import type { GamesService } from "@/lib/services/games.service";
 import type { CreateGameRequest } from "@/lib/types/api";
 import type { NextResponse } from "next/server";
 import type { ZodSchema } from "zod";
 
+import { getSession } from "@/lib/auth-server";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { newGameSchema } from "@/lib/validations/game";
 
 export class GamesController {
-  constructor(
-    private service: GamesService,
-    private authInstance: typeof auth
-  ) {}
+  constructor(private service: GamesService) {}
 
-  async listGames(headers: Headers): Promise<NextResponse> {
-    const session = await this.getSession(headers);
+  async listGames(): Promise<NextResponse> {
+    const session = await getSession();
     if (!session) {
       return errorResponse("Unauthorized", 401);
     }
@@ -30,8 +27,8 @@ export class GamesController {
     }
   }
 
-  async createGame(request: Request, headers: Headers): Promise<NextResponse> {
-    const session = await this.getSession(headers);
+  async createGame(request: Request): Promise<NextResponse> {
+    const session = await getSession();
     if (!session) {
       return errorResponse("Unauthorized", 401);
     }
@@ -51,10 +48,6 @@ export class GamesController {
       console.error("Error creating game:", error);
       return errorResponse("Internal server error", 500);
     }
-  }
-
-  private async getSession(headers: Headers) {
-    return this.authInstance.api.getSession({ headers });
   }
 
   // oxlint-disable-next-line id-length
