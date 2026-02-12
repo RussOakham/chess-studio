@@ -18,15 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { trpc } from "@/lib/trpc/client";
+import { api } from "@/convex/_generated/api";
 import { newGameSchema } from "@/lib/validations/game";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 export default function NewGamePage() {
   const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
   const {
     handleSubmit,
     setValue,
@@ -44,21 +47,26 @@ export default function NewGamePage() {
   const difficulty = watch("difficulty");
   const color = watch("color");
 
-  const createGame = trpc.games.create.useMutation({
-    onSuccess: (data) => {
-      // Redirect to game page
-      router.push(`/game/${data.id}`);
-      router.refresh();
-    },
-    onError: (error) => {
-      setFormError("root", {
-        message: error.message || "Failed to create game",
-      });
-    },
-  });
+  const createGameMutation = useMutation(api.games.create);
 
-  const onSubmit = (data: NewGameFormData) => {
-    createGame.mutate(data);
+  const onSubmit = async (data: NewGameFormData) => {
+    setIsPending(true);
+    setFormError("root", { message: undefined });
+    try {
+      const result = await createGameMutation({
+        difficulty: data.difficulty,
+        color: data.color,
+      });
+      router.push(`/game/${result.id}`);
+      router.refresh();
+    } catch (error: unknown) {
+      setFormError("root", {
+        message:
+          error instanceof Error ? error.message : "Failed to create game",
+      });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -92,7 +100,7 @@ export default function NewGamePage() {
                     });
                   }
                 }}
-                disabled={createGame.isPending}
+                disabled={isPending}
               >
                 <SelectTrigger
                   id="difficulty"
@@ -130,7 +138,7 @@ export default function NewGamePage() {
                     });
                   }
                 }}
-                disabled={createGame.isPending}
+                disabled={isPending}
               >
                 <SelectTrigger
                   id="color"
@@ -149,7 +157,7 @@ export default function NewGamePage() {
             </Field>
 
             <div className="flex gap-3">
-              {createGame.isPending ? (
+              {isPending ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -169,12 +177,8 @@ export default function NewGamePage() {
                   Cancel
                 </Link>
               )}
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={createGame.isPending}
-              >
-                {createGame.isPending ? "Creating game..." : "Start Game"}
+              <Button type="submit" className="flex-1" disabled={isPending}>
+                {isPending ? "Creating game..." : "Start Game"}
               </Button>
             </div>
           </form>

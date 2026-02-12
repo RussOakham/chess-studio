@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "dev:all": "concurrently --names \"next,convex\" \"pnpm run dev\" \"pnpm --filter @repo/web run convex:dev\"",
     "build": "turbo run build",
     "lint": "oxlint --type-aware --type-check . && eslint .",
     "lint:fix": "oxlint --type-aware --type-check --fix . && eslint --fix .",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@convex-dev/eslint-plugin": "^1.1.1",
     "@typescript/native-preview": "7.0.0-dev.20260109.1",
+    "concurrently": "^9.1.2",
     "eslint": "^9.39.2",
     "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-oxlint": "^1.39.0",

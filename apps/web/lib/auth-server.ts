@@ -12,11 +12,25 @@ if (!convexUrl || !convexSiteUrl) {
   );
 }
 
+/** Used by jwtCache to detect auth-related errors and avoid caching them. */
+function isAuthError(error: unknown): boolean {
+  const message =
+    (error instanceof Error && error.message) ||
+    (typeof error === "object" && error !== null && "message" in error)
+      ? String((error as { message: unknown }).message)
+      : "";
+  return /auth/i.test(message);
+}
+
 /** Convex + Better Auth server helpers (preloadAuthQuery, fetchAuthQuery, fetchAuthMutation, fetchAuthAction, isAuthenticated). */
 const authServer: ReturnType<typeof convexBetterAuthNextJs> =
   convexBetterAuthNextJs({
     convexUrl,
     convexSiteUrl,
+    jwtCache: {
+      enabled: true,
+      isAuthError,
+    },
   });
 
 const { getToken, handler } = authServer;
