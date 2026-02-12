@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { ConvexClientProvider } from "@/app/convex-client-provider";
 import { getToken } from "@/lib/auth-server";
-import { TRPCProvider } from "@/lib/trpc/provider";
 import { Roboto } from "next/font/google";
 
 // oxlint-disable-next-line import/no-unassigned-import
@@ -30,7 +29,7 @@ export default async function RootLayout({
     <html lang="en" className={roboto.variable}>
       <body className="font-sans antialiased">
         <ConvexClientProvider initialToken={token}>
-          <TRPCProvider>{children}</TRPCProvider>
+          {children}
         </ConvexClientProvider>
       </body>
     </html>

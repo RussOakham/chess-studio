@@ -12,6 +12,9 @@ import authConfig from "./auth.config";
 
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
+/** Session and JWT duration: 7 days so users don't get "Not authenticated" after a few minutes. */
+const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
+
 const authComponent = createClient<DataModel>(components.betterAuth);
 
 const createAuth = (ctx: GenericCtx<DataModel>) => {
@@ -20,11 +23,20 @@ const createAuth = (ctx: GenericCtx<DataModel>) => {
     basePath: "/api/auth",
     secret: process.env.BETTER_AUTH_SECRET,
     database: authComponent.adapter(ctx),
+    session: {
+      expiresIn: SEVEN_DAYS_SECONDS,
+      updateAge: 24 * 60 * 60, // Refresh expiry when session is used (once per day)
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
-    plugins: [convex({ authConfig })],
+    plugins: [
+      convex({
+        authConfig,
+        jwt: { expirationSeconds: SEVEN_DAYS_SECONDS },
+      }),
+    ],
   });
 };
 
