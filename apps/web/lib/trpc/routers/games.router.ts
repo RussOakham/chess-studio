@@ -98,6 +98,8 @@ export const gamesRouter = router({
           input.promotion
         );
 
+        console.log("result", result);
+
         return {
           success: result.success,
           game: result.game,
@@ -130,11 +132,11 @@ export const gamesRouter = router({
             });
           }
         }
-
+        console.log("error", error);
         // Generic error
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to make move",
+          message: "Failed to make move server-side",
         });
       }
     }),

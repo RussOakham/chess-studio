@@ -50,7 +50,7 @@ export function GameChessboard({
         utils.games.getById.setData({ gameId }, context.previousGame);
       }
       setOptimisticFen(null);
-      setError(error.message || "Failed to make move");
+      setError(error.message || "Failed to make move client");
       // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
     },
@@ -65,11 +65,6 @@ export function GameChessboard({
         onMoveSuccess();
       }
       setError(null);
-    },
-    onSettled: () => {
-      // Always refetch after mutation settles
-      void utils.games.getById.invalidate({ gameId });
-      void utils.games.getMoves.invalidate({ gameId });
     },
   });
 

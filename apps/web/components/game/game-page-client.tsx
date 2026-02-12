@@ -16,7 +16,7 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -47,6 +47,7 @@ export function GamePageClient({
     isStalemate,
     isDraw,
     isLoading,
+    isGameFetching,
     refetch,
     chess,
   } = useGame(gameId);
@@ -60,6 +61,27 @@ export function GamePageClient({
     getBestMove,
   } = useStockfish();
 
+  // Ref to track the FEN when engine calculation starts (to prevent race conditions)
+  const calculationFenRef = useRef<string | null>(null);
+
+  // Ref to track if we just submitted an engine move (to prevent duplicate submissions)
+  const justSubmittedEngineMoveRef = useRef(false);
+
+  // Refs for stable access in engine effect (avoid effect re-running on every render)
+  const makeMoveRef =
+    useRef<
+      (variables: {
+        gameId: string;
+        from: string;
+        to: string;
+        promotion?: string;
+      }) => void
+    >(null);
+  const getBestMoveRef = useRef(getBestMove);
+  const utilsRef = useRef(utils);
+  getBestMoveRef.current = getBestMove;
+  utilsRef.current = utils;
+
   // Make move mutation (used for both user and engine moves)
   const makeMove = trpc.games.makeMove.useMutation({
     onSuccess: () => {
@@ -69,12 +91,19 @@ export function GamePageClient({
       // eslint-disable-next-line typescript/no-floating-promises
       utils.games.getMoves.invalidate({ gameId });
       refetch();
+      // Clear the flag after a delay to allow refetch to complete and prevent re-trigger
+      // The delay ensures the effect won't re-run when game.fen updates
+      setTimeout(() => {
+        justSubmittedEngineMoveRef.current = false;
+      }, 1500);
     },
     onError: (error) => {
       console.error("Move error:", error);
+      justSubmittedEngineMoveRef.current = false;
       refetch();
     },
   });
+  makeMoveRef.current = makeMove.mutate;
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
@@ -92,10 +121,16 @@ export function GamePageClient({
 
   // Auto-trigger engine move when it's engine's turn
   useEffect(() => {
+    // Prevent duplicate submissions - if we just submitted a move, skip
+    if (justSubmittedEngineMoveRef.current) {
+      return;
+    }
+
     if (
       isEngineGame &&
       isEngineTurn &&
       game?.status === "in_progress" &&
+      !isGameFetching &&
       isStockfishReady &&
       !isCalculating &&
       !makeMove.isPending &&
@@ -105,29 +140,101 @@ export function GamePageClient({
       game?.difficulty &&
       game?.fen
     ) {
+      // Capture all game state at the start to prevent race conditions
+      const fenAtStart = game.fen;
+      const gameIdAtStart = game.id;
+      const difficultyAtStart = game.difficulty;
+      const statusAtStart = game.status;
+
+      // Store the FEN in ref to track this calculation
+      calculationFenRef.current = fenAtStart;
+
       // Small delay to ensure UI updates after user move
       const timeout = setTimeout(() => {
         // Calculate engine move client-side and execute
         void (async () => {
           try {
-            const engineMove = await getBestMove(
-              game.fen,
-              game.difficulty as DifficultyLevel
+            const getBestMoveFn = getBestMoveRef.current;
+            if (!getBestMoveFn) {
+              return;
+            }
+            const engineMove = await getBestMoveFn(
+              fenAtStart,
+              difficultyAtStart as DifficultyLevel
             );
-            // Execute the engine move via tRPC
-            makeMove.mutate({
-              gameId,
-              from: engineMove.from,
-              to: engineMove.to,
-              promotion: engineMove.promotion,
+
+            // Verify game state hasn't changed before submitting
+            // Get the latest game state from the query cache (with single retry if empty)
+            let latestGameData = utilsRef.current.games.getById.getData({
+              gameId: gameIdAtStart,
             });
+            if (latestGameData === undefined) {
+              // Single retry after brief delay to allow refetch to repopulate cache
+              // eslint-disable-next-line promise/avoid-new -- standard delay pattern for cache settlement
+              await new Promise<void>((resolve) => {
+                setTimeout(resolve, 150);
+              });
+              latestGameData = utilsRef.current.games.getById.getData({
+                gameId: gameIdAtStart,
+              });
+            }
+
+            // Check if the calculation is still valid
+            if (
+              calculationFenRef.current !== fenAtStart ||
+              !latestGameData ||
+              latestGameData.fen !== fenAtStart ||
+              latestGameData.id !== gameIdAtStart ||
+              latestGameData.status !== statusAtStart ||
+              justSubmittedEngineMoveRef.current
+            ) {
+              console.warn(
+                "Game state changed during engine calculation, skipping move",
+                {
+                  expectedFen: fenAtStart,
+                  currentFen: latestGameData?.fen,
+                  expectedGameId: gameIdAtStart,
+                  currentGameId: latestGameData?.id,
+                  expectedStatus: statusAtStart,
+                  currentStatus: latestGameData?.status,
+                  alreadySubmitted: justSubmittedEngineMoveRef.current,
+                }
+              );
+              calculationFenRef.current = null;
+              return;
+            }
+
+            // Set flag to prevent duplicate submissions
+            justSubmittedEngineMoveRef.current = true;
+
+            // Clear the ref since we're about to submit
+            calculationFenRef.current = null;
+
+            // Execute the engine move via tRPC
+            const mutateFn = makeMoveRef.current;
+            if (mutateFn) {
+              mutateFn({
+                gameId: gameIdAtStart,
+                from: engineMove.from,
+                to: engineMove.to,
+                promotion: engineMove.promotion,
+              });
+            }
           } catch (error) {
             console.error("Failed to calculate engine move:", error);
+            calculationFenRef.current = null;
+            justSubmittedEngineMoveRef.current = false;
           }
         })();
       }, 500);
 
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(timeout);
+        // Clear ref if effect is cleaned up (e.g., component unmounts or conditions change)
+        if (calculationFenRef.current === fenAtStart) {
+          calculationFenRef.current = null;
+        }
+      };
     }
   }, [
     isEngineGame,
@@ -135,11 +242,12 @@ export function GamePageClient({
     game?.status,
     game?.difficulty,
     game?.fen,
+    game?.id,
     gameId,
+    isGameFetching,
     isStockfishReady,
     isCalculating,
-    getBestMove,
-    makeMove,
+    makeMove.isPending,
     isCheckmate,
     isStalemate,
     isDraw,

@@ -13,6 +13,7 @@ export function useGame(gameId: string) {
   const {
     data: game,
     isLoading: gameLoading,
+    isFetching: isGameFetching,
     error: gameError,
     refetch: refetchGame,
   } = trpc.games.getById.useQuery(
@@ -111,6 +112,7 @@ export function useGame(gameId: string) {
     isStalemate,
     isDraw,
     isLoading: gameLoading || movesLoading,
+    isGameFetching,
     error: gameError || movesError,
     refetch,
   };

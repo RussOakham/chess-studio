@@ -9,6 +9,21 @@ const nextConfig: NextConfig = {
   // Configure to handle stockfish package (Web Worker-based, client-only)
   // Mark as external for server builds to prevent SSR bundling issues
   serverExternalPackages: ["stockfish"],
+
+  // Configure headers for WASM files to ensure correct MIME type
+  async headers() {
+    return [
+      {
+        source: "/engine/:path*.wasm",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/wasm",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
