@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { ConvexAuthErrorBoundary } from "@/components/auth/convex-auth-error-boundary";
 import { authClient } from "@/lib/auth-client";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
@@ -23,7 +24,7 @@ export function ConvexClientProvider({
       authClient={authClient}
       initialToken={initialToken}
     >
-      {children}
+      <ConvexAuthErrorBoundary>{children}</ConvexAuthErrorBoundary>
     </ConvexBetterAuthProvider>
   );
 }
