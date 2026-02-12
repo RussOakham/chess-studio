@@ -10,7 +10,10 @@
     "type-check": "tsgo --noEmit --project tsconfig.typecheck.json",
     "auth:generate": "doppler run --project chess-studio --config prd -- pnpm dlx @better-auth/cli@latest generate",
     "setup:stockfish": "./scripts/setup-stockfish.sh",
-    "postinstall": "pnpm setup:stockfish"
+    "postinstall": "pnpm setup:stockfish",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "convex:codegen": "convex codegen"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",

@@ -26,6 +26,7 @@ const config = [
       "**/.next/**",
       "**/public/engine/**",
       "**/public/**/*.{js,wasm}",
+      "**/convex/_generated/**",
     ],
   },
 

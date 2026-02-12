@@ -7,7 +7,8 @@
     ".turbo/**",
     "node_modules/**",
     "**/public/engine/**",
-    "**/*.wasm"
+    "**/*.wasm",
+    "**/convex/_generated/**"
   ],
   "plugins": [
     "eslint",
