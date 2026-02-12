@@ -1,0 +1,51 @@
+---
+description: "Convex backend: schema, queries, mutations, actions, and best practices"
+globs: ["**/convex/**/*.ts", "**/*convex*"]
+---
+
+# Convex Development
+
+Follow [Convex docs](https://docs.convex.dev) and these rules when editing `convex/` or Convex-related code.
+
+## Imports and generated code
+
+- Import `query`, `mutation`, `action` from `"./_generated/server"` (or `"convex/_generated/server"` as appropriate).
+- Import `v` from `"convex/values"`.
+- Import `api` or `internal` from `"./_generated/api"` when calling other functions (e.g. from actions).
+- Run `npx convex dev` so `_generated` is up to date; types depend on it.
+
+## Schema (`convex/schema.ts`)
+
+- Use `defineSchema` and `defineTable` from `"convex/server"`.
+- Define indexes with `.index("name", ["field1", "field2"])` for any field(s) you query or order by.
+- Use `v.id("tableName")` for references to other tables.
+
+## Queries
+
+- Export with `query({ args: { ... }, handler: async (ctx, args) => { ... } })`.
+- Prefer **indexes** over `.filter()`. Use `ctx.db.query("table").withIndex("indexName", (q) => q.eq("field", value))` then `.take(n)` or `.collect()` as needed.
+- Use `.take(n)` or `.paginate()` instead of `.collect()` for large result sets (ESLint rule `no-collect-in-query`).
+
+## Mutations
+
+- Export with `mutation({ args: { ... }, handler: async (ctx, args) => { ... } })`.
+- Use `ctx.db.insert`, `ctx.db.patch`, `ctx.db.replace`, `ctx.db.delete` with table names and document shapes matching the schema.
+
+## Actions
+
+- Use `action` for non-deterministic or I/O (e.g. `fetch`, external APIs). Use `ctx.runMutation` or `ctx.runQuery` with `internal.*` for internal Convex calls.
+- Queries and mutations cannot call external APIs or use non-deterministic APIs.
+
+## Validators
+
+- Use `v.object({ ... })`, `v.string()`, `v.number()`, `v.id("table")`, `v.optional(...)`, `v.array(...)` for `args` and for schema (in `defineTable`).
+- Always define `args` with validators for public functions (ESLint: `require-argument-validators`).
+
+## Naming and layout
+
+- Function name in file becomes `api.path.to.file.functionName`. Place under `convex/` (e.g. `convex/games.ts` → `api.games.getById`).
+
+## HTTP and cron
+
+- HTTP routes: use `httpRouter()` and `http.route({ path, method, handler })` from `"convex/server"`.
+- Cron: use `cronJobs()` and export default from `convex/crons.ts`.

@@ -16,6 +16,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@convex-dev/eslint-plugin": "^1.1.1",
     "@typescript/native-preview": "7.0.0-dev.20260109.1",
     "eslint": "^9.39.2",
     "eslint-plugin-json": "^4.0.1",
