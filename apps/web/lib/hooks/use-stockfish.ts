@@ -1,8 +1,16 @@
 "use client";
 
-import type { DifficultyLevel, StockfishInstance } from "@repo/chess";
+import type {
+  DifficultyLevel,
+  PositionEvaluation,
+  StockfishInstance,
+} from "@repo/chess";
 
-import { getEngineDepth, calculateBestMove } from "@repo/chess";
+import {
+  getEngineDepth,
+  calculateBestMove,
+  getPositionEvaluation,
+} from "@repo/chess";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -138,9 +146,29 @@ export function useStockfish() {
     }
   };
 
+  /**
+   * Get position evaluation (centipawns or mate) from Stockfish.
+   * Sets isCalculating for the duration to prevent races with getBestMove.
+   */
+  const getEvaluation = async (fen: string): Promise<PositionEvaluation> => {
+    if (!stockfishRef.current) {
+      throw new Error("Stockfish not initialized");
+    }
+    if (isCalculating) {
+      throw new Error("Stockfish is already calculating");
+    }
+    setIsCalculating(true);
+    try {
+      return await getPositionEvaluation(fen, stockfishRef.current);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   return {
     isReady,
     isCalculating,
     getBestMove,
+    getEvaluation,
   };
 }

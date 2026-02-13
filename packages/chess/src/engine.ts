@@ -98,31 +98,59 @@ async function calculateBestMove(
   });
 }
 
+/** Evaluation in centipawns (from White's perspective). */
+interface PositionEvaluationCp {
+  type: "cp";
+  value: number;
+}
+
+/** Mate in N moves (positive = White wins, negative = Black wins). */
+interface PositionEvaluationMate {
+  type: "mate";
+  value: number;
+}
+
+/** Position evaluation: centipawns or mate. */
+type PositionEvaluation = PositionEvaluationCp | PositionEvaluationMate;
+
 /**
- * Get engine evaluation of current position
+ * Get engine evaluation of the current position.
+ * Result is normalized to White's perspective (positive = White better).
+ *
  * @param fen - Current position in FEN notation
  * @param stockfish - Stockfish WASM instance
- * @returns Promise resolving to evaluation in centipawns
+ * @returns Promise resolving to cp or mate evaluation from White's perspective
  */
 async function getPositionEvaluation(
   fen: string,
   stockfish: StockfishInstance
-): Promise<number> {
+): Promise<PositionEvaluation> {
+  const isBlackToMove = fen.split(" ")[1] === "b";
+
   return new Promise((resolve, reject) => {
-    let evaluation: number | null = null;
+    let evaluation: PositionEvaluation | null = null;
     let isResolved = false;
 
     const messageHandler = (event: MessageEvent<string>) => {
       const message = event.data;
-      // Parse "info depth X score cp Y" or "info depth X score mate Y"
       if (message.includes("score")) {
-        const scoreMatch = message.match(/score (?:cp|mate) (-?\d+)/);
-        if (scoreMatch) {
-          evaluation = parseInt(scoreMatch[1] ?? "0", 10);
+        const mateMatch = message.match(/score mate (-?\d+)/);
+        const cpMatch = message.match(/score cp (-?\d+)/);
+        if (mateMatch) {
+          const raw = parseInt(mateMatch[1] ?? "0", 10);
+          evaluation = {
+            type: "mate",
+            value: isBlackToMove ? -raw : raw,
+          };
+        } else if (cpMatch) {
+          const raw = parseInt(cpMatch[1] ?? "0", 10);
+          evaluation = {
+            type: "cp",
+            value: isBlackToMove ? -raw : raw,
+          };
         }
       }
 
-      // When we get "bestmove", we have the final evaluation
       if (message.startsWith("bestmove")) {
         if (!isResolved) {
           isResolved = true;
@@ -143,11 +171,10 @@ async function getPositionEvaluation(
         stockfish.removeEventListener("message", messageHandler);
         reject(new Error("Evaluation timeout"));
       }
-    }, 10000); // 10 second timeout for evaluation
+    }, 10000);
 
     stockfish.addEventListener("message", messageHandler);
 
-    // Get quick evaluation (depth 5)
     stockfish.postMessage(`position fen ${fen}`);
     stockfish.postMessage("go depth 5");
   });
@@ -155,6 +182,9 @@ async function getPositionEvaluation(
 
 export {
   type DifficultyLevel,
+  type PositionEvaluation,
+  type PositionEvaluationCp,
+  type PositionEvaluationMate,
   type StockfishInstance,
   DIFFICULTY_DEPTH,
   getEngineDepth,

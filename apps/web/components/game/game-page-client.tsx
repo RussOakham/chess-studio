@@ -1,7 +1,8 @@
 "use client";
 
-import type { DifficultyLevel } from "@repo/chess";
+import type { DifficultyLevel, PositionEvaluation } from "@repo/chess";
 
+import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import {
   AlertDialog,
@@ -67,6 +68,7 @@ function GamePageContent({
     isReady: isStockfishReady,
     isCalculating,
     getBestMove,
+    getEvaluation,
   } = useStockfish();
 
   const calculationFenRef = useRef<string | null>(null);
@@ -82,6 +84,10 @@ function GamePageContent({
   const [isMovePending, setIsMovePending] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [evaluation, setEvaluation] = useState<PositionEvaluation | null>(null);
+  const evaluationFenRef = useRef<string | null>(null);
+  const getEvaluationRef = useRef(getEvaluation);
+  getEvaluationRef.current = getEvaluation;
 
   const makeMoveMutateWrapper = useCallback(
     async (variables: {
@@ -141,6 +147,35 @@ function GamePageContent({
     };
   }, [kingSquareInCheck]);
   const gameOverMessage = getGameOverMessage(game?.result);
+
+  /**
+   * Debounced position evaluation for the evaluation bar.
+   * Runs only when game is in progress and Stockfish is ready; skips when engine is calculating.
+   */
+  useEffect(() => {
+    if (game?.status !== "in_progress" || !isStockfishReady || isCalculating) {
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      const requestedFen = game.fen;
+      evaluationFenRef.current = requestedFen;
+      void (async () => {
+        try {
+          const ev = await getEvaluationRef.current(requestedFen);
+          if (evaluationFenRef.current === requestedFen) {
+            setEvaluation(ev);
+          }
+        } catch {
+          if (evaluationFenRef.current === requestedFen) {
+            setEvaluation(null);
+          }
+        }
+      })();
+    }, 250);
+    return () => clearTimeout(timeoutId);
+    // Omit isCalculating to avoid loop: getEvaluation sets it, so deps would retrigger effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game.fen, game.status, isStockfishReady
+  }, [game?.fen, game?.status, isStockfishReady]);
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
@@ -401,20 +436,28 @@ function GamePageContent({
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center gap-4">
-                  <GameChessboard
-                    position={game.fen}
-                    orientation={boardOrientation}
-                    draggable={
-                      game.status === "in_progress" &&
-                      !isEngineTurn &&
-                      !isCalculating &&
-                      !makeMove.isPending
-                    }
-                    status={game.status}
-                    gameId={game.id}
-                    onMoveSuccess={undefined}
-                    customSquareStyles={customSquareStyles}
-                  />
+                  <div className="flex items-stretch gap-4">
+                    <GameChessboard
+                      position={game.fen}
+                      orientation={boardOrientation}
+                      draggable={
+                        game.status === "in_progress" &&
+                        !isEngineTurn &&
+                        !isCalculating &&
+                        !makeMove.isPending
+                      }
+                      status={game.status}
+                      gameId={game.id}
+                      onMoveSuccess={undefined}
+                      customSquareStyles={customSquareStyles}
+                    />
+                    {game.status === "in_progress" && isStockfishReady && (
+                      <EvaluationBar
+                        evaluation={evaluation}
+                        orientation={boardOrientation}
+                      />
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

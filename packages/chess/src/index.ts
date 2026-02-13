@@ -66,6 +66,9 @@ export {
 // Engine utilities
 export {
   type DifficultyLevel,
+  type PositionEvaluation,
+  type PositionEvaluationCp,
+  type PositionEvaluationMate,
   type StockfishInstance,
   DIFFICULTY_DEPTH,
   getEngineDepth,
