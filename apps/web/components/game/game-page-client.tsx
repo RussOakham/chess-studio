@@ -1,7 +1,6 @@
 "use client";
 
 import type { DifficultyLevel } from "@repo/chess";
-import type { Chess } from "chess.js";
 
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import {
@@ -24,6 +23,11 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
+import {
+  getGameOverMessage,
+  getKingSquareInCheck,
+  getStatusDescription,
+} from "@/lib/game-status";
 import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
@@ -34,35 +38,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 interface GamePageClientProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
-}
-
-// Get status description
-function getStatusDescription(status: string): string {
-  if (status === "in_progress") {
-    return "Make your move";
-  }
-  if (status === "waiting") {
-    return "Waiting to start";
-  }
-  return "Game ended";
-}
-
-/** Get the square of the king in check (side to move). Returns null if not in check. */
-function getKingSquareInCheck(chess: Chess | null): string | null {
-  if (!chess || !chess.isCheck()) {
-    return null;
-  }
-  const board = chess.board();
-  const turn = chess.turn();
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const piece = board[row]?.[col];
-      if (piece?.type === "k" && piece.color === turn) {
-        return `${"abcdefgh"[col]}${8 - row}`;
-      }
-    }
-  }
-  return null;
 }
 
 /**
@@ -287,18 +262,7 @@ function GamePageContent({
       },
     };
   }, [kingSquareInCheck]);
-  const gameOverMessage = ((): string => {
-    if (!game.result) {
-      return "Game over";
-    }
-    if (game.result === "white_wins") {
-      return "White wins";
-    }
-    if (game.result === "black_wins") {
-      return "Black wins";
-    }
-    return "Draw";
-  })();
+  const gameOverMessage = getGameOverMessage(game.result);
 
   // Format move history for display
   // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.

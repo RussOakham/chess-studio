@@ -1,7 +1,5 @@
 "use client";
 
-import type { Doc } from "@/convex/_generated/dataModel";
-
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -12,53 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import {
+  formatBadgeText,
+  getBadgeVariant,
+  getStatusLabel,
+} from "@/lib/game-list-helpers";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-
-function formatBadgeText(game: Doc<"games">): string {
-  if (game.result) {
-    return game.result
-      .replaceAll("_", " ")
-      .replaceAll(/\b\w/g, (letter: string) => letter.toUpperCase());
-  }
-  if (game.status === "completed") {
-    return "Draw";
-  }
-  if (game.status === "in_progress") {
-    return "In Progress";
-  }
-  if (game.status === "waiting") {
-    return "Waiting";
-  }
-  return "Abandoned";
-}
-
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case "in_progress": {
-      return "In Progress";
-    }
-    case "waiting": {
-      return "Waiting";
-    }
-    case "completed": {
-      return "Completed";
-    }
-    default: {
-      return "Abandoned";
-    }
-  }
-}
-
-function getBadgeVariant(status: string): "default" | "secondary" | "outline" {
-  if (status === "in_progress") {
-    return "default";
-  }
-  if (status === "completed") {
-    return "secondary";
-  }
-  return "outline";
-}
 
 export function GamesListClient() {
   const gamesQuery = useQuery(api.games.list, { limit: 100 });
