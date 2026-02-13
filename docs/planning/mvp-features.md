@@ -191,7 +191,7 @@ This document outlines the MVP feature set for a slimmed-down chess.com clone. F
 
 ### MVP Technical Requirements
 
-- [ ] Real-time game updates (WebSocket or polling)
+- [ ] Real-time game updates (Convex subscriptions)
 - [ ] Game state persistence
 - [ ] Move history storage
 - [ ] Engine integration (Stockfish)

@@ -58,7 +58,6 @@ export default function NewGamePage() {
         color: data.color,
       });
       router.push(`/game/${result.id}`);
-      router.refresh();
     } catch (error: unknown) {
       setFormError("root", {
         message:

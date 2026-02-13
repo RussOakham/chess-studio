@@ -80,7 +80,7 @@ chess-game/
    cp packages/db/.env.example packages/db/.env
    ```
 
-   Fill in the required values in each `.env` file.
+   Fill in the required values in each `.env` file. The web app uses Convex; you can skip `packages/db/.env` unless you use that package (e.g. for another app).
 
 5. **Start development server**
 

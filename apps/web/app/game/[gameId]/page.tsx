@@ -1,5 +1,6 @@
 import { GamePageClient } from "@/components/game/game-page-client";
 import { api } from "@/convex/_generated/api";
+import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
 import { toGameId } from "@/lib/convex-id";
 import { notFound, redirect } from "next/navigation";
@@ -20,8 +21,15 @@ export default async function GamePage({ params }: GamePageProps) {
     await authServer.fetchAuthQuery(api.games.getById, {
       gameId: toGameId(gameId),
     });
-  } catch {
-    notFound();
+  } catch (error) {
+    if (isConvexAuthError(error)) {
+      redirect("/login");
+    }
+    // Game not found: Convex returns null/undefined for missing game
+    if (error instanceof Error && /not found|404/i.test(error.message)) {
+      notFound();
+    }
+    throw error;
   }
 
   const boardOrientation: "white" | "black" = "white";

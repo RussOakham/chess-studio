@@ -275,8 +275,8 @@ services:
 # Test Doppler connection
 doppler secrets
 
-# Verify specific secret
-doppler secrets get DATABASE_URL
+# Verify specific secret (e.g. web app auth)
+doppler secrets get BETTER_AUTH_SECRET
 
 # Check current config
 doppler configure get

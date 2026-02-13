@@ -8,10 +8,16 @@ alwaysApply: false
 
 **This app uses Convex for all persisted data** (games, moves, and auth). Auth is Better Auth with data stored in Convex; **Neon and Drizzle are not used.**
 
-- **Convex**: Schema in `apps/web/convex/schema.ts`; deploy with Convex CLI. See `@.cursor/rules/convex.mdc`.
-- **packages/db**: Retired for the web app. Kept in repo for reference or other apps. If you use it elsewhere, Drizzle migrations live in `packages/db`.
+- **Convex (active)**: Schema in `apps/web/convex/schema.ts`. Run `npx convex dev` for local development; run `convex deploy` to deploy. See `@.cursor/rules/convex.mdc`.
+- **packages/db (archived)**: Retired for the web app. Kept in repo for reference or other apps. If you use it elsewhere, Drizzle migrations live in `packages/db`. The sections below describe the Drizzle workflow only.
 
-## Migration Workflow
+## Convex (active)
+
+- **Schema**: Edit `apps/web/convex/schema.ts`.
+- **Local**: `npx convex dev` (watches and pushes schema/function changes).
+- **Deploy**: `convex deploy` (from repo root or `apps/web`).
+
+## Drizzle (archived) – Migration Workflow
 
 ### Development Workflow
 

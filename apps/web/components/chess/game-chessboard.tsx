@@ -4,7 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
 import { Chess } from "chess.js";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChessboardWrapper } from "./chessboard";
 
@@ -28,6 +28,15 @@ export function GameChessboard({
   const [error, setError] = useState<string | null>(null);
   const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const errorClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (errorClearTimerRef.current !== null) {
+        clearTimeout(errorClearTimerRef.current);
+      }
+    };
+  }, []);
 
   const makeMoveMutation = useMutation(api.games.makeMove);
 
@@ -46,7 +55,7 @@ export function GameChessboard({
     try {
       const optimisticChess = new Chess();
       optimisticChess.load(position);
-      const promotion = move.promotion === "n" ? move.promotion : undefined;
+      const promotion = move.promotion ?? undefined;
       const chessMove = optimisticChess.move({
         from: move.from,
         to: move.to,
@@ -74,7 +83,10 @@ export function GameChessboard({
     } catch (error: unknown) {
       setOptimisticFen(null);
       setError(error instanceof Error ? error.message : "Failed to make move");
-      setTimeout(() => setError(null), 3000);
+      if (errorClearTimerRef.current !== null) {
+        clearTimeout(errorClearTimerRef.current);
+      }
+      errorClearTimerRef.current = setTimeout(() => setError(null), 3000);
     } finally {
       setIsPending(false);
     }

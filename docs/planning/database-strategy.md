@@ -51,7 +51,9 @@ If you add a relational DB later for vector/AI features:
 - `position_embeddings` - Vector embeddings of chess positions (pgvector)
 - `game_patterns` - Similar game patterns for analysis
 
-## Caching Strategy
+## Caching Strategy (historical / future reference)
+
+The following applies if you use a relational DB (e.g. Neon). The current app uses Convex for all data.
 
 ### Do We Need Redis/Upstash?
 
@@ -65,7 +67,7 @@ If you add a relational DB later for vector/AI features:
 2. **Game State Caching**
    - Cache active game states
    - Quick retrieval for ongoing games
-   - **Decision**: PostgreSQL is sufficient initially
+   - **Decision**: Convex (or PostgreSQL if reintroduced) is sufficient initially
 
 3. **API Response Caching**
    - Cache game history queries
