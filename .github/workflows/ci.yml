@@ -58,7 +58,7 @@ jobs:
       - name: Build (web)
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: cd apps/web && doppler run --project chess-studio --config dev -- next build
+        run: cd apps/web && doppler run --project chess-studio --config dev -- pnpm exec next build
 
   format-check:
     name: Format check
