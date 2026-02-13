@@ -137,10 +137,20 @@ services:
 3. **Setup Project**
 
    ```bash
-   doppler setup --project chess-game --config dev
+   doppler setup --project chess-studio --config dev
    ```
 
-4. **Run with Doppler**
+4. **Sync .env.local to Doppler (dev and dev_personal)**
+
+   From repo root, after `doppler login`:
+
+   ```bash
+   ./scripts/sync-env-to-doppler.sh
+   ```
+
+   This sets each variable from `.env.local` (except comments and `DOPPLER_TOKEN`) into Doppler configs `dev` and `dev_personal`. Add any vars from `.env.example` (e.g. `SITE_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`) to `.env.local` first if you want them in Doppler.
+
+5. **Run with Doppler**
 
    ```bash
    # In apps/web

@@ -47,7 +47,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Required for apps/web build (doppler run -- next build). Add DOPPLER_TOKEN to repo secrets.
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
       - name: Build
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_CONFIG: dev
         run: pnpm build
 
   format-check:
