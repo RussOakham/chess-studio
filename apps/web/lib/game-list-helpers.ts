@@ -3,10 +3,12 @@ import type { Doc } from "@/convex/_generated/dataModel";
 const ACTIVE_STATUSES = ["in_progress", "waiting"] as const;
 const RECENT_STATUSES = ["completed", "abandoned"] as const;
 
+/** True if game is in_progress or waiting. */
 function isActive(status: string): boolean {
   return (ACTIVE_STATUSES as readonly string[]).includes(status);
 }
 
+/** True if game is completed or abandoned (for "recent" lists). */
 function isRecent(status: string): boolean {
   return (RECENT_STATUSES as readonly string[]).includes(status);
 }
@@ -52,6 +54,7 @@ function getStatusLabel(status: string): string {
   }
 }
 
+/** Badge variant for status: default (in progress), secondary (completed), outline (other). */
 function getBadgeVariant(status: string): "default" | "secondary" | "outline" {
   if (status === "in_progress") {
     return "default";
