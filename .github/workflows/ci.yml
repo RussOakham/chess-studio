@@ -62,7 +62,6 @@ jobs:
 
   format-check:
     name: Format check
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -78,17 +77,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-
-      - name: Restore Turbo cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .turbo
-            apps/web/.next
-            packages/chess/dist
-            packages/db/dist
-            packages/types/dist
-          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -206,7 +194,6 @@ jobs:
 
   docs:
     name: Docs
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -222,17 +209,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-
-      - name: Restore Turbo cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .turbo
-            apps/web/.next
-            packages/chess/dist
-            packages/db/dist
-            packages/types/dist
-          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

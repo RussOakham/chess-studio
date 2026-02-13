@@ -37,6 +37,41 @@ Doppler Project: chess-game
 
 Each service (web, api, db) has its own Doppler service token for isolation.
 
+## CI (GitHub Actions)
+
+The workflow runs the web app build with `doppler run --project chess-studio --config dev`, so the **dev** config in Doppler must contain all env vars the Next.js build needs.
+
+### Required secrets in Doppler `dev` config
+
+| Secret                        | Where to get it                                                                                    | Notes                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`      | Convex dashboard → your project → Settings → URL, or after `npx convex dev --once --configure=new` | e.g. `https://your-deployment.convex.cloud`  |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex dashboard (same project) → site URL for Better Auth                                         | e.g. `https://your-deployment.convex.site`   |
+| `BETTER_AUTH_SECRET`          | Generate: `openssl rand -base64 32`                                                                | Use the same value in Convex env and Doppler |
+| `BETTER_AUTH_URL`             | Your app URL (for CI build, a placeholder is fine, e.g. `https://example.com`)                     | Required by Better Auth at build time        |
+
+### How to add them
+
+1. **From your existing `.env.local` (recommended)**  
+   Ensure `apps/web/.env.local` (or root `.env.local` if you use it for Convex) contains:
+   - `NEXT_PUBLIC_CONVEX_URL`
+   - `NEXT_PUBLIC_CONVEX_SITE_URL`  
+     Then from repo root, after `doppler login`:
+
+   ```bash
+   ./scripts/sync-env-to-doppler.sh
+   ```
+
+   This syncs those variables into Doppler configs **dev** and **dev_personal**.
+
+2. **Manually in Doppler**  
+   In [Doppler](https://dashboard.doppler.com): Project **chess-studio** → Config **dev** → add each key/value above.
+
+### GitHub repository secret
+
+- **`DOPPLER_TOKEN`**: A Doppler service token for project **chess-studio**, config **dev** (read-only is enough).  
+  Create in Doppler: Project → Access → Service tokens → Generate. Add the token value as a GitHub repo secret named `DOPPLER_TOKEN`.
+
 ## Secrets Managed
 
 ### Web Service (Next.js)
