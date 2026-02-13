@@ -13,6 +13,7 @@
     "format": "oxfmt --check .",
     "format:fix": "oxfmt .",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
     "clean": "turbo run clean",
     "prepare": "husky"
   },
