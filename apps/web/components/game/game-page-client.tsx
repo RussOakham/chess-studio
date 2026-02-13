@@ -81,6 +81,7 @@ function GamePageContent({
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isMovePending, setIsMovePending] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
+  const [gameOverDismissed, setGameOverDismissed] = useState(false);
 
   const makeMoveMutateWrapper = useCallback(
     async (variables: {
@@ -126,6 +127,20 @@ function GamePageContent({
     }),
     [makeMoveMutateWrapper, isMovePending, moveError]
   );
+
+  const isGameOver = game?.status === "completed";
+  const kingSquareInCheck = useMemo(() => getKingSquareInCheck(chess), [chess]);
+  const customSquareStyles = useMemo(() => {
+    if (!kingSquareInCheck) {
+      return undefined;
+    }
+    return {
+      [kingSquareInCheck]: {
+        boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
+      },
+    };
+  }, [kingSquareInCheck]);
+  const gameOverMessage = getGameOverMessage(game?.result);
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
@@ -250,20 +265,6 @@ function GamePageContent({
   const boardOrientation: "white" | "black" =
     initialBoardOrientation ?? "white";
 
-  const isGameOver = game.status === "completed";
-  const kingSquareInCheck = useMemo(() => getKingSquareInCheck(chess), [chess]);
-  const customSquareStyles = useMemo(() => {
-    if (!kingSquareInCheck) {
-      return undefined;
-    }
-    return {
-      [kingSquareInCheck]: {
-        boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
-      },
-    };
-  }, [kingSquareInCheck]);
-  const gameOverMessage = getGameOverMessage(game.result);
-
   // Format move history for display
   // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.
   const moveHistory = moves.map((move) => {
@@ -280,7 +281,14 @@ function GamePageContent({
 
   return (
     <div className="min-h-screen bg-background">
-      <AlertDialog open={isGameOver}>
+      <AlertDialog
+        open={isGameOver && !gameOverDismissed}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGameOverDismissed(true);
+          }
+        }}
+      >
         <AlertDialogContent size="default" className="max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Game Over</AlertDialogTitle>
