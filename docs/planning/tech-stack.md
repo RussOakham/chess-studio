@@ -132,10 +132,10 @@ This document outlines the technology stack for the chess game project.
 - **Redis/Upstash**: In-memory caching, fast lookups
   - **Upstash**: Serverless Redis, good free tier, pay-per-request
   - **Redis**: Traditional Redis (self-hosted or managed)
-- **PostgreSQL**: Use for most data, add caching only if needed
+- **Convex**: Game and auth data; add dedicated cache only if needed
 - **Next.js Cache**: Built-in caching for static/API routes
 
-**Recommendation**: Start without dedicated cache (use PostgreSQL + Next.js cache), add Redis/Upstash later if performance issues arise.
+**Recommendation**: Start without dedicated cache (use Convex + Next.js cache), add Redis/Upstash later if performance issues arise.
 
 ### Type Safety
 

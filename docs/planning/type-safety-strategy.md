@@ -19,6 +19,30 @@ The sections below also describe **tRPC** as an alternative or historical contex
 - **Real-time**: Subscriptions keep UI in sync without polling
 - **Single backend**: Schema, queries, mutations, and auth (Better Auth JWT) in one place
 
+**Type flow (Convex):**
+
+```text
+apps/web/convex/schema.ts + games.ts (queries/mutations)
+  ↓
+convex/_generated/api.d.ts, dataModel.d.ts (Convex codegen)
+  ↓
+useQuery(api.games.getById, { gameId }), useMutation(api.games.makeMove)
+  ↓
+Full type safety: args, return types, and Doc<"games"> inferred in the app
+```
+
+**Usage in components:**
+
+```typescript
+// apps/web/components/game/game-page-client.tsx
+import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+
+const game = useQuery(api.games.getById, { gameId }); // Doc<"games"> | undefined
+const makeMove = useMutation(api.games.makeMove); // (args) => Promise<...>
+// game.fen, game.status, makeMove({ gameId, from, to, promotion }) all typed
+```
+
 ### tRPC (alternative / historical)
 
 **Why tRPC was considered?**
@@ -32,7 +56,7 @@ The sections below also describe **tRPC** as an alternative or historical contex
 
 ## Architecture
 
-### tRPC Setup
+### tRPC Setup (historical)
 
 **Frontend (Next.js)**:
 
@@ -50,7 +74,7 @@ The sections below also describe **tRPC** as an alternative or historical contex
   - Just makes type checking faster
   - Same tRPC setup, better performance
 
-### Type Flow
+### Type Flow (historical – tRPC)
 
 **With Express.js:**
 
@@ -88,7 +112,7 @@ tRPC Client (TypeScript)
 Full Type Safety ✅ (same as before, just faster)
 ```
 
-## Implementation
+## Implementation (historical – tRPC)
 
 ### Backend tRPC Router
 

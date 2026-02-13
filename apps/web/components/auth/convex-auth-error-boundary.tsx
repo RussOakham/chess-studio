@@ -16,8 +16,8 @@ interface State {
 
 /**
  * Catches Convex auth errors (e.g. "Not authenticated") and redirects to login
- * instead of breaking the app. Other errors are rethrown so a parent boundary
- * or the default error UI can handle them.
+ * instead of breaking the app. Other errors display a generic fallback with a
+ * Retry button.
  */
 export class ConvexAuthErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -60,8 +60,19 @@ export class ConvexAuthErrorBoundary extends Component<Props, State> {
         );
       }
       return (
-        <div className="flex min-h-[200px] items-center justify-center text-destructive">
-          Something went wrong. Please try again.
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-destructive">
+          <p>Something went wrong. Please try again.</p>
+          <button
+            type="button"
+            onClick={() => {
+              // Intentional: reset boundary state so children can re-render
+              // eslint-disable-next-line react/no-set-state -- Retry resets boundary
+              this.setState({ hasError: false, isAuthError: false });
+            }}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Retry
+          </button>
         </div>
       );
     }

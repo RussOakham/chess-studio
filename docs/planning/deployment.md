@@ -52,13 +52,14 @@ This document outlines the deployment strategy for the chess game application on
    - Port: 3001 (internal)
    - Exposed via Nginx reverse proxy
 
-3. **Convex** (game/move data and real-time)
+3. **Convex** (game/move data, real-time, and auth)
    - Managed backend (not a container)
-   - Hosted by Convex; `NEXT_PUBLIC_CONVEX_URL` and auth (Better Auth JWT) configured via Doppler
+   - Hosted by Convex; `NEXT_PUBLIC_CONVEX_URL` and Better Auth **JWT (JSON Web Token)** configured via Doppler.
+   - Docs: [Convex](https://docs.convex.dev/), [Better Auth](https://www.better-auth.com/docs), [Doppler](https://docs.doppler.com/).
+   - Example: [@apps/web/convex/auth.ts](apps/web/convex/auth.ts) reads `BETTER_AUTH_SECRET` from the environment; the web app uses `NEXT_PUBLIC_CONVEX_URL` (see [@apps/web/app/convex-client-provider.tsx](apps/web/app/convex-client-provider.tsx)) and Convex auth env vars from Doppler.
+   - Games, moves, and auth via Better Auth component; no Neon or Drizzle in the web app
 
-4. **Auth and data**: Convex (games, moves, and auth via Better Auth component). No Neon or Drizzle.
-
-5. **Nginx** (Reverse Proxy)
+4. **Nginx** (Reverse Proxy)
    - Port: 80, 443
    - Routes:
      - `/` → Web container
@@ -215,7 +216,6 @@ Doppler service tokens are injected into containers:
 
 - HTTPS only (SSL/TLS)
 - Rate limiting on API endpoints
-- Input validation
 - Input validation; Convex handles persistence (no SQL/Drizzle in app)
 
 ### Container Security

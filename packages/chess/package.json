@@ -15,6 +15,7 @@
     "dev": "tsc --watch",
     "lint": "eslint .",
     "type-check": "tsgo --noEmit",
+    "test": "echo 'No tests yet'",
     "clean": "rm -rf dist"
   },
   "dependencies": {

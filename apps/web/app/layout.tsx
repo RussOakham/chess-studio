@@ -24,7 +24,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const token = await getToken();
+  let token: string | null = null;
+  try {
+    token = (await getToken()) ?? null;
+  } catch {
+    // Fall back to client-side auth flow
+  }
   return (
     <html lang="en" className={roboto.variable}>
       <body className="font-sans antialiased">

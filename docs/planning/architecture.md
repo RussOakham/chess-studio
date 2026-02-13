@@ -4,6 +4,8 @@
 
 This document describes the architecture and design of the chess game application.
 
+**Note:** Some diagrams below (e.g. Postgres, Express API) are partially outdated. The app uses **Convex** for data, real-time subscriptions, and backend logic. The "Service communication" and environment setup reflect the current Convex-based architecture where described.
+
 ## High-Level Architecture
 
 ### Monorepo Structure (Turbo)

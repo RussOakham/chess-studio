@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "doppler run --project chess-studio --config prd -- next dev",
-    "build": "doppler run --project chess-studio --config prd -- next build",
-    "start": "doppler run --project chess-studio --config prd -- next start",
+    "dev": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next dev",
+    "build": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next build",
+    "start": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next start",
     "lint": "eslint .",
     "type-check": "tsgo --noEmit --project tsconfig.typecheck.json",
-    "auth:generate": "doppler run --project chess-studio --config prd -- pnpm dlx @better-auth/cli@latest generate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "auth:generate": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- pnpm dlx @better-auth/cli@latest generate",
     "setup:stockfish": "./scripts/setup-stockfish.sh",
     "postinstall": "pnpm setup:stockfish",
     "convex:dev": "convex dev",
@@ -48,9 +50,12 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "jsdom": "^28.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }

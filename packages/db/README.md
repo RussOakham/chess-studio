@@ -8,8 +8,7 @@ This package (`@repo/db`) remains in the monorepo for reference or for other app
 
 ### Prerequisites
 
-- Neon DB project created (for Better Auth)
-- `DATABASE_URL` environment variable set
+When using this package standalone (e.g. another app): Neon DB project and `DATABASE_URL`. The chess-studio web app does not use this package; it uses Convex for auth and data.
 
 ### Environment Variables
 

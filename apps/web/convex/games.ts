@@ -1,20 +1,17 @@
-// oxlint-disable unicorn/no-array-sort
 import { Chess } from "chess.js";
 import { v } from "convex/values";
 
 /**
  * Convex queries and mutations for games and moves.
- * Mirrors tRPC games router; auth via ctx.auth.getUserIdentity() (configure Convex auth for production).
+ * Auth via ctx.auth.getUserIdentity() (Better Auth JWT).
  */
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+
 import { mutation, query } from "./_generated/server";
 
 const INITIAL_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-interface AuthContext {
-  auth: { getUserIdentity(): Promise<{ subject: string } | null> };
-}
-
-async function getUserId(ctx: AuthContext): Promise<string> {
+async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (identity === null) {
     throw new Error("Not authenticated");
@@ -48,15 +45,11 @@ const getMoves = query({
     if (game.userId !== userId) {
       throw new Error("You do not have access to this game");
     }
-    const moves = await ctx.db
+    const existingMoves = await ctx.db
       .query("moves")
-      .withIndex("by_gameId_moveNumber", (query) =>
-        query.eq("gameId", args.gameId)
-      )
+      .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
       .collect();
-    return [...moves].sort(
-      (moveA, moveB) => moveA.moveNumber - moveB.moveNumber
-    );
+    return existingMoves;
   },
 });
 
@@ -65,13 +58,11 @@ const list = query({
   handler: async (ctx, args) => {
     const userId = await getUserId(ctx);
     const limit = Math.min(args.limit ?? 50, 100);
-    const games = await ctx.db
+    return await ctx.db
       .query("games")
-      .withIndex("by_userId", (query) => query.eq("userId", userId))
-      .take(100);
-    return [...games]
-      .sort((gameA, gameB) => gameB.updatedAt - gameA.updatedAt)
-      .slice(0, limit);
+      .withIndex("by_userId_updatedAt", (idx) => idx.eq("userId", userId))
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -87,11 +78,18 @@ const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getUserId(ctx);
     const now = Date.now();
+    const resolvedColor = (): "white" | "black" => {
+      if (args.color === "random") {
+        return Math.random() < 0.5 ? "white" : "black";
+      }
+      return args.color;
+    };
+    const color = resolvedColor();
     const gameId = await ctx.db.insert("games", {
       userId,
       status: "in_progress",
       difficulty: args.difficulty,
-      color: args.color,
+      color,
       fen: INITIAL_FEN,
       createdAt: now,
       updatedAt: now,
@@ -152,14 +150,12 @@ const makeMove = mutation({
     const fenAfter = chess.fen();
     const pgn = chess.pgn();
 
-    const movesDesc = await ctx.db
+    const existingMoves = await ctx.db
       .query("moves")
-      .withIndex("by_gameId_moveNumber", (query) =>
-        query.eq("gameId", args.gameId)
-      )
+      .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
       .collect();
     const lastMove =
-      movesDesc.length > 0 ? movesDesc[movesDesc.length - 1] : null;
+      existingMoves.length > 0 ? existingMoves[existingMoves.length - 1] : null;
     const moveNumber = (lastMove?.moveNumber ?? 0) + 1;
 
     await ctx.db.insert("moves", {

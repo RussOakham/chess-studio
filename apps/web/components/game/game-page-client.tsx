@@ -18,7 +18,7 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -75,44 +75,50 @@ function GamePageContent({
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isMovePending, setIsMovePending] = useState(false);
 
-  const makeMoveMutateWrapper = async (variables: {
-    gameId: string;
-    from: string;
-    to: string;
-    promotion?: string;
-  }) => {
-    setMoveError(null);
-    setIsMovePending(true);
-    try {
-      await makeMoveMutation({
-        gameId: toGameId(variables.gameId),
-        from: variables.from,
-        to: variables.to,
-        promotion: variables.promotion,
-      });
-      setTimeout(() => {
+  const makeMoveMutateWrapper = useCallback(
+    async (variables: {
+      gameId: string;
+      from: string;
+      to: string;
+      promotion?: string;
+    }) => {
+      setMoveError(null);
+      setIsMovePending(true);
+      try {
+        await makeMoveMutation({
+          gameId: toGameId(variables.gameId),
+          from: variables.from,
+          to: variables.to,
+          promotion: variables.promotion,
+        });
+        setTimeout(() => {
+          justSubmittedEngineMoveRef.current = false;
+        }, 800);
+      } catch (error: unknown) {
+        console.error("Move error:", error);
         justSubmittedEngineMoveRef.current = false;
-      }, 800);
-    } catch (error: unknown) {
-      console.error("Move error:", error);
-      justSubmittedEngineMoveRef.current = false;
-      setMoveError(
-        error instanceof Error ? error.message : "Failed to make move"
-      );
-    } finally {
-      setIsMovePending(false);
-    }
-  };
+        setMoveError(
+          error instanceof Error ? error.message : "Failed to make move"
+        );
+      } finally {
+        setIsMovePending(false);
+      }
+    },
+    [makeMoveMutation]
+  );
 
   const makeMoveRef = useRef(makeMoveMutateWrapper);
   makeMoveRef.current = makeMoveMutateWrapper;
 
-  const makeMove = {
-    mutate: makeMoveMutateWrapper,
-    isPending: isMovePending,
-    isError: Boolean(moveError),
-    error: moveError,
-  };
+  const makeMove = useMemo(
+    () => ({
+      mutate: makeMoveMutateWrapper,
+      isPending: isMovePending,
+      isError: Boolean(moveError),
+      error: moveError,
+    }),
+    [makeMoveMutateWrapper, isMovePending, moveError]
+  );
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);

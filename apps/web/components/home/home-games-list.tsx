@@ -30,7 +30,7 @@ function isRecent(status: string): boolean {
 function formatBadgeText(game: Doc<"games">): string {
   if (game.result) {
     return game.result
-      .replace("_", " ")
+      .replaceAll("_", " ")
       .replaceAll(/\b\w/g, (letter: string) => letter.toUpperCase());
   }
   if (game.status === "completed") {
@@ -40,10 +40,20 @@ function formatBadgeText(game: Doc<"games">): string {
 }
 
 export function HomeGamesList() {
-  const games = useQuery(api.games.list, { limit: 15 }) ?? [];
+  const gamesQuery = useQuery(api.games.list, { limit: 15 });
+  const games = gamesQuery ?? [];
+  const isLoading = gamesQuery === undefined;
 
   const activeGames = games.filter((game) => isActive(game.status));
   const recentGames = games.filter((game) => isRecent(game.status));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <p className="text-muted-foreground">Loading games…</p>
+      </div>
+    );
+  }
 
   return (
     <>

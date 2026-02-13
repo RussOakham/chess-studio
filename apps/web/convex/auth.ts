@@ -10,7 +10,14 @@ import { components } from "./_generated/api";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
-const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+const siteUrl = process.env.SITE_URL;
+if (!siteUrl) {
+  throw new Error("SITE_URL must be set in environment variables");
+}
+
+if (!process.env.BETTER_AUTH_SECRET) {
+  throw new Error("BETTER_AUTH_SECRET must be set in environment variables");
+}
 
 /** Session and JWT duration: 7 days so users don't get "Not authenticated" after a few minutes. */
 const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;

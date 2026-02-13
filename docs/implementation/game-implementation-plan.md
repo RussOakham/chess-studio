@@ -17,10 +17,7 @@ This document outlines the high-level implementation plan for building the core 
   - Game and move data use Convex (queries/mutations, real-time subscriptions)
   - Type-safe API via `useQuery(api.games.*)` and `useMutation(api.games.*)`
   - No polling; Convex subscriptions for live updates
-- **UUID v7 Migration** ✅
-  - Database migrated to use UUID v7 (time-ordered UUIDs)
-  - pg_uuidv7 extension enabled
-  - All UUID columns now generate UUID v7
+- **UUID v7** (packages/db only, if used): pg_uuidv7 in Neon for time-ordered IDs; Convex uses its own document IDs
 - **Phase 1.1: Home/Dashboard Page Enhancement** ✅
   - "New Game" button (prominent CTA)
   - Active games list (displays in_progress/waiting games)
@@ -331,8 +328,7 @@ This document outlines the high-level implementation plan for building the core 
   - Game status (in_progress, completed, etc.) ✅
 - [x] Implement real-time updates: ✅
   - Polling for engine moves (MVP approach) ✅
-  - 2-second polling interval when game is in progress ✅
-  - Or WebSocket connection (future enhancement)
+  - Real-time updates via Convex subscriptions ✅
 - [x] Update UI based on game state: ✅
   - Show whose turn it is ✅
   - Display game status ✅
@@ -343,7 +339,7 @@ This document outlines the high-level implementation plan for building the core 
 
 **Estimated Time:** 4-5 hours
 
-**Status:** ✅ Complete - `useGame` hook created for centralized game state management. Real-time updates via polling (2s interval when in progress). Turn indicator, check/checkmate/stalemate/draw indicators implemented. Move history displayed with proper formatting. Client component (`GamePageClient`) handles all interactive features with automatic UI updates.
+**Status:** ✅ Complete - `useGame` hook created for centralized game state management. Real-time updates via Convex subscriptions. Turn indicator, check/checkmate/stalemate/draw indicators implemented. Move history displayed with proper formatting. Client component (`GamePageClient`) handles all interactive features with automatic UI updates.
 
 ---
 
@@ -679,7 +675,7 @@ await db.insert(moves).values({
 
 - Database as source of truth
 - Server-side Stockfish WASM for engine moves (controlled difficulty, rate limiting)
-- Real-time updates via polling (MVP) or WebSocket (future)
+- Real-time updates via Convex subscriptions
 
 ## User Journey Flow
 

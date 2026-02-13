@@ -1,0 +1,217 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_CONFIG: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Cache Turbo build outputs
+        uses: actions/cache@v4
+        id: turbo-cache
+        with:
+          path: |
+            .turbo
+            apps/web/.next
+            packages/chess/dist
+            packages/db/dist
+            packages/types/dist
+          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Required for apps/web build. Add DOPPLER_TOKEN to repo secrets.
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Build (workspace)
+        run: pnpm turbo run build --filter=!@repo/web
+
+      - name: Build (web)
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: cd apps/web && doppler run --project chess-studio --config dev -- pnpm exec next build
+
+  format-check:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format
+
+  lint:
+    name: Lint
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            apps/web/.next
+            packages/chess/dist
+            packages/db/dist
+            packages/types/dist
+          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+  type-check:
+    name: Type check
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            apps/web/.next
+            packages/chess/dist
+            packages/db/dist
+            packages/types/dist
+          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check
+
+  test:
+    name: Test
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            apps/web/.next
+            packages/chess/dist
+            packages/db/dist
+            packages/types/dist
+          key: turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ hashFiles('**/package.json', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint markdown
+        run: pnpm lint:md

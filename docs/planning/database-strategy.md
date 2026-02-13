@@ -53,51 +53,13 @@ If you add a relational DB later for vector/AI features:
 
 ## Caching Strategy
 
-### Do We Need Redis/Upstash?
+**Current app:** All data is in Convex; no separate cache layer is required. Use Next.js built-in caching for API routes and static assets.
 
-**Potential Use Cases**:
+**If you add a relational DB later** (e.g. Neon for pgvector):
 
-1. **Stockfish Position Evaluations**
-   - Cache common position evaluations
-   - Avoid re-calculating same positions
-   - **Decision**: Start without, add if needed
-
-2. **Game State Caching**
-   - Cache active game states
-   - Quick retrieval for ongoing games
-   - **Decision**: PostgreSQL is sufficient initially
-
-3. **API Response Caching**
-   - Cache game history queries
-   - Cache user profile data
-   - **Decision**: Use Next.js built-in caching first
-
-4. **Session Data**
-   - Better Auth handles sessions
-   - **Decision**: No additional cache needed
-
-### Recommendation: Start Without Dedicated Cache ✅
-
-**Rationale**:
-
-- Neon DB is fast (serverless, optimized)
-- PostgreSQL has good query performance
-- Next.js has built-in caching for API routes
-- Add Redis/Upstash only if performance issues arise
-
-### When to Add Redis/Upstash
-
-**Add caching if**:
-
-- Position evaluation queries become slow
-- High concurrent game load
-- Need sub-millisecond lookups
-- API response times degrade
-
-**Options**:
-
-- **Upstash**: Serverless Redis, good free tier, pay-per-request
-- **Redis**: Traditional Redis (self-hosted or managed)
+- Rely on the database and Next.js caching first.
+- Add Redis/Upstash only if you see performance issues (e.g. slow position evaluations, high concurrent load, need for sub-millisecond lookups).
+- Options: [Upstash](https://upstash.com/) (serverless Redis) or managed Redis.
 
 ## Database Branching Workflow
 
