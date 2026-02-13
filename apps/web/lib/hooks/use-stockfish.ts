@@ -146,6 +146,10 @@ export function useStockfish() {
     }
   };
 
+  /**
+   * Get position evaluation (centipawns or mate) from Stockfish.
+   * Sets isCalculating for the duration to prevent races with getBestMove.
+   */
   const getEvaluation = async (fen: string): Promise<PositionEvaluation> => {
     if (!stockfishRef.current) {
       throw new Error("Stockfish not initialized");
@@ -153,7 +157,12 @@ export function useStockfish() {
     if (isCalculating) {
       throw new Error("Stockfish is already calculating");
     }
-    return getPositionEvaluation(fen, stockfishRef.current);
+    setIsCalculating(true);
+    try {
+      return await getPositionEvaluation(fen, stockfishRef.current);
+    } finally {
+      setIsCalculating(false);
+    }
   };
 
   return {

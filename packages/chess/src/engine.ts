@@ -114,15 +114,19 @@ interface PositionEvaluationMate {
 type PositionEvaluation = PositionEvaluationCp | PositionEvaluationMate;
 
 /**
- * Get engine evaluation of current position
+ * Get engine evaluation of the current position.
+ * Result is normalized to White's perspective (positive = White better).
+ *
  * @param fen - Current position in FEN notation
  * @param stockfish - Stockfish WASM instance
- * @returns Promise resolving to cp or mate evaluation
+ * @returns Promise resolving to cp or mate evaluation from White's perspective
  */
 async function getPositionEvaluation(
   fen: string,
   stockfish: StockfishInstance
 ): Promise<PositionEvaluation> {
+  const isBlackToMove = fen.split(" ")[1] === "b";
+
   return new Promise((resolve, reject) => {
     let evaluation: PositionEvaluation | null = null;
     let isResolved = false;
@@ -133,14 +137,16 @@ async function getPositionEvaluation(
         const mateMatch = message.match(/score mate (-?\d+)/);
         const cpMatch = message.match(/score cp (-?\d+)/);
         if (mateMatch) {
+          const raw = parseInt(mateMatch[1] ?? "0", 10);
           evaluation = {
             type: "mate",
-            value: parseInt(mateMatch[1] ?? "0", 10),
+            value: isBlackToMove ? -raw : raw,
           };
         } else if (cpMatch) {
+          const raw = parseInt(cpMatch[1] ?? "0", 10);
           evaluation = {
             type: "cp",
-            value: parseInt(cpMatch[1] ?? "0", 10),
+            value: isBlackToMove ? -raw : raw,
           };
         }
       }

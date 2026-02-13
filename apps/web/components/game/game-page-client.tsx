@@ -148,7 +148,10 @@ function GamePageContent({
   }, [kingSquareInCheck]);
   const gameOverMessage = getGameOverMessage(game?.result);
 
-  // Debounced position evaluation for the evaluation bar (in-progress games only)
+  /**
+   * Debounced position evaluation for the evaluation bar.
+   * Runs only when game is in progress and Stockfish is ready; skips when engine is calculating.
+   */
   useEffect(() => {
     if (game?.status !== "in_progress" || !isStockfishReady || isCalculating) {
       return;
@@ -170,9 +173,9 @@ function GamePageContent({
       })();
     }, 250);
     return () => clearTimeout(timeoutId);
-    // Only re-run when fen/status/engine state change, not on every game reference change
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- game.fen, game.status
-  }, [game?.fen, game?.status, isStockfishReady, isCalculating]);
+    // Omit isCalculating to avoid loop: getEvaluation sets it, so deps would retrigger effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- game.fen, game.status, isStockfishReady
+  }, [game?.fen, game?.status, isStockfishReady]);
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
