@@ -58,7 +58,9 @@ jobs:
       - name: Build (web)
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: cd apps/web && doppler run --project chess-studio --config dev -- pnpm exec next build
+        # Force NODE_ENV=production so Next.js does not see Doppler's dev NODE_ENV
+        # (avoids prerender bug: useContext/useState null on _global-error / _not-found)
+        run: cd apps/web && doppler run --project chess-studio --config dev -- sh -c 'export NODE_ENV=production && pnpm exec next build'
 
   format-check:
     name: Format check
