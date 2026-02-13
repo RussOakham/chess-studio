@@ -1,8 +1,16 @@
 "use client";
 
-import type { DifficultyLevel, StockfishInstance } from "@repo/chess";
+import type {
+  DifficultyLevel,
+  PositionEvaluation,
+  StockfishInstance,
+} from "@repo/chess";
 
-import { getEngineDepth, calculateBestMove } from "@repo/chess";
+import {
+  getEngineDepth,
+  calculateBestMove,
+  getPositionEvaluation,
+} from "@repo/chess";
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -138,9 +146,20 @@ export function useStockfish() {
     }
   };
 
+  const getEvaluation = async (fen: string): Promise<PositionEvaluation> => {
+    if (!stockfishRef.current) {
+      throw new Error("Stockfish not initialized");
+    }
+    if (isCalculating) {
+      throw new Error("Stockfish is already calculating");
+    }
+    return getPositionEvaluation(fen, stockfishRef.current);
+  };
+
   return {
     isReady,
     isCalculating,
     getBestMove,
+    getEvaluation,
   };
 }
