@@ -71,9 +71,11 @@ function GamePageContent({
   getBestMoveRef.current = getBestMove;
 
   const makeMoveMutation = useMutation(api.games.makeMove);
+  const resignMutation = useMutation(api.games.resign);
 
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isMovePending, setIsMovePending] = useState(false);
+  const [isResigning, setIsResigning] = useState(false);
 
   const makeMoveMutateWrapper = useCallback(
     async (variables: {
@@ -428,10 +430,27 @@ function GamePageContent({
                   <Button
                     variant="destructive"
                     className="w-full"
-                    disabled
-                    // TODO: Implement resign in Phase 3.2
+                    disabled={isResigning}
+                    onClick={async () => {
+                      if (
+                        !globalThis.confirm(
+                          "Are you sure you want to resign? This will end the game."
+                        )
+                      ) {
+                        return;
+                      }
+                      setIsResigning(true);
+                      try {
+                        await resignMutation({
+                          gameId: toGameId(gameId),
+                        });
+                      } catch (error) {
+                        console.error("Resign error:", error);
+                        setIsResigning(false);
+                      }
+                    }}
                   >
-                    Resign
+                    {isResigning ? "Resigning…" : "Resign"}
                   </Button>
                 )}
                 {game.status === "in_progress" && (

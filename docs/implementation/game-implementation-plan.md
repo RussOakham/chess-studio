@@ -64,11 +64,20 @@ This document outlines the high-level implementation plan for building the core 
   - Optimistic/local state; Convex reactivity for persistence
   - Automatic rollback on errors
 
+- **Phase 2.3: Stockfish Engine Integration** ✅
+  - Client-side Stockfish via `useStockfish` and `/public/engine/stockfish.js`; engine moves submitted via `makeMove` mutation. No server-side engine API (client-only implementation).
+- **Phase 2.4: Game Status Detection** ✅ (mostly)
+  - Game end (checkmate, stalemate, draw) updates status/result in Convex; UI shows result and checkmate badge. Optional remaining: game-end modal, king-in-check highlight.
+- **Phase 3.2: Game Controls (Resign)** ✅
+  - `resign` Convex mutation and Resign button with confirmation implemented. Offer draw not yet wired.
+- **Phase 3.3: Game History Page** ✅
+  - `/games` page implemented (`app/games/page.tsx`, `GamesListClient`); "View all" from home no longer 404s.
+
 🔄 **Next Steps:**
 
-- Phase 2.3: Stockfish Engine Integration (engine moves)
-- Phase 2.4: Game Status Detection (enhanced UI for game end)
-- Phase 3: Game Features & Polish
+- Phase 3.1: Move replay (click to navigate to position) and PGN export (optional)
+- Phase 3.2: Offer draw (mutation + wire button) if desired
+- Phase 4: Enhanced features (evaluation bar, hints, post-game analysis)
 
 ## Library Decision: react-chessboard
 
@@ -343,127 +352,44 @@ This document outlines the high-level implementation plan for building the core 
 
 ---
 
-#### 2.3 Stockfish Engine Integration (Hybrid Approach)
+#### 2.3 Stockfish Engine Integration ✅ **COMPLETE** (client-side only)
 
 **Location:**
 
-- `apps/web/components/chess/engine-client.tsx` (client-side engine)
-- `apps/web/app/api/games/[gameId]/engine/route.ts` (server-side API endpoint)
-- `packages/chess/src/engine.ts` (shared engine utilities)
+- `apps/web/lib/hooks/use-stockfish.ts` (client-side engine hook)
+- `apps/web/public/engine/stockfish.js` (Stockfish Web Worker)
+- `apps/web/components/game/game-page-client.tsx` (engine turn effect, submit via `makeMove`)
 
-**Library:** Use [`stockfish.wasm`](https://github.com/lichess-org/stockfish.wasm) - WebAssembly port of Stockfish
-
-**Why WASM?**
-
-- Runs efficiently in both browser and Node.js
-- Better performance than JavaScript-only implementations
-- Lower memory footprint
-- Works seamlessly with `react-chessboard` (see [advanced examples](https://react-chessboard.vercel.app/?path=/docs/how-to-use-advanced-examples--docs))
-
-**Hybrid Architecture:**
-
-- **Client-Side (Browser)**: Quick evaluations (depth 5-8) for real-time UI feedback
-  - Position evaluation bar
-  - Legal move highlighting
-  - Move hints (shallow analysis)
-  - Instant feedback, no network latency
-- **Server-Side (API)**: Engine moves and deep analysis (depth 10-20+)
-  - Controlled difficulty levels
-  - Rate limiting and cost control
-  - Consistent performance
-  - Integration with AI services
+**Status:** ✅ **Complete** - Engine runs client-side only. Stockfish is initialized in the browser via Web Worker; when it is the engine's turn, the client computes the best move and submits it via the Convex `makeMove` mutation. No server-side engine API. Difficulty is applied via depth in `@repo/chess` (`getEngineDepth`).
 
 **Tasks:**
 
-- [ ] Install `stockfish.wasm`:
-
-  ```bash
-  pnpm add stockfish.wasm
-  ```
-
-- [ ] **Client-Side Engine Setup:**
-  - Create `engine-client.tsx` hook/component
-  - Initialize Stockfish WASM in browser
-  - Implement quick evaluation (depth 5-8)
-  - Integrate with react-chessboard for evaluation display
-  - Add legal move highlighting using engine
-  - Cache evaluations for common positions
-- [ ] **Server-Side Engine API:**
-  - Implement `POST /api/games/[gameId]/engine/move` endpoint
-  - Accept current FEN position and difficulty level
-  - Initialize Stockfish WASM in Node.js
-  - Calculate best move (depth 10-20+ based on difficulty)
-  - Return move in UCI format
-  - Add rate limiting
-- [ ] **Engine Configuration:**
-  - Difficulty levels mapping:
-    - Easy: depth 10-12
-    - Medium: depth 15-18
-    - Hard: depth 20+
-  - Thinking time limits
-  - Evaluation return
-- [ ] **Auto-play Engine Moves:**
-  - Trigger after user move
-  - Show loading state while engine thinks
-  - Call server-side API for engine move
-  - Execute engine move automatically
-  - Update game state
-- [ ] **Integration with react-chessboard:**
-  - Follow [advanced examples guide](https://react-chessboard.vercel.app/?path=/docs/how-to-use-advanced-examples--docs)
-  - Use client-side engine for real-time evaluation
-  - Use server-side engine for actual moves
+- [x] Client-side engine: `useStockfish` hook, Stockfish from `/public/engine/`
+- [x] Auto-play engine moves when it is engine's turn; submit via `makeMove`
+- [x] Difficulty levels (easy/medium/hard) control engine depth
+- [ ] Server-side engine API and evaluation bar / move hints (optional; deferred to Phase 4)
 
 **Dependencies:** 2.1, 2.2
 
-**Estimated Time:** 8-10 hours (includes both client and server setup)
-
-**Technical Notes:**
-
-- **Client-Side:**
-  - Limit depth to 5-8 to avoid blocking UI thread
-  - Debounce evaluation requests during rapid moves
-  - Cache engine instances and evaluations
-  - Use Web Workers if needed for heavy calculations
-- **Server-Side:**
-  - Use deeper analysis (10-20+ depth) for actual moves
-  - Implement rate limiting to prevent abuse
-  - Cache engine instances per request or use connection pooling
-  - Handle engine timeouts gracefully
-- **Best Practices:**
-  - Client-side for UX (evaluation bar, hints)
-  - Server-side for game logic (engine moves, difficulty control)
-  - See react-chessboard [advanced examples](https://react-chessboard.vercel.app/?path=/docs/how-to-use-advanced-examples--docs) for integration patterns
-
 ---
 
-#### 2.4 Game Status Detection
+#### 2.4 Game Status Detection ✅ **MOSTLY COMPLETE**
 
 **Location:**
 
-- `packages/chess/src/game-state.ts` (utilities)
-- `apps/web/app/game/[gameId]/page.tsx` (UI)
+- `apps/web/convex/games.ts` (`makeMove` updates status/result on checkmate, stalemate, draw)
+- `apps/web/components/game/game-page-client.tsx` (result display, checkmate badge)
+
+**Status:** Game end detection is implemented in `makeMove`; status and result are stored in Convex. UI shows result and checkmate badge. Optional remaining: game-end modal, king-in-check highlight.
 
 **Tasks:**
 
-- [ ] Implement game end detection:
-  - Checkmate detection
-  - Stalemate detection
-  - Draw detection (insufficient material, threefold repetition, 50-move rule)
-- [ ] Update game status in database:
-  - Set status to "completed"
-  - Set result (white_wins, black_wins, draw)
-  - Update game record
-- [ ] Display game end UI:
-  - Show game result modal/alert
-  - Display reason (checkmate, stalemate, draw)
-  - Options: New Game, Review Game, View History
-- [ ] Handle check indicator:
-  - Highlight king in check
-  - Show check warning
+- [x] Game end detection (checkmate, stalemate, draw) in Convex mutation
+- [x] Update game status and result in database
+- [x] Display result and checkmate in UI
+- [ ] Game result modal and check indicator (optional polish)
 
 **Dependencies:** 2.1 (move validation)
-
-**Estimated Time:** 3-4 hours
 
 ---
 
@@ -500,61 +426,43 @@ This document outlines the high-level implementation plan for building the core 
 
 ---
 
-#### 3.2 Game Controls
+#### 3.2 Game Controls ✅ **RESIGN COMPLETE**
 
 **Location:**
 
-- `apps/web/components/chess/game-controls.tsx`
-- `apps/web/app/api/games/[gameId]/resign/route.ts`
+- `apps/web/convex/games.ts` (`resign` mutation)
+- `apps/web/components/game/game-page-client.tsx` (Resign button with confirmation)
+
+**Status:** Resign is implemented: `resign` Convex mutation sets game to completed with opponent winning; Resign button with confirmation dialog is wired. Offer draw button is present but not yet wired (no mutation).
 
 **Tasks:**
 
-- [ ] Implement resign functionality:
-  - Resign button
-  - Confirmation dialog
-  - API endpoint to update game status
-  - Show resignation in game result
-- [ ] Add draw offer (optional for MVP):
-  - Offer draw button
-  - Handle draw acceptance
-- [ ] Game controls UI:
-  - Resign button
-  - Draw offer button
-  - New game button (redirects to new game page)
+- [x] Resign: Convex mutation, button, confirmation
+- [ ] Offer draw: mutation + wire button (optional for MVP)
+- [x] New game link (to `/game/new`) available from home and game page
 
 **Dependencies:** 2.4 (game status)
 
-**Estimated Time:** 2-3 hours
-
 ---
 
-#### 3.3 Game History Page
+#### 3.3 Game History Page ✅ **COMPLETE** (list); replay optional
 
 **Location:**
 
-- `apps/web/app/games/page.tsx`
-- `apps/web/app/games/[gameId]/page.tsx` (game detail/replay)
+- `apps/web/app/games/page.tsx` (server component, auth)
+- `apps/web/components/game/games-list-client.tsx` (Convex `api.games.list`, cards)
+- Game detail: existing `/game/[gameId]` page (no separate replay page)
+
+**Status:** Games list page at `/games` is implemented; "View all" from home links here. Shows all user games (limit 100) with status/result badges and link to each game. Game detail and move list are on the existing game page. Replay (step through moves) and PGN export are optional future work.
 
 **Tasks:**
 
-- [ ] Create games list page:
-  - Fetch user's games from database
-  - Display in table/list format
-  - Show: Date, Opponent, Result, Status
-  - Filter by status (all, completed, in progress)
-  - Sort by date (newest first)
-- [ ] Create game detail/replay page:
-  - Display full game information
-  - Replay functionality (step through moves)
-  - Move list with annotations
-  - Game metadata (duration, result, etc.)
-- [ ] Add pagination:
-  - Load more games
-  - Infinite scroll or pagination controls
+- [x] Games list page at `/games` with Convex list query
+- [x] Display games with status, result, date; link to game page
+- [ ] Replay (step through moves) and PGN export (optional)
+- [ ] Pagination if needed (currently limit 100)
 
 **Dependencies:** Phase 1 & 2 (games exist)
-
-**Estimated Time:** 4-5 hours
 
 ---
 
@@ -657,7 +565,7 @@ await db.insert(moves).values({
 4. `api.games.getMoves` - Get moves for a game ✅ **Implemented**
 5. `api.games.makeMove` - Make a move ✅ **Implemented**
 6. Engine move - Handled client-side (Stockfish) then submitted via `makeMove` ✅
-7. `games.resign` - Resign game ⏳ **Stub or future**
+7. `api.games.resign` - Resign game ✅ **Implemented**
 8. `games.offerDraw` - Offer draw ⏳ **Stub or future**
 9. `games.acceptDraw` - Accept draw ⏳ **Stub or future**
 
@@ -716,37 +624,27 @@ Phase 1 is complete when:
 Phase 2 is complete when:
 
 - ✅ User can make valid moves
-- ⏳ Engine responds with moves (Phase 2.3 - Next)
+- ✅ Engine responds with moves (Phase 2.3 - client-side Stockfish)
 - ✅ Game state is saved to database
 - ✅ Game end is detected correctly
 
-**Status:** 🔄 **Phase 2 In Progress** - Move validation and game state management complete. Engine integration (Phase 2.3) is next.
+**Status:** ✅ **Phase 2 Complete** - Move validation, game state, and engine integration done.
 
 Phase 3 is complete when:
 
-- ✅ User can view game history
-- ✅ User can replay past games
-- ✅ All MVP game features work
+- ✅ User can view game history (home + `/games` list)
+- [ ] User can replay past games (step-through; optional)
+- ✅ Core game features work (resign implemented; offer draw optional)
 
 ## Next Steps
 
-1. ✅ **Phase 1.1**: Enhance home page with "New Game" button - **COMPLETE**
-2. ✅ **Phase 1.2**: Create new game flow - **COMPLETE**
-3. ✅ **Phase 1.3**: Create game page route - **COMPLETE**
-4. ✅ **Phase 1.4**: Build basic chessboard component - **COMPLETE**
-5. ✅ **Phase 2.1**: Move validation & execution - **COMPLETE**
-6. ✅ **Phase 2.2**: Game state management - **COMPLETE**
-7. **Next: Phase 2.3**: Stockfish Engine Integration
-   - Install `stockfish.wasm`
-   - Set up client-side engine for quick evaluations
-   - Implement server-side engine API for actual moves
-   - Auto-play engine moves after user moves
-8. **Then Phase 2.4**: Enhanced game status detection UI
-   - Game end modals/alerts
-   - Check indicator improvements
-   - Result display enhancements
+1. ✅ **Phase 1.1–1.4**: Home, new game, game page, chessboard - **COMPLETE**
+2. ✅ **Phase 2.1–2.4**: Move validation, game state, Stockfish (client-side), game status - **COMPLETE**
+3. ✅ **Phase 3.2**: Resign - **COMPLETE**
+4. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
+5. **Optional:** Phase 3.1 move replay and PGN export; Phase 3.2 offer draw; Phase 4 evaluation bar, hints, post-game analysis
 
-**Current Status:** Core game mechanics are fully functional. Users can create games, make moves, and see real-time game state updates. Engine integration is the next major milestone.
+**Current Status:** Core game mechanics and game history list are complete. Users can create games, play vs engine, resign, and view all games at `/games`.
 
 ## Notes
 
