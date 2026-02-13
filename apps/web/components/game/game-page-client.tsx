@@ -3,6 +3,15 @@
 import type { DifficultyLevel } from "@repo/chess";
 
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,26 +23,21 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
+import {
+  getGameOverMessage,
+  getKingSquareInCheck,
+  getStatusDescription,
+} from "@/lib/game-status";
 import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
-}
-
-// Get status description
-function getStatusDescription(status: string): string {
-  if (status === "in_progress") {
-    return "Make your move";
-  }
-  if (status === "waiting") {
-    return "Waiting to start";
-  }
-  return "Game ended";
 }
 
 /**
@@ -71,9 +75,13 @@ function GamePageContent({
   getBestMoveRef.current = getBestMove;
 
   const makeMoveMutation = useMutation(api.games.makeMove);
+  const resignMutation = useMutation(api.games.resign);
 
+  const router = useRouter();
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isMovePending, setIsMovePending] = useState(false);
+  const [isResigning, setIsResigning] = useState(false);
+  const [gameOverDismissed, setGameOverDismissed] = useState(false);
 
   const makeMoveMutateWrapper = useCallback(
     async (variables: {
@@ -119,6 +127,20 @@ function GamePageContent({
     }),
     [makeMoveMutateWrapper, isMovePending, moveError]
   );
+
+  const isGameOver = game?.status === "completed";
+  const kingSquareInCheck = useMemo(() => getKingSquareInCheck(chess), [chess]);
+  const customSquareStyles = useMemo(() => {
+    if (!kingSquareInCheck) {
+      return undefined;
+    }
+    return {
+      [kingSquareInCheck]: {
+        boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
+      },
+    };
+  }, [kingSquareInCheck]);
+  const gameOverMessage = getGameOverMessage(game?.result);
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
@@ -259,6 +281,30 @@ function GamePageContent({
 
   return (
     <div className="min-h-screen bg-background">
+      <AlertDialog
+        open={isGameOver && !gameOverDismissed}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGameOverDismissed(true);
+          }
+        }}
+      >
+        <AlertDialogContent size="default" className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Game Over</AlertDialogTitle>
+            <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => router.push("/game/new")}>
+              New Game
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => router.push("/games")}>
+              View History
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <main className="container mx-auto max-w-7xl px-4 py-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -367,6 +413,7 @@ function GamePageContent({
                     status={game.status}
                     gameId={game.id}
                     onMoveSuccess={undefined}
+                    customSquareStyles={customSquareStyles}
                   />
                 </div>
               </CardContent>
@@ -428,10 +475,27 @@ function GamePageContent({
                   <Button
                     variant="destructive"
                     className="w-full"
-                    disabled
-                    // TODO: Implement resign in Phase 3.2
+                    disabled={isResigning}
+                    onClick={async () => {
+                      if (
+                        !globalThis.confirm(
+                          "Are you sure you want to resign? This will end the game."
+                        )
+                      ) {
+                        return;
+                      }
+                      setIsResigning(true);
+                      try {
+                        await resignMutation({
+                          gameId: toGameId(gameId),
+                        });
+                      } catch (error) {
+                        console.error("Resign error:", error);
+                        setIsResigning(false);
+                      }
+                    }}
                   >
-                    Resign
+                    {isResigning ? "Resigning…" : "Resign"}
                   </Button>
                 )}
                 {game.status === "in_progress" && (

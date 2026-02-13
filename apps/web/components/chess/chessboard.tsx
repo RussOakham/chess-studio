@@ -1,8 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { Chess } from "chess.js";
 import { useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
+
+/** Styles keyed by square (e.g. "e1") for highlighting (e.g. king in check). */
+type CustomSquareStyles = Record<string, CSSProperties>;
 
 interface ChessboardWrapperProps {
   /** FEN string representing the current board position */
@@ -17,6 +22,8 @@ interface ChessboardWrapperProps {
   showCoordinates?: boolean;
   /** Custom board width (defaults to responsive) */
   boardWidth?: number;
+  /** Optional per-square styles (e.g. highlight king in check) */
+  customSquareStyles?: CustomSquareStyles;
 }
 
 export function ChessboardWrapper({
@@ -26,6 +33,7 @@ export function ChessboardWrapper({
   onMove,
   showCoordinates = true,
   boardWidth,
+  customSquareStyles,
 }: ChessboardWrapperProps) {
   // Initialize chess instance with the current position
   // Update when position changes
@@ -130,9 +138,12 @@ export function ChessboardWrapper({
           customBoardStyle={boardStyle}
           customDarkSquareStyle={darkSquareStyle}
           customLightSquareStyle={lightSquareStyle}
+          customSquareStyles={customSquareStyles}
           showBoardNotation={showCoordinates}
         />
       </div>
     </div>
   );
 }
+
+export type { CustomSquareStyles };

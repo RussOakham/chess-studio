@@ -207,4 +207,30 @@ const makeMove = mutation({
   },
 });
 
-export { getById, getMoves, list, create, makeMove };
+const resign = mutation({
+  args: { gameId: v.id("games") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx);
+    const game = await ctx.db.get(args.gameId);
+    if (game === null) {
+      throw new Error("Game not found");
+    }
+    if (game.userId !== userId) {
+      throw new Error("You do not have access to this game");
+    }
+    if (game.status !== "in_progress") {
+      throw new Error("Game is not in progress");
+    }
+    // Resigning player loses; opponent wins. game.color is the user's color.
+    const result: "white_wins" | "black_wins" =
+      game.color === "white" ? "black_wins" : "white_wins";
+    await ctx.db.patch(args.gameId, {
+      status: "completed",
+      result,
+      updatedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export { getById, getMoves, list, create, makeMove, resign };

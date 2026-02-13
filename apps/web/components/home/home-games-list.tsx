@@ -1,7 +1,5 @@
 "use client";
 
-import type { Doc } from "@/convex/_generated/dataModel";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,31 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { formatBadgeText, isActive, isRecent } from "@/lib/game-list-helpers";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-
-const ACTIVE_STATUSES = ["in_progress", "waiting"] as const;
-const RECENT_STATUSES = ["completed", "abandoned"] as const;
-
-function isActive(status: string): boolean {
-  return (ACTIVE_STATUSES as readonly string[]).includes(status);
-}
-
-function isRecent(status: string): boolean {
-  return (RECENT_STATUSES as readonly string[]).includes(status);
-}
-
-function formatBadgeText(game: Doc<"games">): string {
-  if (game.result) {
-    return game.result
-      .replaceAll("_", " ")
-      .replaceAll(/\b\w/g, (letter: string) => letter.toUpperCase());
-  }
-  if (game.status === "completed") {
-    return "Draw";
-  }
-  return "Abandoned";
-}
 
 export function HomeGamesList() {
   const gamesQuery = useQuery(api.games.list, { limit: 15 });
