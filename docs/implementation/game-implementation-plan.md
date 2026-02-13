@@ -66,8 +66,8 @@ This document outlines the high-level implementation plan for building the core 
 
 - **Phase 2.3: Stockfish Engine Integration** ✅
   - Client-side Stockfish via `useStockfish` and `/public/engine/stockfish.js`; engine moves submitted via `makeMove` mutation. No server-side engine API (client-only implementation).
-- **Phase 2.4: Game Status Detection** ✅ (mostly)
-  - Game end (checkmate, stalemate, draw) updates status/result in Convex; UI shows result and checkmate badge. Optional remaining: game-end modal, king-in-check highlight.
+- **Phase 2.4: Game Status Detection** ✅
+  - Game end (checkmate, stalemate, draw) updates status/result in Convex; UI shows result and checkmate badge. Game-end modal (AlertDialog) and king-in-check square highlight implemented.
 - **Phase 3.2: Game Controls (Resign)** ✅
   - `resign` Convex mutation and Resign button with confirmation implemented. Offer draw not yet wired.
 - **Phase 3.3: Game History Page** ✅
@@ -380,14 +380,14 @@ This document outlines the high-level implementation plan for building the core 
 - `apps/web/convex/games.ts` (`makeMove` updates status/result on checkmate, stalemate, draw)
 - `apps/web/components/game/game-page-client.tsx` (result display, checkmate badge)
 
-**Status:** Game end detection is implemented in `makeMove`; status and result are stored in Convex. UI shows result and checkmate badge. Optional remaining: game-end modal, king-in-check highlight.
+**Status:** Game end detection is implemented in `makeMove`; status and result are stored in Convex. UI shows result and checkmate badge. Game-end modal (AlertDialog with "New Game" / "View History") and king-in-check square highlight (customSquareStyles on the board) are implemented.
 
 **Tasks:**
 
 - [x] Game end detection (checkmate, stalemate, draw) in Convex mutation
 - [x] Update game status and result in database
 - [x] Display result and checkmate in UI
-- [ ] Game result modal and check indicator (optional polish)
+- [x] Game result modal and king-in-check highlight
 
 **Dependencies:** 2.1 (move validation)
 

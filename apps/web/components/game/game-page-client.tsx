@@ -1,8 +1,18 @@
 "use client";
 
 import type { DifficultyLevel } from "@repo/chess";
+import type { Chess } from "chess.js";
 
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +28,7 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
@@ -34,6 +45,24 @@ function getStatusDescription(status: string): string {
     return "Waiting to start";
   }
   return "Game ended";
+}
+
+/** Get the square of the king in check (side to move). Returns null if not in check. */
+function getKingSquareInCheck(chess: Chess | null): string | null {
+  if (!chess || !chess.isCheck()) {
+    return null;
+  }
+  const board = chess.board();
+  const turn = chess.turn();
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row]?.[col];
+      if (piece?.type === "k" && piece.color === turn) {
+        return `${"abcdefgh"[col]}${8 - row}`;
+      }
+    }
+  }
+  return null;
 }
 
 /**
@@ -73,6 +102,7 @@ function GamePageContent({
   const makeMoveMutation = useMutation(api.games.makeMove);
   const resignMutation = useMutation(api.games.resign);
 
+  const router = useRouter();
   const [moveError, setMoveError] = useState<string | null>(null);
   const [isMovePending, setIsMovePending] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
@@ -245,6 +275,31 @@ function GamePageContent({
   const boardOrientation: "white" | "black" =
     initialBoardOrientation ?? "white";
 
+  const isGameOver = game.status === "completed";
+  const kingSquareInCheck = useMemo(() => getKingSquareInCheck(chess), [chess]);
+  const customSquareStyles = useMemo(() => {
+    if (!kingSquareInCheck) {
+      return undefined;
+    }
+    return {
+      [kingSquareInCheck]: {
+        boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
+      },
+    };
+  }, [kingSquareInCheck]);
+  const gameOverMessage = ((): string => {
+    if (!game.result) {
+      return "Game over";
+    }
+    if (game.result === "white_wins") {
+      return "White wins";
+    }
+    if (game.result === "black_wins") {
+      return "Black wins";
+    }
+    return "Draw";
+  })();
+
   // Format move history for display
   // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.
   const moveHistory = moves.map((move) => {
@@ -261,6 +316,23 @@ function GamePageContent({
 
   return (
     <div className="min-h-screen bg-background">
+      <AlertDialog open={isGameOver}>
+        <AlertDialogContent size="default" className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Game Over</AlertDialogTitle>
+            <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => router.push("/game/new")}>
+              New Game
+            </AlertDialogAction>
+            <AlertDialogAction onClick={() => router.push("/games")}>
+              View History
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <main className="container mx-auto max-w-7xl px-4 py-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -369,6 +441,7 @@ function GamePageContent({
                     status={game.status}
                     gameId={game.id}
                     onMoveSuccess={undefined}
+                    customSquareStyles={customSquareStyles}
                   />
                 </div>
               </CardContent>
