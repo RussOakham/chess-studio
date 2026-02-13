@@ -52,13 +52,13 @@ This document outlines the deployment strategy for the chess game application on
    - Port: 3001 (internal)
    - Exposed via Nginx reverse proxy
 
-3. **Database** (Neon DB - Serverless PostgreSQL)
-   - Managed service (not a container)
-   - Serverless, auto-scaling
-   - Database branching for dev/staging
-   - pgvector extension support
+3. **Convex** (game/move data and real-time)
+   - Managed backend (not a container)
+   - Hosted by Convex; `NEXT_PUBLIC_CONVEX_URL` and auth (Better Auth JWT) configured via Doppler
 
-4. **Nginx** (Reverse Proxy)
+4. **Auth and data**: Convex (games, moves, and auth via Better Auth component). No Neon or Drizzle.
+
+5. **Nginx** (Reverse Proxy)
    - Port: 80, 443
    - Routes:
      - `/` → Web container
@@ -142,8 +142,7 @@ Key considerations:
 
 Secrets managed via Doppler:
 
-- `NEXT_PUBLIC_API_URL` - Public API URL (can be in Doppler or env file)
-- `DATABASE_URL` - PostgreSQL connection string
+- `NEXT_PUBLIC_CONVEX_URL` - Convex deployment URL (games, moves, and auth data)
 - `BETTER_AUTH_SECRET` - Better Auth secret key
 - `BETTER_AUTH_URL` - Better Auth callback URL
 
@@ -151,18 +150,14 @@ Secrets managed via Doppler:
 
 Secrets managed via Doppler:
 
-- `DATABASE_URL` - PostgreSQL connection string
 - `STOCKFISH_PATH` - Path to Stockfish binary (can be env var)
 - `OPENAI_API_KEY` - OpenAI API key for AI features
 - `JWT_SECRET` - JWT signing secret
 - `PORT` - API server port (can be env var, default 3001)
 
-#### Database (Neon DB)
+#### Convex
 
-Secrets managed via Doppler:
-
-- `DATABASE_URL` - Neon DB connection string (includes credentials)
-- Neon DB provides connection string with all credentials included
+- `NEXT_PUBLIC_CONVEX_URL` - From Convex dashboard or CLI; games, moves, and auth (Better Auth) all stored in Convex. See `docs/temp/migrate-convex.temp.md`. Neon and Drizzle are not used.
 
 #### Doppler Integration
 
@@ -192,7 +187,7 @@ Doppler service tokens are injected into containers:
 
 - Regular security updates for base images
 - Dependency updates via CI/CD (GitHub Actions + Blacksmith)
-- Database migrations via Drizzle
+- Convex schema and function deployments (no Drizzle; Neon retired)
 - Automated dependency updates (Dependabot or Renovate)
 
 ## Scaling Considerations
@@ -221,7 +216,7 @@ Doppler service tokens are injected into containers:
 - HTTPS only (SSL/TLS)
 - Rate limiting on API endpoints
 - Input validation
-- SQL injection prevention (Drizzle parameterized queries)
+- Input validation; Convex handles persistence (no SQL/Drizzle in app)
 
 ### Container Security
 

@@ -41,17 +41,19 @@ Each service (web, api, db) has its own Doppler service token for isolation.
 
 ### Web Service (Next.js)
 
+Auth and data (games, moves) are in **Convex**; no Neon or Drizzle. Doppler secrets:
+
 ```env
 # Public (can be in .env.local for dev)
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+NEXT_PUBLIC_CONVEX_SITE_URL=https://yourdomain.com
 
 # Secrets (from Doppler)
-DATABASE_URL=postgresql://user:pass@db:5432/chess_game
 BETTER_AUTH_SECRET=your-secret-key-here
 BETTER_AUTH_URL=https://yourdomain.com
 ```
 
-### API Service (Express.js/Go)
+### API Service (Express.js/Go, if used)
 
 ```env
 # Configuration
@@ -59,7 +61,6 @@ PORT=3001
 STOCKFISH_PATH=/usr/bin/stockfish
 
 # Secrets (from Doppler)
-DATABASE_URL=postgresql://user:pass@db:5432/chess_game
 OPENAI_API_KEY=sk-...
 JWT_SECRET=your-jwt-secret-here
 ```

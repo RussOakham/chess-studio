@@ -2,21 +2,33 @@
 
 ## Overview
 
-This document outlines the end-to-end type safety strategy for the chess game application, ensuring type safety between frontend and backend services.
+This document outlines the end-to-end type safety strategy for the chess game application.
+
+**Current approach (game/move API):** We use **Convex** for type-safe queries and mutations. Types flow from Convex function definitions (`apps/web/convex/games.ts`) to the frontend via `convex/_generated`; no separate API layer or code generation. See `docs/temp/migrate-convex.temp.md` and `@.cursor/rules/convex.mdc`.
+
+The sections below also describe **tRPC** as an alternative or historical context; the app no longer uses tRPC for games/moves.
 
 ## Type Safety Solution
 
-### tRPC ✅ **Selected**
+### Convex ✅ **Selected** (game and move API)
 
-**Why tRPC?**
+**Why Convex?**
+
+- **Full-stack TypeScript**: Types inferred from Convex queries/mutations to React hooks
+- **No code generation**: Use `useQuery(api.games.getById, { gameId })` and `useMutation(api.games.makeMove)` with full inference
+- **Real-time**: Subscriptions keep UI in sync without polling
+- **Single backend**: Schema, queries, mutations, and auth (Better Auth JWT) in one place
+
+### tRPC (alternative / historical)
+
+**Why tRPC was considered?**
 
 - **Full-stack TypeScript**: Types flow automatically from backend to frontend
 - **No Code Generation**: Types are inferred at compile time
 - **Excellent DX**: Full autocomplete and type checking in IDE
 - **Runtime Safety**: Validates requests at runtime
 - **Works with Next.js**: Excellent integration
-- **Works with Express.js**: Can be used with separate backend
-- **Small Bundle Size**: Minimal runtime overhead
+- The app previously used tRPC for games; that layer has been removed in favour of Convex
 
 ## Architecture
 
@@ -268,11 +280,10 @@ export interface Move {
 - Middleware support
 - Error handling
 
-### Drizzle ORM Integration
+### Convex (current)
 
-- Drizzle schema types flow through tRPC
-- Database types → tRPC types → Frontend types
-- Full type safety from database to UI
+- Convex schema and function types flow to the frontend via `convex/_generated`
+- Convex types → Frontend types (useQuery/useMutation). No Drizzle or tRPC; Neon and Drizzle are retired.
 
 ## Benefits
 

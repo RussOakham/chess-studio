@@ -73,37 +73,26 @@ This document outlines the technology stack for the chess game project.
 
 **Recommendation**: Start with Express.js for faster development, migrate engine-heavy operations to Go later if needed.
 
-### Database
+### Game data & real-time backend
 
-**PostgreSQL with Neon DB** ✅ **Selected**
+**Convex** ✅ **Selected** (for games and moves)
 
-- **Neon DB**: Serverless PostgreSQL with branching
-  - **Database Branching**: Create dev branches from prod database
-  - **Serverless**: Auto-scaling, pay-per-use
-  - **Great DX**: Easy setup, good free tier
-  - **Perfect for development**: Branch databases for feature development
-- Excellent for relational data (users, games, moves, history)
-- Strong JSON support for storing game states/moves
-- **pgvector** extension for vector embeddings (future AI features)
-- Great tooling and ecosystem
-- Works well with Drizzle ORM
+- **Real-time**: Subscriptions for live game/move updates (no polling)
+- **Type-safe**: Queries and mutations with full TypeScript inference
+- **Backend-as-a-service**: Schema, queries, mutations, and auth (Better Auth JWT) in one stack
+- **Location**: `apps/web/convex/` (schema, `games.ts` for game/move functions)
+- Games, moves, and game_reviews (for future AI) live in Convex; auth identity comes from Better Auth
 
-**ORM**: **Drizzle ORM** ✅ **Selected**
+**Rationale**: Real-time board updates, simpler backend surface, and strong typing without a separate API layer for game operations.
 
-- Lighter weight, more SQL-like
-- Excellent TypeScript support
-- Better performance than Prisma
-- Works with both Node.js and Go (via SQL drivers)
+### Auth
 
-**Schema Considerations** (to be detailed after MVP definition):
+**Better Auth + Convex** ✅ **Selected**
 
-- Users (auth handled by Better Auth)
-- Games (id, user_id, pgn, result, created_at, etc.)
-- Moves (game_id, move_number, move_san, position_fen, evaluation, etc.)
-- Game Reviews (game_id, ai_summary, key_moments, etc.)
-- Vector embeddings (for future AI features using pgvector)
-
-**Note**: Database schema diagram will be created after MVP functionality is defined.
+- **Better Auth** handles sign-in, sessions, and user identity
+- **Auth data** (user, session, account, etc.) is stored in **Convex** via the `@convex-dev/better-auth` component
+- Next.js `/api/auth/*` routes proxy to Convex; no separate auth database
+- **Neon and Drizzle are retired** – not used for auth or games
 
 ### Chess Engine
 
@@ -152,21 +141,19 @@ This document outlines the technology stack for the chess game project.
 
 **End-to-End Type Safety** ✅ **Required**
 
-- **tRPC** ✅ **Recommended**
-  - Full-stack TypeScript types
-  - Type-safe API calls from frontend to backend
-  - Automatic type inference
-  - Works with Next.js and Express.js
-  - No code generation needed
-  - Excellent DX with autocomplete
-- **Alternative**: OpenAPI/TypeScript code generation (more setup, but more flexible)
+- **Convex** ✅ **Selected** (for game/move API)
+  - Full-stack TypeScript types for queries and mutations
+  - Type-safe API calls via `useQuery(api.games.getById, { gameId })` and `useMutation(api.games.makeMove)`
+  - Automatic type inference from Convex function definitions
+  - No code generation needed; types from `convex/_generated`
+  - Works with Next.js; auth via Better Auth JWT
+- **Alternative** (future): better-convex for tRPC-style procedures on top of Convex
 
 **Rationale**:
 
-- Ensures type safety between frontend and backend
+- Ensures type safety between frontend and Convex backend
 - Catches API contract mismatches at compile time
-- Better developer experience with autocomplete
-- Reduces runtime errors
+- Real-time subscriptions and single backend for game state
 
 **TypeScript 7.0 (Native Go-based Compiler)** 🔮 **Future**:
 
@@ -278,7 +265,7 @@ This document outlines the technology stack for the chess game project.
 - **TypeScript**: Type safety across the stack
 - **Chess.js**: JavaScript chess library for move validation, game state
 - **Zustand/Redux**: State management (if needed beyond React state)
-- **tRPC**: End-to-end type safety (see Type Safety section above)
+- **Convex**: Game/move data and real-time subscriptions; type-safe API (see Type Safety section above)
 
 ### CI/CD Stack
 
@@ -305,16 +292,15 @@ This document outlines the technology stack for the chess game project.
 | ------------------- | ------------------------------------------------ | --------------------------------------------------- |
 | Monorepo            | Turbo Repo                                       | Multi-service management, code sharing              |
 | Frontend            | Next.js 14+                                      | Full-stack capabilities, auth integration, SSR      |
-| Auth                | Better Auth                                      | Modern, type-safe, Next.js friendly                 |
-| Backend             | Hybrid (Next.js Auth + Express/Go API)           | Performance + simplicity                            |
+| Auth                | Better Auth + Convex                             | Auth data and sessions stored in Convex             |
+| Backend             | Next.js API (auth) + Convex (games/moves)        | Auth + Convex for game data and real-time           |
 | TypeScript Compiler | TypeScript 6.x (now), 7.0 (future)               | 10x faster with Go-based compiler                   |
-| Database            | Neon DB (PostgreSQL)                             | Serverless, branching, pgvector support             |
+| Game data / API     | Convex                                           | Real-time, type-safe queries/mutations, Better Auth |
 | Caching             | TBD (Start without, add Redis/Upstash if needed) | Performance optimization                            |
-| ORM                 | Drizzle                                          | Lightweight, SQL-like, performant                   |
-| Chess Engine        | Stockfish                                        | Industry standard, multiple integration options     |
+| Chess Engine        | Stockfish                                        | Industry standard, client-side WASM                 |
 | AI                  | Stockfish + LLM API                              | Best moves from engine, summaries from LLM          |
 | Language            | TypeScript                                       | Type safety, better DX                              |
-| Type Safety         | tRPC                                             | End-to-end type safety between frontend and backend |
+| Type Safety         | Convex                                           | End-to-end type safety for game/move API            |
 | Styling             | Tailwind CSS                                     | Utility-first CSS framework                         |
 | UI Components       | ShadCN UI                                        | Component library built on Radix UI                 |
 | Chess Board         | Custom 2D (SVG icons)                            | Full control, brand consistency                     |

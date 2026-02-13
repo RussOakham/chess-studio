@@ -1,93 +1,47 @@
 ---
-description: "Architecture patterns: Repository, Service, and tRPC layer separation"
-globs: ["**/lib/**/*.ts", "**/lib/**/*.tsx"]
+description: "Architecture patterns: Convex for game data; optional service layer for shared logic"
+globs: ["**/lib/**/*.ts", "**/lib/**/*.tsx", "**/convex/**/*.ts"]
 alwaysApply: false
 ---
 
 # Architecture Patterns
 
-This project follows a layered architecture pattern with clear separation of concerns.
+This project uses **Convex** for game and move data, with an optional service layer for shared logic (e.g. engine validation).
 
-## Layer Structure
+## Game and move data (Convex)
 
-### 1. Data Access Layer (Repository Pattern)
-
-- **Location**: `apps/web/lib/data-access/`
-- **Purpose**: All database operations using Drizzle ORM
-- **Pattern**: Repository classes with methods for CRUD operations
-- **Example**: `@apps/web/lib/data-access/games.repository.ts`
+- **Location**: `apps/web/convex/`
+- **Schema**: `convex/schema.ts` (games, moves, game_reviews)
+- **Functions**: `convex/games.ts` – queries (`getById`, `getMoves`, `list`) and mutations (`create`, `makeMove`)
+- **Auth**: Protected functions use `ctx.auth.getUserIdentity()`; identity from Better Auth JWT (see `convex/auth.ts` and `docs/temp/migrate-convex.temp.md`)
 
 **Guidelines:**
 
-- Repository classes should only contain database queries
-- Use Drizzle ORM query builders (`db.select()`, `db.insert()`, etc.)
-- Export types using `InferSelectModel` from Drizzle
-- No business logic in repositories
+- Add new game/move behaviour as Convex queries or mutations
+- Use Convex validators (`v.id("games")`, etc.) for args
+- Enforce ownership in handlers (e.g. `getUserId(ctx)` then check `game.userId === userId`)
+- No Drizzle or repository layer for games/moves; they live only in Convex
 
-### 2. Service Layer (Business Logic)
+## Client usage
+
+- **Location**: Components and hooks under `apps/web/`
+- **Pattern**: `useQuery(api.games.getById, { gameId })`, `useMutation(api.games.makeMove)`
+- **Real-time**: Convex subscriptions keep data in sync; no polling
+- **Provider**: `ConvexClientProvider` + `ConvexBetterAuthProvider` in layout; see `app/convex-client-provider.tsx`
+
+## Optional service layer
 
 - **Location**: `apps/web/lib/services/`
-- **Purpose**: Business logic, validation, and orchestration
-- **Pattern**: Service classes that use repositories
-- **Example**: `@apps/web/lib/services/games.service.ts`
+- **Purpose**: Shared, non-Convex logic (e.g. `engine.service.ts` for validating engine moves; runs client-side with Stockfish)
+- **Pattern**: Pure functions or small modules; no repository or database access for game data
 
-**Guidelines:**
+## Auth (Convex + Better Auth)
 
-- Services orchestrate multiple repositories when needed
-- Handle business rules and validation
-- Use chess.js for game logic validation
-- Return domain objects, not raw database models
-
-### 3. API Layer (tRPC Routers)
-
-- **Location**: `apps/web/lib/trpc/routers/`
-- **Purpose**: API endpoints with input validation and error handling
-- **Pattern**: tRPC routers with procedures
-- **Example**: `@apps/web/lib/trpc/routers/games.router.ts`
-
-**Guidelines:**
-
-- Use `protectedProcedure` for authenticated endpoints
-- Use `publicProcedure` for public endpoints
-- Validate inputs with Zod schemas from `@apps/web/lib/validations/`
-- Initialize services/repositories at module level (reuse instances)
-- Handle errors with appropriate TRPCError codes:
-  - `NOT_FOUND` - Resource doesn't exist
-  - `FORBIDDEN` - User lacks permission
-  - `BAD_REQUEST` - Invalid input or business rule violation
-  - `UNAUTHORIZED` - Not authenticated (handled by protectedProcedure)
-  - `INTERNAL_SERVER_ERROR` - Unexpected errors
-
-## Flow Example
-
-```text
-tRPC Router → Service Layer → Repository Layer → Database
-     ↓              ↓                ↓
-  Validation   Business Logic   Database Queries
-  Error Handle  Orchestration    Drizzle ORM
-```
-
-## When Creating New Features
-
-1. **Create Repository** (if new data access needed)
-   - Add methods to existing repository or create new one
-   - Use Drizzle query builders
-   - Export types with `InferSelectModel`
-
-2. **Create/Update Service** (if business logic needed)
-   - Add methods to existing service or create new one
-   - Inject repositories via constructor
-   - Implement business rules
-
-3. **Create/Update tRPC Router** (if new API endpoint needed)
-   - Add procedure to existing router or create new router
-   - Use Zod for input validation
-   - Call service methods
-   - Handle errors appropriately
+- **Location**: Convex Better Auth component (`convex/auth.ts`, `@convex-dev/better-auth`); Next.js `/api/auth/*` proxies to Convex
+- **Usage**: Auth data (user, session, account) is stored in Convex. Neon and Drizzle are not used.
 
 ## References
 
-- Repository example: `@apps/web/lib/data-access/games.repository.ts`
-- Service example: `@apps/web/lib/services/games.service.ts`
-- Router example: `@apps/web/lib/trpc/routers/games.router.ts`
-- tRPC init: `@apps/web/lib/trpc/init.ts`
+- Convex schema and functions: `@apps/web/convex/schema.ts`, `@apps/web/convex/games.ts`
+- Convex rules: `@.cursor/rules/convex.mdc`
+- Auth and migration: `@docs/temp/migrate-convex.temp.md`

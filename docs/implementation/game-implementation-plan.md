@@ -13,10 +13,10 @@ This document outlines the high-level implementation plan for building the core 
 - Database schema (games, moves, gameReviews tables)
 - Basic chess utilities package (`packages/chess`)
 - Code quality tooling (oxlint with type-aware linting, oxfmt)
-- **tRPC Migration** ✅
-  - Complete migration from axios to tRPC for end-to-end type safety
-  - All game endpoints migrated to tRPC procedures
-  - React Query integration for data fetching
+- **Convex migration** ✅
+  - Game and move data use Convex (queries/mutations, real-time subscriptions)
+  - Type-safe API via `useQuery(api.games.*)` and `useMutation(api.games.*)`
+  - No polling; Convex subscriptions for live updates
 - **UUID v7 Migration** ✅
   - Database migrated to use UUID v7 (time-ordered UUIDs)
   - pg_uuidv7 extension enabled
@@ -36,7 +36,7 @@ This document outlines the high-level implementation plan for building the core 
 - **Phase 1.3: Game Page Route** ✅
   - Dynamic route for `/game/[gameId]`
   - Server-side authentication and authorization checks
-  - Game data fetching with tRPC
+  - Game data via Convex (`useQuery(api.games.getById)`, `useQuery(api.games.getMoves)`)
   - Page layout with chessboard, game info, controls, and move history
   - Client component wrapper for interactive features
 - **Phase 1.4: Basic Chessboard Component** ✅
@@ -48,15 +48,15 @@ This document outlines the high-level implementation plan for building the core 
   - Responsive design and styling
 - **Phase 2.1: Move Validation & Execution** ✅
   - Full move validation (client and server-side)
-  - `makeMove` tRPC mutation implemented
-  - Moves saved to database with full metadata
+  - `makeMove` Convex mutation implemented (`api.games.makeMove`)
+  - Moves stored in Convex with full metadata
   - Game FEN and PGN updated after moves
   - Game end detection (checkmate, stalemate, draw)
   - Automatic game status and result updates
   - Comprehensive error handling
 - **Phase 2.2: Game State Management** ✅
-  - Created `useGame` hook for centralized state management
-  - Real-time updates via polling (2s interval when in progress)
+  - Created `useGame` hook (Convex `useQuery(api.games.getById)`, `useQuery(api.games.getMoves)`)
+  - Real-time updates via Convex subscriptions (no polling)
   - Turn indicator showing current player
   - Check/checkmate/stalemate/draw indicators
   - Move history display with proper formatting
@@ -64,11 +64,8 @@ This document outlines the high-level implementation plan for building the core 
   - Optimistic updates for instant visual feedback
 - **Optimistic Updates** ✅
   - Instant visual feedback when moving pieces
-  - Optimistic cache updates
+  - Optimistic/local state; Convex reactivity for persistence
   - Automatic rollback on errors
-- **React Query DevTools** ✅
-  - Development tools for debugging queries and mutations
-  - Integrated into TRPCProvider
 
 🔄 **Next Steps:**
 
@@ -184,7 +181,7 @@ This document outlines the high-level implementation plan for building the core 
 
 **Estimated Time:** 2-3 hours
 
-**Status:** ✅ Complete - Game page route created with server-side authentication checks, tRPC integration for data fetching, and full layout with chessboard, game info, controls, and move history. Client component wrapper (`GamePageClient`) handles all interactive features with real-time updates.
+**Status:** ✅ Complete - Game page route created with server-side authentication checks, Convex for data fetching and real-time updates, and full layout with chessboard, game info, controls, and move history. Client component wrapper (`GamePageClient`) handles all interactive features with Convex subscriptions.
 
 ---
 
@@ -275,11 +272,10 @@ This document outlines the high-level implementation plan for building the core 
 **Location:**
 
 - `apps/web/components/chess/game-chessboard.tsx` (UI)
-- `apps/web/lib/trpc/routers/games.router.ts` (tRPC mutation)
-- `apps/web/lib/services/games.service.ts` (business logic)
-- `apps/web/lib/data-access/moves.repository.ts` (data access)
+- `apps/web/convex/games.ts` (Convex mutation `makeMove`)
+- `apps/web/lib/services/engine.service.ts` (engine move validation, client-side)
 
-**Status:** ✅ **Complete** - Full move validation and execution implemented with tRPC, database persistence, and optimistic updates.
+**Status:** ✅ **Complete** - Full move validation and execution implemented with Convex mutations, real-time persistence, and optimistic updates.
 
 **Tasks:**
 
@@ -297,11 +293,11 @@ This document outlines the high-level implementation plan for building the core 
   - Use `position` prop to update board from FEN ✅
   - Optimistic updates for instant visual feedback ✅
 - [x] Create move API endpoint: ✅
-  - `makeMove` tRPC mutation ✅
-  - Validate move server-side ✅
-  - Save move to database ✅
+  - `makeMove` Convex mutation ✅
+  - Validate move in Convex mutation ✅
+  - Save move in Convex ✅
   - Update game FEN and PGN ✅
-  - Return updated game state ✅
+  - Real-time updates via Convex subscriptions ✅
 - [x] Handle move errors: ✅
   - Show error messages for invalid moves ✅
   - Handle network errors ✅
@@ -311,7 +307,7 @@ This document outlines the high-level implementation plan for building the core 
 
 **Estimated Time:** 4-5 hours (reduced with react-chessboard handling UI)
 
-**Status:** ✅ Complete - Full move validation implemented on both client and server. Moves are validated using chess.js, saved to database with full metadata (SAN, UCI, FEN before/after), and game state is automatically updated. Game end detection (checkmate, stalemate, draw) is implemented. Optimistic updates provide instant visual feedback.
+**Status:** ✅ Complete - Full move validation implemented on both client and server. Moves are validated using chess.js, stored in Convex with full metadata (SAN, UCI, FEN before/after), and game state is updated in real time. Game end detection (checkmate, stalemate, draw) is implemented. Optimistic updates provide instant visual feedback.
 
 ---
 
@@ -626,7 +622,7 @@ This document outlines the high-level implementation plan for building the core 
 - **React**: UI framework
 - **ShadCN UI**: Component library
 - **Tailwind CSS**: Styling
-- **Drizzle ORM**: Database operations
+- **Convex**: Persistence and real-time (games, moves, auth)
 - **Next.js App Router**: Routing and API routes
 
 ### Database Operations
@@ -657,25 +653,25 @@ await db.insert(moves).values({
 });
 ```
 
-### API Endpoints (tRPC Procedures)
+### API (Convex queries and mutations)
 
-1. `games.create` - Create new game ✅ **Implemented**
-2. `games.list` - List user's games ✅ **Implemented**
-3. `games.getById` - Get game details ✅ **Implemented**
-4. `games.getMoves` - Get moves for a game ✅ **Implemented**
-5. `games.makeMove` - Make a move ✅ **Implemented**
-6. `games.getEngineMove` - Get engine move ⏳ **Stub created, not implemented**
-7. `games.resign` - Resign game ⏳ **Stub created, not implemented**
-8. `games.offerDraw` - Offer draw ⏳ **Stub created, not implemented**
-9. `games.acceptDraw` - Accept draw ⏳ **Stub created, not implemented**
+1. `api.games.create` - Create new game ✅ **Implemented**
+2. `api.games.list` - List user's games ✅ **Implemented**
+3. `api.games.getById` - Get game details ✅ **Implemented**
+4. `api.games.getMoves` - Get moves for a game ✅ **Implemented**
+5. `api.games.makeMove` - Make a move ✅ **Implemented**
+6. Engine move - Handled client-side (Stockfish) then submitted via `makeMove` ✅
+7. `games.resign` - Resign game ⏳ **Stub or future**
+8. `games.offerDraw` - Offer draw ⏳ **Stub or future**
+9. `games.acceptDraw` - Accept draw ⏳ **Stub or future**
 
 ### State Management Strategy
 
 **Client-Side:**
 
 - React state for UI state (selected square, move history display)
-- React Query or SWR for server state (game data, moves)
-- Optimistic updates for moves
+- Convex `useQuery` for game and move data (real-time subscriptions)
+- Optimistic updates for moves; Convex reactivity for persistence
 - Client-side Stockfish WASM for real-time evaluation (evaluation bar, move hints)
 - Local caching of engine evaluations
 
