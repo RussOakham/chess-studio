@@ -1,6 +1,5 @@
-// Better Auth API route handler for Next.js App Router
+// Proxy Better Auth requests to Convex (auth runs on Convex)
 
-import { auth } from "@/lib/auth";
-import { toNextJsHandler } from "better-auth/next-js";
+import { handler } from "@/lib/auth-server";
 
-export const { GET, POST } = toNextJsHandler(auth);
+export const { GET, POST } = handler;

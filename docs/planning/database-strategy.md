@@ -2,27 +2,25 @@
 
 ## Overview
 
-This document outlines the database strategy for the chess game application, including Neon DB setup, pgvector configuration, and caching considerations.
+This document outlines the data and persistence strategy for the chess game application.
 
-## Database Provider
+**Current stack:**
 
-### Neon DB ✅ **Selected**
+- **Games, moves, and game_reviews**: Stored in **Convex** (see `apps/web/convex/schema.ts` and `convex/games.ts`). Real-time subscriptions and type-safe queries/mutations.
+- **Auth and user data**: Stored in **Convex** via **Better Auth** and the `@convex-dev/better-auth` component. No Neon or Drizzle; auth tables (user, session, account, etc.) live in Convex.
 
-**Why Neon DB?**
+**Neon and Drizzle are retired** – the app uses Convex for all persisted data (games and auth). The sections below are kept for historical context and for teams that might reintroduce a relational DB (e.g. Neon) for optional features like pgvector.
+
+## Database Provider (historical / optional future)
+
+### Neon DB (retired; was used for auth)
+
+Neon was previously used for Better Auth; auth now runs on Convex. If you reintroduce Neon (e.g. for pgvector):
 
 - **Serverless PostgreSQL**: Auto-scaling, pay-per-use
-- **Database Branching**: Create dev branches from prod database (game-changing feature!)
+- **Database Branching**: Create dev branches from prod database
 - **pgvector Support**: Built-in support for vector embeddings
-- **Great Free Tier**: Generous free tier for development
-- **Excellent DX**: Easy setup, good documentation
 - **Connection Pooling**: Built-in connection pooling
-
-**Database Branching Benefits**:
-
-- Create feature branches with isolated database copies
-- Test migrations safely
-- Easy rollback
-- Perfect for development workflow
 
 ## Database Extensions
 
@@ -39,22 +37,19 @@ This document outlines the database strategy for the chess game application, inc
 
 ## Schema Planning
 
-### Current Considerations (To be detailed after MVP)
+### Convex (current)
 
-**Core Tables**:
+All persisted data is in Convex:
 
-- `users` - User accounts (Better Auth may handle this)
-- `games` - Chess games
-- `moves` - Individual moves in games
-- `game_reviews` - AI-generated game reviews
-- `positions` - Cached position evaluations (optional)
+- **Games, moves, game_reviews**: `apps/web/convex/schema.ts`, `convex/games.ts`
+- **Auth** (user, session, account, etc.): Stored in Convex via the Better Auth component (`convex/auth.ts`, `@convex-dev/better-auth`)
 
-**Future Tables** (for vector features):
+### Optional future (e.g. Neon + pgvector)
 
-- `position_embeddings` - Vector embeddings of chess positions
+If you add a relational DB later for vector/AI features:
+
+- `position_embeddings` - Vector embeddings of chess positions (pgvector)
 - `game_patterns` - Similar game patterns for analysis
-
-**Note**: Detailed database schema diagram will be created after MVP functionality is defined.
 
 ## Caching Strategy
 

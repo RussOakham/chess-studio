@@ -1,23 +1,19 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { api } from "@/convex/_generated/api";
+import { toGameId } from "@/lib/convex-id";
 import { Chess } from "chess.js";
+import { useMutation } from "convex/react";
 import { useState } from "react";
 
 import { ChessboardWrapper } from "./chessboard";
 
 interface GameChessboardProps {
-  /** FEN string representing the current board position */
   position: string;
-  /** Board orientation - which side is at the bottom */
   orientation?: "white" | "black";
-  /** Whether pieces can be moved via drag and drop */
   draggable?: boolean;
-  /** Game status */
   status: string;
-  /** Game ID */
   gameId: string;
-  /** Optional callback to refetch game data after move */
   onMoveSuccess?: () => void;
 }
 
@@ -31,44 +27,15 @@ export function GameChessboard({
 }: GameChessboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
-  const utils = trpc.useUtils();
+  const [isPending, setIsPending] = useState(false);
 
-  const makeMove = trpc.games.makeMove.useMutation({
-    onMutate: async () => {
-      // Cancel outgoing refetches to avoid overwriting optimistic update
-      await utils.games.getById.cancel({ gameId });
-      await utils.games.getMoves.cancel({ gameId });
+  const makeMoveMutation = useMutation(api.games.makeMove);
 
-      // Snapshot the previous value
-      const previousGame = utils.games.getById.getData({ gameId });
-
-      return { previousGame };
-    },
-    onError: (error, _variables, context) => {
-      // Rollback optimistic update on error
-      if (context?.previousGame) {
-        utils.games.getById.setData({ gameId }, context.previousGame);
-      }
-      setOptimisticFen(null);
-      setError(error.message || "Failed to make move client");
-      // Clear error after 3 seconds
-      setTimeout(() => setError(null), 3000);
-    },
-    onSuccess: () => {
-      // Clear optimistic state
-      setOptimisticFen(null);
-      // Invalidate and refetch game queries to get server state
-      void utils.games.getById.invalidate({ gameId });
-      void utils.games.getMoves.invalidate({ gameId });
-      // Call optional callback
-      if (onMoveSuccess) {
-        onMoveSuccess();
-      }
-      setError(null);
-    },
-  });
-
-  function handleMove(move: { from: string; to: string; promotion?: string }) {
+  async function handleMove(move: {
+    from: string;
+    to: string;
+    promotion?: string;
+  }) {
     if (status !== "in_progress") {
       setError("Game is not in progress");
       return;
@@ -76,7 +43,6 @@ export function GameChessboard({
 
     setError(null);
 
-    // Calculate optimistic FEN immediately before mutation
     try {
       const optimisticChess = new Chess();
       optimisticChess.load(position);
@@ -88,36 +54,32 @@ export function GameChessboard({
       });
 
       if (chessMove) {
-        const newFen = optimisticChess.fen();
-        setOptimisticFen(newFen);
-
-        // Optimistically update the cache
-        const previousGame = utils.games.getById.getData({ gameId });
-        if (previousGame) {
-          utils.games.getById.setData(
-            { gameId },
-            {
-              ...previousGame,
-              fen: newFen,
-              pgn: optimisticChess.pgn(),
-            }
-          );
-        }
+        setOptimisticFen(optimisticChess.fen());
       }
     } catch {
-      // If optimistic update fails, continue with server call anyway
+      // Continue with server call
     }
 
-    // Trigger the mutation
-    makeMove.mutate({
-      gameId,
-      from: move.from,
-      to: move.to,
-      promotion: move.promotion,
-    });
+    setIsPending(true);
+    try {
+      await makeMoveMutation({
+        gameId: toGameId(gameId),
+        from: move.from,
+        to: move.to,
+        promotion: move.promotion,
+      });
+      setOptimisticFen(null);
+      onMoveSuccess?.();
+      setError(null);
+    } catch (error: unknown) {
+      setOptimisticFen(null);
+      setError(error instanceof Error ? error.message : "Failed to make move");
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setIsPending(false);
+    }
   }
 
-  // Use optimistic FEN if available, otherwise use server position
   const displayPosition = optimisticFen ?? position;
 
   return (
@@ -130,7 +92,7 @@ export function GameChessboard({
       <ChessboardWrapper
         position={displayPosition}
         orientation={orientation}
-        draggable={draggable && status === "in_progress" && !makeMove.isPending}
+        draggable={draggable && status === "in_progress" && !isPending}
         onMove={handleMove}
       />
     </div>

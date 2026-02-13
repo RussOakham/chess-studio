@@ -1,12 +1,14 @@
 # Database Package
 
-This package contains the database schema, client configuration, and migrations for Chess Studio.
+**Status: Retired for this app.** The chess-studio app uses **Convex** for all persisted data (games, moves, and auth). Better Auth runs on Convex via `@convex-dev/better-auth`; Neon and Drizzle are not used.
+
+This package (`@repo/db`) remains in the monorepo for reference or for other apps that might use Neon/Drizzle. The web app does not depend on it for auth or games.
 
 ## Setup
 
 ### Prerequisites
 
-- Neon DB project created
+- Neon DB project created (for Better Auth)
 - `DATABASE_URL` environment variable set
 
 ### Environment Variables
@@ -19,14 +21,9 @@ DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 
 The connection string can be obtained from your Neon project dashboard.
 
-### Database Schema
+### Schema (when used)
 
-The database includes the following tables:
-
-- **users**: User accounts
-- **games**: Chess games
-- **moves**: Individual moves in games
-- **game_reviews**: AI-generated game reviews
+When this package is used (e.g. by another app), the schema can include Better Auth tables and optional pgvector tables. The **chess-studio web app** does not use this package; it uses Convex for auth and games.
 
 ### Running Migrations
 

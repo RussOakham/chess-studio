@@ -12,11 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { api } from "@/convex/_generated/api";
+import { toGameId } from "@/lib/convex-id";
 import { useGame } from "@/lib/hooks/use-game";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
-import { trpc } from "@/lib/trpc/client";
+import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -34,9 +36,14 @@ function getStatusDescription(status: string): string {
   return "Game ended";
 }
 
-export function GamePageClient({
+/**
+ * Inner game content. Mounted with a key when Convex reconnects so useQuery
+ * re-subscribes and receives the latest game state (avoids stale UI after
+ * WebSocket disconnect/reconnect, e.g. from HMR).
+ */
+function GamePageContent({
   gameId,
-  initialBoardOrientation = "white",
+  initialBoardOrientation,
 }: GamePageClientProps) {
   const {
     game,
@@ -48,11 +55,8 @@ export function GamePageClient({
     isDraw,
     isLoading,
     isGameFetching,
-    refetch,
     chess,
   } = useGame(gameId);
-
-  const utils = trpc.useUtils();
 
   // Stockfish engine hook (client-side only)
   const {
@@ -61,49 +65,54 @@ export function GamePageClient({
     getBestMove,
   } = useStockfish();
 
-  // Ref to track the FEN when engine calculation starts (to prevent race conditions)
   const calculationFenRef = useRef<string | null>(null);
-
-  // Ref to track if we just submitted an engine move (to prevent duplicate submissions)
   const justSubmittedEngineMoveRef = useRef(false);
-
-  // Refs for stable access in engine effect (avoid effect re-running on every render)
-  const makeMoveRef =
-    useRef<
-      (variables: {
-        gameId: string;
-        from: string;
-        to: string;
-        promotion?: string;
-      }) => void
-    >(null);
   const getBestMoveRef = useRef(getBestMove);
-  const utilsRef = useRef(utils);
   getBestMoveRef.current = getBestMove;
-  utilsRef.current = utils;
 
-  // Make move mutation (used for both user and engine moves)
-  const makeMove = trpc.games.makeMove.useMutation({
-    onSuccess: () => {
-      // Refetch game data after move (fire-and-forget)
-      // eslint-disable-next-line typescript/no-floating-promises
-      utils.games.getById.invalidate({ gameId });
-      // eslint-disable-next-line typescript/no-floating-promises
-      utils.games.getMoves.invalidate({ gameId });
-      refetch();
-      // Clear the flag after a delay to allow refetch to complete and prevent re-trigger
-      // The delay ensures the effect won't re-run when game.fen updates
+  const makeMoveMutation = useMutation(api.games.makeMove);
+
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [isMovePending, setIsMovePending] = useState(false);
+
+  const makeMoveMutateWrapper = async (variables: {
+    gameId: string;
+    from: string;
+    to: string;
+    promotion?: string;
+  }) => {
+    setMoveError(null);
+    setIsMovePending(true);
+    try {
+      await makeMoveMutation({
+        gameId: toGameId(variables.gameId),
+        from: variables.from,
+        to: variables.to,
+        promotion: variables.promotion,
+      });
       setTimeout(() => {
         justSubmittedEngineMoveRef.current = false;
-      }, 1500);
-    },
-    onError: (error) => {
+      }, 800);
+    } catch (error: unknown) {
       console.error("Move error:", error);
       justSubmittedEngineMoveRef.current = false;
-      refetch();
-    },
-  });
-  makeMoveRef.current = makeMove.mutate;
+      setMoveError(
+        error instanceof Error ? error.message : "Failed to make move"
+      );
+    } finally {
+      setIsMovePending(false);
+    }
+  };
+
+  const makeMoveRef = useRef(makeMoveMutateWrapper);
+  makeMoveRef.current = makeMoveMutateWrapper;
+
+  const makeMove = {
+    mutate: makeMoveMutateWrapper,
+    isPending: isMovePending,
+    isError: Boolean(moveError),
+    error: moveError,
+  };
 
   // Check if it's an engine game and engine's turn
   const isEngineGame = Boolean(game?.difficulty);
@@ -144,7 +153,6 @@ export function GamePageClient({
       const fenAtStart = game.fen;
       const gameIdAtStart = game.id;
       const difficultyAtStart = game.difficulty;
-      const statusAtStart = game.status;
 
       // Store the FEN in ref to track this calculation
       calculationFenRef.current = fenAtStart;
@@ -163,57 +171,20 @@ export function GamePageClient({
               difficultyAtStart as DifficultyLevel
             );
 
-            // Verify game state hasn't changed before submitting
-            // Get the latest game state from the query cache (with single retry if empty)
-            let latestGameData = utilsRef.current.games.getById.getData({
-              gameId: gameIdAtStart,
-            });
-            if (latestGameData === undefined) {
-              // Single retry after brief delay to allow refetch to repopulate cache
-              // eslint-disable-next-line promise/avoid-new -- standard delay pattern for cache settlement
-              await new Promise<void>((resolve) => {
-                setTimeout(resolve, 150);
-              });
-              latestGameData = utilsRef.current.games.getById.getData({
-                gameId: gameIdAtStart,
-              });
-            }
-
-            // Check if the calculation is still valid
             if (
               calculationFenRef.current !== fenAtStart ||
-              !latestGameData ||
-              latestGameData.fen !== fenAtStart ||
-              latestGameData.id !== gameIdAtStart ||
-              latestGameData.status !== statusAtStart ||
               justSubmittedEngineMoveRef.current
             ) {
-              console.warn(
-                "Game state changed during engine calculation, skipping move",
-                {
-                  expectedFen: fenAtStart,
-                  currentFen: latestGameData?.fen,
-                  expectedGameId: gameIdAtStart,
-                  currentGameId: latestGameData?.id,
-                  expectedStatus: statusAtStart,
-                  currentStatus: latestGameData?.status,
-                  alreadySubmitted: justSubmittedEngineMoveRef.current,
-                }
-              );
               calculationFenRef.current = null;
               return;
             }
 
-            // Set flag to prevent duplicate submissions
             justSubmittedEngineMoveRef.current = true;
-
-            // Clear the ref since we're about to submit
             calculationFenRef.current = null;
 
-            // Execute the engine move via tRPC
             const mutateFn = makeMoveRef.current;
             if (mutateFn) {
-              mutateFn({
+              void mutateFn({
                 gameId: gameIdAtStart,
                 from: engineMove.from,
                 to: engineMove.to,
@@ -263,7 +234,8 @@ export function GamePageClient({
 
   // Determine board orientation based on game state
   // For now, default to white. Later we can use the color preference from game creation
-  const boardOrientation: "white" | "black" = initialBoardOrientation;
+  const boardOrientation: "white" | "black" =
+    initialBoardOrientation ?? "white";
 
   // Format move history for display
   // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.
@@ -333,7 +305,7 @@ export function GamePageClient({
                       if (makeMove.isError) {
                         return "bg-red-500";
                       }
-                      if (isCalculating || makeMove.isPending) {
+                      if (isEngineTurn || isCalculating || makeMove.isPending) {
                         return "bg-yellow-500";
                       }
                       return "bg-green-500";
@@ -343,8 +315,8 @@ export function GamePageClient({
                       if (makeMove.isError) {
                         return "Server error";
                       }
-                      if (isCalculating || makeMove.isPending) {
-                        return "Engine calculating move";
+                      if (isEngineTurn || isCalculating || makeMove.isPending) {
+                        return "Engine turn or calculating";
                       }
                       return "Player turn";
                     };
@@ -355,6 +327,9 @@ export function GamePageClient({
                       }
                       if (isCalculating || makeMove.isPending) {
                         return "Engine thinking";
+                      }
+                      if (isEngineTurn) {
+                        return "Engine's turn";
                       }
                       return "Your turn";
                     };
@@ -385,7 +360,7 @@ export function GamePageClient({
                     }
                     status={game.status}
                     gameId={game.id}
-                    onMoveSuccess={refetch}
+                    onMoveSuccess={undefined}
                   />
                 </div>
               </CardContent>
@@ -507,5 +482,30 @@ export function GamePageClient({
         </div>
       </main>
     </div>
+  );
+}
+
+/** When Convex WebSocket reconnects, remount game content so subscriptions get latest state. */
+export function GamePageClient(props: GamePageClientProps) {
+  const connectionState = useConvexConnectionState();
+  const wasDisconnectedRef = useRef(false);
+  const [connectionRefreshKey, setConnectionRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const connected = connectionState?.isWebSocketConnected ?? false;
+    if (wasDisconnectedRef.current && connected) {
+      setConnectionRefreshKey((prev) => prev + 1);
+      wasDisconnectedRef.current = false;
+    } else if (!connected) {
+      wasDisconnectedRef.current = true;
+    }
+  }, [connectionState?.isWebSocketConnected]);
+
+  return (
+    <GamePageContent
+      key={connectionRefreshKey}
+      gameId={props.gameId}
+      initialBoardOrientation={props.initialBoardOrientation}
+    />
   );
 }

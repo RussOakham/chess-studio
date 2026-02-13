@@ -2,16 +2,19 @@
 // NOTE: Stockfish runs client-side only (Web Worker-based)
 // This service validates and processes engine moves from the client
 
-import type { Game } from "@/lib/data-access/games.repository";
-
 import { Chess } from "chess.js";
+
+/** Minimal game shape needed for engine move validation (Convex game doc or equivalent). */
+export interface GameWithFen {
+  fen: string;
+}
 
 /**
  * Validate and process an engine move from the client
  * The actual Stockfish calculation happens client-side using useStockfish hook
  */
 export function validateEngineMove(
-  game: Game,
+  game: GameWithFen,
   move: {
     from: string;
     to: string;

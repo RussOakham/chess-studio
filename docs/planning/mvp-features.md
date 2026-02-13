@@ -283,16 +283,16 @@ This document outlines the MVP feature set for a slimmed-down chess.com clone. F
 
 ### Key Technical Considerations
 
-- **Type Safety**: tRPC for end-to-end type safety between frontend and backend
+- **Type Safety**: Convex for end-to-end type safety for game/move API (typed queries and mutations)
 - **Styling**: Tailwind CSS (latest) + ShadCN UI for components
 - **Chess Board**: 2D top-down view with custom SVG icons (MVP)
 - **3D Board**: Three.js + @react-three/fiber (Phase 2+ enhanced feature)
-- **Real-time updates**: WebSocket for live games, polling acceptable for MVP
+- **Real-time updates**: Convex subscriptions for live game/move updates (no polling)
 - **Engine integration**: Stockfish via child process or WebAssembly
 - **Move validation**: Use chess.js library
 - **Board UI**: Custom implementation with chess.js integration
 - **State management**: React state + Zustand if needed
-- **Game persistence**: Save to Neon DB after each move or at game end
+- **Game persistence**: Save to Convex after each move or at game end (real-time sync)
 - **Pre-move implementation**:
   - Queue moves in client state before turn
   - Validate pre-move when turn changes

@@ -1,12 +1,15 @@
 ---
-description: "Database migrations: Drizzle ORM migration workflow and best practices"
-globs: ["**/packages/db/**/*.ts", "**/packages/db/**/*.sql"]
+description: "Database migrations: Convex (primary); Drizzle/packages/db retired for this app"
+globs: ["**/packages/db/**/*.ts", "**/packages/db/**/*.sql", "**/convex/**/*.ts"]
 alwaysApply: false
 ---
 
 # Database Migrations
 
-This project uses Drizzle ORM for database schema management and migrations.
+**This app uses Convex for all persisted data** (games, moves, and auth). Auth is Better Auth with data stored in Convex; **Neon and Drizzle are not used.**
+
+- **Convex**: Schema in `apps/web/convex/schema.ts`; deploy with Convex CLI. See `@.cursor/rules/convex.mdc`.
+- **packages/db**: Retired for the web app. Kept in repo for reference or other apps. If you use it elsewhere, Drizzle migrations live in `packages/db`.
 
 ## Migration Workflow
 

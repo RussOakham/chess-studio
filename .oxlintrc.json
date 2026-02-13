@@ -7,7 +7,8 @@
     ".turbo/**",
     "node_modules/**",
     "**/public/engine/**",
-    "**/*.wasm"
+    "**/*.wasm",
+    "**/convex/_generated/**"
   ],
   "plugins": [
     "eslint",
@@ -39,6 +40,7 @@
     "unicorn/numeric-separators-style": "off",
     "react-in-jsx-scope": "off",
     "jsx-max-depth": "off",
+    "arrow-body-style": "off",
     "func-style": "off",
     "jsx-props-no-spreading": "off",
     "no-magic-numbers": "off",

@@ -18,12 +18,13 @@ AI-driven chess game application built with Next.js 16, React 19, and modern web
 ## Tech Stack
 
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, ShadCN Base UI
-- **Backend**: Next.js API Routes, Express.js/Go (planned)
-- **Database**: PostgreSQL (Neon DB) with Drizzle ORM
-- **Chess Engine**: Stockfish
-- **AI**: OpenAI/Anthropic for hints and summaries
-- **Authentication**: Better Auth
-- **Type Safety**: End-to-end type safety with tRPC (planned)
+- **Backend**: Next.js API Routes; game data and real-time state via Convex
+- **Game data**: Convex (queries/mutations, real-time subscriptions) for games and moves
+- **Auth**: Better Auth with Convex (auth data and sessions stored in Convex; no Neon or Drizzle)
+- **Chess Engine**: Stockfish (client-side WASM)
+- **AI**: OpenAI/Anthropic for hints and summaries (planned)
+- **Authentication**: Better Auth (Convex JWT integration)
+- **Type Safety**: End-to-end type safety via Convex (typed queries/mutations)
 - **Monorepo**: Turbo Repo with pnpm workspaces
 
 ## Project Structure

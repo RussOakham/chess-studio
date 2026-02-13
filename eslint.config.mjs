@@ -1,5 +1,7 @@
 // oxlint-disable typescript/no-unsafe-member-access
 // oxlint-disable typescript/no-unsafe-assignment
+import convexPlugin from "@convex-dev/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import json from "eslint-plugin-json";
 import oxlint from "eslint-plugin-oxlint";
 import yml from "eslint-plugin-yml";
@@ -25,6 +27,7 @@ const config = [
       "**/.next/**",
       "**/public/engine/**",
       "**/public/**/*.{js,wasm}",
+      "**/convex/_generated/**",
     ],
   },
 
@@ -47,12 +50,31 @@ const config = [
     },
   },
 
+  // Convex: best-practice rules for convex/** (scoped so rest of repo unchanged)
+  ...convexPlugin.configs.recommended,
+
   // YAML linting
   ...yml.configs["flat/recommended"],
 
   // eslint-plugin-oxlint to disable rules handled by Oxlint (for all files)
   // Type-aware linting is now handled by oxlint --type-aware
   ...oxlint.configs["flat/recommended"],
+
+  // Convex app code (last so it overrides): parse as TypeScript; allow Convex-style exports and .sort() on copies
+  {
+    files: ["apps/web/convex/**/*.ts"],
+    ignores: ["**/convex/_generated/**"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+    rules: {
+      "id-length": ["warn", { min: 2, exceptions: ["q", "a", "b"] }],
+      "import/group-exports": "off",
+      "unicorn/no-array-sort": "off",
+      "jest/require-hook": "off",
+    },
+  },
 ];
 
 export default config;

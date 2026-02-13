@@ -10,12 +10,14 @@ import { signIn } from "@/lib/auth-client";
 import { loginSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { fromError } from "zod-validation-error";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") ?? "/";
   const {
     register,
     handleSubmit,
@@ -40,8 +42,12 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to home page on success
-      router.push("/");
+      // Redirect to intended page (or home) on success
+      const target =
+        redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : "/";
+      router.push(target);
       router.refresh();
     } catch (error: unknown) {
       if (error instanceof Error) {

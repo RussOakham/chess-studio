@@ -293,18 +293,16 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://api:3001
-      - DATABASE_URL=${DATABASE_URL} # Neon DB connection string
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL} # Convex (games + auth)
 
   api:
     build: ./apps/api
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=${DATABASE_URL} # Neon DB connection string
       - STOCKFISH_PATH=/usr/bin/stockfish
 
-# Note: Database is Neon DB (serverless), not a container
-# DATABASE_URL is provided via Doppler secrets
+# Note: All persisted data (games and auth) is in Convex. Neon and Drizzle are not used.
 ```
 
 ### Deployment Flow (Dokploy)
@@ -320,17 +318,18 @@ services:
 
 ### Service Communication
 
-- **Frontend → Backend**: HTTP/HTTPS (REST API)
-- **Backend → Database**: Neon DB connection (serverless PostgreSQL)
-- **Backend → Stockfish**: Process spawn or UCI protocol
-- **Backend → LLM API**: HTTP requests (OpenAI/Anthropic)
+- **Frontend → Convex**: Convex client (WebSocket/HTTP) for game/move queries and mutations and for auth; real-time subscriptions
+- **Frontend → Next.js API**: Better Auth routes (e.g. `/api/auth/*`) proxy to Convex
+- **Convex**: Stores games, moves, and auth data (Better Auth component); no Neon or Drizzle
+- **Stockfish**: Client-side WASM (browser) or server process/UCI
+- **LLM API**: HTTP requests (OpenAI/Anthropic) for AI features
 
 ### Environment Variables
 
 All secrets managed via **Doppler**:
 
-- **Web**: `NEXT_PUBLIC_API_URL`, `DATABASE_URL`, Better Auth secrets
-- **API**: `DATABASE_URL`, `STOCKFISH_PATH`, `OPENAI_API_KEY`, `JWT_SECRET`
-- **Database**: Neon DB connection string (via Doppler)
+- **Web**: `NEXT_PUBLIC_CONVEX_URL`, Better Auth secrets (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc.)
+- **API** (if used): `STOCKFISH_PATH`, `OPENAI_API_KEY`, `JWT_SECRET`
+- **Convex**: Deployment URL; auth is Better Auth with data stored in Convex (see `docs/temp/migrate-convex.temp.md`). Neon and Drizzle are not used.
 
 Doppler service tokens injected into containers at runtime via Docker Compose integration.
