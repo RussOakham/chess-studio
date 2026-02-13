@@ -17,6 +17,9 @@ jobs:
   setup:
     name: Setup
     runs-on: ubuntu-latest
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_CONFIG: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,9 +55,6 @@ jobs:
         uses: dopplerhq/cli-action@v3
 
       - name: Build
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-          DOPPLER_CONFIG: dev
         run: pnpm build
 
   format-check:
