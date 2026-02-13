@@ -25,7 +25,7 @@ export default async function GamePage({ params }: GamePageProps) {
     if (isConvexAuthError(error)) {
       redirect("/login");
     }
-    // Game not found: Convex returns null/undefined for missing game
+    // Game not found: Convex throws Error with "Game not found" message
     if (error instanceof Error && /not found|404/i.test(error.message)) {
       notFound();
     }

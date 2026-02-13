@@ -15,7 +15,7 @@ alwaysApply: false
 
 - **Schema**: Edit `apps/web/convex/schema.ts`.
 - **Local**: `npx convex dev` (watches and pushes schema/function changes).
-- **Deploy**: `convex deploy` (from repo root or `apps/web`).
+- **Deploy**: `npx convex deploy` (from repo root or `apps/web`).
 
 ## Drizzle (archived) – Migration Workflow
 
