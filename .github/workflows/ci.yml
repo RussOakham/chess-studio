@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: ["**"]
   pull_request:
     branches: ["**"]
 
@@ -50,12 +48,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Required for apps/web build (doppler run -- next build). Add DOPPLER_TOKEN to repo secrets.
+      # Required for apps/web build. Add DOPPLER_TOKEN to repo secrets.
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
 
-      - name: Build
-        run: pnpm build
+      - name: Build (workspace)
+        run: pnpm turbo run build --filter=!@repo/web
+
+      - name: Build (web)
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: cd apps/web && doppler run --project chess-studio --config dev -- next build
 
   format-check:
     name: Format check
