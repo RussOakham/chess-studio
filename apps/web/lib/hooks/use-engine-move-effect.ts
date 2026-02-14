@@ -52,7 +52,6 @@ export function useEngineMoveEffect({
     promotion?: string;
   }>;
   makeMoveMutate: (variables: {
-    gameId: string;
     from: string;
     to: string;
     promotion?: string;
@@ -84,7 +83,6 @@ export function useEngineMoveEffect({
       gameId
     ) {
       const fenAtStart = gameFen;
-      const gameIdAtStart = gameId;
 
       calculationFenRef.current = fenAtStart;
 
@@ -109,7 +107,6 @@ export function useEngineMoveEffect({
             calculationFenRef.current = null;
 
             await makeMoveMutate({
-              gameId: String(gameIdAtStart),
               from: engineMove.from,
               to: engineMove.to,
               promotion: engineMove.promotion,

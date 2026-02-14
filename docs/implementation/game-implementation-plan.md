@@ -637,7 +637,7 @@ Phase 3 is complete when:
 
 1. ✅ **Phase 1.1–1.4**: Home, new game, game page, chessboard - **COMPLETE**
 2. ✅ **Phase 2.1–2.4**: Move validation, game state, Stockfish (client-side), game status - **COMPLETE**
-3. ✅ **Phase 3.1**: Move replay and PGN export - **COMPLETE** (when implemented)
+3. ✅ **Phase 3.1**: Move replay and PGN export - **COMPLETE**
 4. ✅ **Phase 3.2**: Resign - **COMPLETE** (offer draw descoped for PvE)
 5. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
 6. ✅ **Phase 4.1**: Evaluation bar and real-time eval - **COMPLETE**; best move suggestion optional

@@ -42,7 +42,7 @@ import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -123,6 +123,19 @@ function GamePageContent({
     getEvaluation
   );
 
+  const makeMoveMutate = useCallback(
+    async (variables: { from: string; to: string; promotion?: string }) => {
+      await makeMove.mutate({
+        from: variables.from,
+        to: variables.to,
+        promotion: variables.promotion,
+      });
+    },
+    // Intentionally depend only on makeMove.mutate to keep callback stable and avoid useEngineMoveEffect re-firing every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- makeMove object is new each render; .mutate is stable
+    [makeMove.mutate]
+  );
+
   useEngineMoveEffect({
     isEngineGame,
     isEngineTurn,
@@ -139,14 +152,7 @@ function GamePageContent({
     isStalemate,
     isDraw,
     getBestMove,
-    makeMoveMutate: async (variables) => {
-      await makeMove.mutate({
-        gameId: variables.gameId,
-        from: variables.from,
-        to: variables.to,
-        promotion: variables.promotion,
-      });
-    },
+    makeMoveMutate,
     justSubmittedRef: justSubmittedEngineMoveRef,
   });
 
