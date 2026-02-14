@@ -1,7 +1,5 @@
 "use client";
 
-import type { DifficultyLevel, PositionEvaluation } from "@repo/chess";
-
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import {
@@ -26,10 +24,20 @@ import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
 import {
   getGameOverMessage,
-  getKingSquareInCheck,
+  getKingInCheckSquareStyles,
   getStatusDescription,
 } from "@/lib/game-status";
+import {
+  getTurnStatusColor,
+  getTurnStatusLabel,
+  getTurnStatusText,
+} from "@/lib/game-turn-status";
+import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
+import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
+import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
 import { useGame } from "@/lib/hooks/use-game";
+import { useMakeMove } from "@/lib/hooks/use-make-move";
+import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation } from "convex/react";
 import Link from "next/link";
@@ -39,6 +47,35 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 interface GamePageClientProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
+}
+
+/** Status dot and label for turn/engine state. */
+function TurnStatusIndicator({
+  makeMove,
+  isEngineTurn,
+  isCalculating,
+}: {
+  makeMove: { isError: boolean; isPending: boolean };
+  isEngineTurn: boolean;
+  isCalculating: boolean;
+}) {
+  const params = {
+    isMoveError: makeMove.isError,
+    isEngineTurn,
+    isCalculating,
+    isMovePending: makeMove.isPending,
+  };
+  return (
+    <div className="absolute top-4 right-4 flex h-5 items-center gap-2">
+      <div
+        className={`h-3 w-3 shrink-0 rounded-full ${getTurnStatusColor(params)}`}
+        aria-label={getTurnStatusLabel(params)}
+      />
+      <span className="text-xs whitespace-nowrap text-muted-foreground">
+        {getTurnStatusText(params)}
+      </span>
+    </div>
+  );
 }
 
 /**
@@ -71,221 +108,73 @@ function GamePageContent({
     getEvaluation,
   } = useStockfish();
 
-  const calculationFenRef = useRef<string | null>(null);
-  const justSubmittedEngineMoveRef = useRef(false);
-  const getBestMoveRef = useRef(getBestMove);
-  getBestMoveRef.current = getBestMove;
-
-  const makeMoveMutation = useMutation(api.games.makeMove);
   const resignMutation = useMutation(api.games.resign);
-
   const router = useRouter();
-  const [moveError, setMoveError] = useState<string | null>(null);
-  const [isMovePending, setIsMovePending] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
-  const [evaluation, setEvaluation] = useState<PositionEvaluation | null>(null);
-  const evaluationFenRef = useRef<string | null>(null);
-  const getEvaluationRef = useRef(getEvaluation);
-  getEvaluationRef.current = getEvaluation;
+  const [pgnCopied, setPgnCopied] = useState(false);
 
-  const makeMoveMutateWrapper = useCallback(
-    async (variables: {
-      gameId: string;
-      from: string;
-      to: string;
-      promotion?: string;
-    }) => {
-      setMoveError(null);
-      setIsMovePending(true);
-      try {
-        await makeMoveMutation({
-          gameId: toGameId(variables.gameId),
-          from: variables.from,
-          to: variables.to,
-          promotion: variables.promotion,
-        });
-        setTimeout(() => {
-          justSubmittedEngineMoveRef.current = false;
-        }, 800);
-      } catch (error: unknown) {
-        console.error("Move error:", error);
-        justSubmittedEngineMoveRef.current = false;
-        setMoveError(
-          error instanceof Error ? error.message : "Failed to make move"
-        );
-      } finally {
-        setIsMovePending(false);
-      }
+  const { makeMove, justSubmittedEngineMoveRef } = useMakeMove(gameId);
+  const { isEngineGame, isEngineTurn } = useEngineTurn(game, chess);
+  const evaluation = useEvaluationSync(
+    game?.fen,
+    game?.status,
+    isStockfishReady,
+    getEvaluation
+  );
+
+  const makeMoveMutate = useCallback(
+    async (variables: { from: string; to: string; promotion?: string }) => {
+      await makeMove.mutate({
+        from: variables.from,
+        to: variables.to,
+        promotion: variables.promotion,
+      });
     },
-    [makeMoveMutation]
+    // Intentionally depend only on makeMove.mutate to keep callback stable and avoid useEngineMoveEffect re-firing every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- makeMove object is new each render; .mutate is stable
+    [makeMove.mutate]
   );
 
-  const makeMoveRef = useRef(makeMoveMutateWrapper);
-  makeMoveRef.current = makeMoveMutateWrapper;
-
-  const makeMove = useMemo(
-    () => ({
-      mutate: makeMoveMutateWrapper,
-      isPending: isMovePending,
-      isError: Boolean(moveError),
-      error: moveError,
-    }),
-    [makeMoveMutateWrapper, isMovePending, moveError]
-  );
-
-  const isGameOver = game?.status === "completed";
-  const kingSquareInCheck = useMemo(() => getKingSquareInCheck(chess), [chess]);
-  const customSquareStyles = useMemo(() => {
-    if (!kingSquareInCheck) {
-      return undefined;
-    }
-    return {
-      [kingSquareInCheck]: {
-        boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
-      },
-    };
-  }, [kingSquareInCheck]);
-  const gameOverMessage = getGameOverMessage(game?.result);
-
-  /**
-   * Debounced position evaluation for the evaluation bar.
-   * Runs only when game is in progress and Stockfish is ready; skips when engine is calculating.
-   */
-  useEffect(() => {
-    if (game?.status !== "in_progress" || !isStockfishReady || isCalculating) {
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      const requestedFen = game.fen;
-      evaluationFenRef.current = requestedFen;
-      void (async () => {
-        try {
-          const ev = await getEvaluationRef.current(requestedFen);
-          if (evaluationFenRef.current === requestedFen) {
-            setEvaluation(ev);
-          }
-        } catch {
-          if (evaluationFenRef.current === requestedFen) {
-            setEvaluation(null);
-          }
-        }
-      })();
-    }, 250);
-    return () => clearTimeout(timeoutId);
-    // Omit isCalculating to avoid loop: getEvaluation sets it, so deps would retrigger effect
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- game.fen, game.status, isStockfishReady
-  }, [game?.fen, game?.status, isStockfishReady]);
-
-  // Check if it's an engine game and engine's turn
-  const isEngineGame = Boolean(game?.difficulty);
-  const isEngineTurn = (() => {
-    if (!game || !chess || !isEngineGame) {
-      return false;
-    }
-
-    const userColor = game.color === "random" ? "white" : game.color;
-    const engineColor = userColor === "white" ? "black" : "white";
-    const currentTurnColor = chess.turn() === "w" ? "white" : "black";
-
-    return currentTurnColor === engineColor;
-  })();
-
-  // Auto-trigger engine move when it's engine's turn
-  useEffect(() => {
-    // Prevent duplicate submissions - if we just submitted a move, skip
-    if (justSubmittedEngineMoveRef.current) {
-      return;
-    }
-
-    if (
-      isEngineGame &&
-      isEngineTurn &&
-      game?.status === "in_progress" &&
-      !isGameFetching &&
-      isStockfishReady &&
-      !isCalculating &&
-      !makeMove.isPending &&
-      !isCheckmate &&
-      !isStalemate &&
-      !isDraw &&
-      game?.difficulty &&
-      game?.fen
-    ) {
-      // Capture all game state at the start to prevent race conditions
-      const fenAtStart = game.fen;
-      const gameIdAtStart = game.id;
-      const difficultyAtStart = game.difficulty;
-
-      // Store the FEN in ref to track this calculation
-      calculationFenRef.current = fenAtStart;
-
-      // Small delay to ensure UI updates after user move
-      const timeout = setTimeout(() => {
-        // Calculate engine move client-side and execute
-        void (async () => {
-          try {
-            const getBestMoveFn = getBestMoveRef.current;
-            if (!getBestMoveFn) {
-              return;
-            }
-            const engineMove = await getBestMoveFn(
-              fenAtStart,
-              difficultyAtStart as DifficultyLevel
-            );
-
-            if (
-              calculationFenRef.current !== fenAtStart ||
-              justSubmittedEngineMoveRef.current
-            ) {
-              calculationFenRef.current = null;
-              return;
-            }
-
-            justSubmittedEngineMoveRef.current = true;
-            calculationFenRef.current = null;
-
-            const mutateFn = makeMoveRef.current;
-            if (mutateFn) {
-              void mutateFn({
-                gameId: gameIdAtStart,
-                from: engineMove.from,
-                to: engineMove.to,
-                promotion: engineMove.promotion,
-              });
-            }
-          } catch (error) {
-            console.error("Failed to calculate engine move:", error);
-            calculationFenRef.current = null;
-            justSubmittedEngineMoveRef.current = false;
-          }
-        })();
-      }, 500);
-
-      return () => {
-        clearTimeout(timeout);
-        // Clear ref if effect is cleaned up (e.g., component unmounts or conditions change)
-        if (calculationFenRef.current === fenAtStart) {
-          calculationFenRef.current = null;
-        }
-      };
-    }
-  }, [
+  useEngineMoveEffect({
     isEngineGame,
     isEngineTurn,
-    game?.status,
-    game?.difficulty,
-    game?.fen,
-    game?.id,
-    gameId,
+    gameStatus: game?.status,
+    gameFen: game?.fen,
+    gameId: game?.id,
+    gameDifficulty: game?.difficulty,
+    gameIdParam: gameId,
     isGameFetching,
     isStockfishReady,
     isCalculating,
-    makeMove.isPending,
+    makeMoveIsPending: makeMove.isPending,
     isCheckmate,
     isStalemate,
     isDraw,
-  ]);
+    getBestMove,
+    makeMoveMutate,
+    justSubmittedRef: justSubmittedEngineMoveRef,
+  });
+
+  const isGameOver = game?.status === "completed";
+  const customSquareStyles = useMemo(
+    () => getKingInCheckSquareStyles(chess),
+    [chess]
+  );
+  const gameOverMessage = getGameOverMessage(game?.result);
+
+  // All hooks must run before any early return (Rules of Hooks)
+  const boardOrientation: "white" | "black" =
+    initialBoardOrientation ?? "white";
+
+  const {
+    replayIndex,
+    setReplayIndex,
+    sortedMoves,
+    viewingFen,
+    isViewingLive,
+    moveHistory,
+  } = useReplay(moves, game?.fen);
 
   if (isLoading || !game) {
     return (
@@ -294,25 +183,6 @@ function GamePageContent({
       </div>
     );
   }
-
-  // Determine board orientation based on game state
-  // For now, default to white. Later we can use the color preference from game creation
-  const boardOrientation: "white" | "black" =
-    initialBoardOrientation ?? "white";
-
-  // Format move history for display
-  // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.
-  const moveHistory = moves.map((move) => {
-    // Move number represents the full move pair (white + black)
-    // For display: white moves show the number, black moves don't
-    const movePairNumber = Math.ceil(move.moveNumber / 2);
-    const isWhiteMove = move.moveNumber % 2 === 1;
-    return {
-      ...move,
-      displayNumber: isWhiteMove ? movePairNumber : undefined,
-      isWhiteMove,
-    };
-  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -386,61 +256,28 @@ function GamePageContent({
                   {getStatusDescription(game.status)}
                 </CardDescription>
                 {/* Fixed-size status indicator (always rendered to prevent CLS) */}
-                {game.status === "in_progress" &&
-                  (() => {
-                    const getStatusColor = () => {
-                      if (makeMove.isError) {
-                        return "bg-red-500";
-                      }
-                      if (isEngineTurn || isCalculating || makeMove.isPending) {
-                        return "bg-yellow-500";
-                      }
-                      return "bg-green-500";
-                    };
-
-                    const getStatusLabel = () => {
-                      if (makeMove.isError) {
-                        return "Server error";
-                      }
-                      if (isEngineTurn || isCalculating || makeMove.isPending) {
-                        return "Engine turn or calculating";
-                      }
-                      return "Player turn";
-                    };
-
-                    const getStatusText = () => {
-                      if (makeMove.isError) {
-                        return "Error";
-                      }
-                      if (isCalculating || makeMove.isPending) {
-                        return "Engine thinking";
-                      }
-                      if (isEngineTurn) {
-                        return "Engine's turn";
-                      }
-                      return "Your turn";
-                    };
-
-                    return (
-                      <div className="absolute top-4 right-4 flex h-5 items-center gap-2">
-                        <div
-                          className={`h-3 w-3 shrink-0 rounded-full ${getStatusColor()}`}
-                          aria-label={getStatusLabel()}
-                        />
-                        <span className="text-xs whitespace-nowrap text-muted-foreground">
-                          {getStatusText()}
-                        </span>
-                      </div>
-                    );
-                  })()}
+                {game.status === "in_progress" && (
+                  <TurnStatusIndicator
+                    makeMove={makeMove}
+                    isEngineTurn={isEngineTurn}
+                    isCalculating={isCalculating}
+                  />
+                )}
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center gap-4">
+                  {!isViewingLive && (
+                    <p className="text-xs text-muted-foreground">
+                      Viewing past position — use controls below to return to
+                      live
+                    </p>
+                  )}
                   <div className="flex items-stretch gap-4">
                     <GameChessboard
-                      position={game.fen}
+                      position={viewingFen}
                       orientation={boardOrientation}
                       draggable={
+                        isViewingLive &&
                         game.status === "in_progress" &&
                         !isEngineTurn &&
                         !isCalculating &&
@@ -541,11 +378,6 @@ function GamePageContent({
                     {isResigning ? "Resigning…" : "Resign"}
                   </Button>
                 )}
-                {game.status === "in_progress" && (
-                  <Button variant="outline" className="w-full" disabled>
-                    Offer Draw
-                  </Button>
-                )}
               </CardContent>
             </Card>
 
@@ -554,41 +386,131 @@ function GamePageContent({
               <CardHeader>
                 <CardTitle>Move History</CardTitle>
                 <CardDescription>
-                  {moves.length === 0
+                  {sortedMoves.length === 0
                     ? "No moves yet"
-                    : `${moves.length} move${moves.length === 1 ? "" : "s"}`}
+                    : `${sortedMoves.length} move${sortedMoves.length === 1 ? "" : "s"}`}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {moves.length === 0 ? (
+              <CardContent className="space-y-3">
+                {sortedMoves.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === 0}
+                      onClick={() => setReplayIndex(0)}
+                    >
+                      Start
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === 0}
+                      onClick={() =>
+                        setReplayIndex((prev) => Math.max(0, prev - 1))
+                      }
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === sortedMoves.length}
+                      onClick={() =>
+                        setReplayIndex((prev) =>
+                          Math.min(sortedMoves.length, prev + 1)
+                        )
+                      }
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === sortedMoves.length}
+                      onClick={() => setReplayIndex(sortedMoves.length)}
+                    >
+                      End
+                    </Button>
+                  </div>
+                )}
+                {sortedMoves.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Move history will appear here as you play
                   </p>
                 ) : (
                   <div className="max-h-96 space-y-1 overflow-y-auto">
-                    {moveHistory.map((move) => (
-                      <div
-                        key={move.id}
-                        className="flex items-center gap-2 rounded p-2 text-sm hover:bg-muted"
-                      >
-                        {move.displayNumber && (
-                          <span className="font-medium text-muted-foreground">
-                            {move.displayNumber}.
-                          </span>
-                        )}
-                        <span
-                          className={
-                            move.isWhiteMove
-                              ? "font-medium"
-                              : "text-muted-foreground"
-                          }
+                    {moveHistory.map((move, idx) => {
+                      const isCurrent =
+                        replayIndex > 0 && replayIndex === idx + 1;
+                      const isLive =
+                        replayIndex === sortedMoves.length &&
+                        idx === moveHistory.length - 1;
+                      const highlighted = isCurrent || isLive;
+                      return (
+                        <button
+                          key={move.id}
+                          type="button"
+                          className={`flex w-full cursor-pointer items-center gap-2 rounded p-2 text-left text-sm hover:bg-muted ${
+                            highlighted
+                              ? "bg-primary/10 ring-1 ring-primary/30"
+                              : ""
+                          }`}
+                          onClick={() => setReplayIndex(idx + 1)}
                         >
-                          {move.moveSan}
-                        </span>
-                      </div>
-                    ))}
+                          {move.displayNumber && (
+                            <span className="font-medium text-muted-foreground">
+                              {move.displayNumber}.
+                            </span>
+                          )}
+                          <span
+                            className={
+                              move.isWhiteMove
+                                ? "font-medium"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {move.moveSan}
+                          </span>
+                          {isLive && (
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              (live)
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* PGN */}
+            <Card>
+              <CardHeader>
+                <CardTitle>PGN</CardTitle>
+                <CardDescription>Portable Game Notation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
+                  {game.pgn ?? "No moves yet"}
+                </pre>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(game.pgn ?? "");
+                      setPgnCopied(true);
+                      setTimeout(() => setPgnCopied(false), 2000);
+                    } catch {
+                      // Ignore clipboard errors
+                    }
+                  }}
+                >
+                  {pgnCopied ? "Copied" : "Copy PGN"}
+                </Button>
               </CardContent>
             </Card>
           </div>

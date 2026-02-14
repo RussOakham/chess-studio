@@ -131,6 +131,41 @@ refactor/simplify-service-layer
 - Note any breaking changes
 - Include testing instructions if needed
 
+### Handling MR/PR Comments
+
+When addressing reviewer feedback (e.g. CodeRabbit, human reviewers):
+
+**1. Retrieve all comments via GitHub CLI**
+
+- List PR comments: `gh pr view <PR_NUMBER> --comments` or `gh api repos/:owner/:repo/issues/<PR_NUMBER>/comments`
+- List review comments (on lines of code): `gh pr view <PR_NUMBER>` then `gh api repos/:owner/:repo/pulls/<PR_NUMBER>/comments`
+- From the PR branch: `gh pr view --web` to open in browser, or `gh pr view <PR_NUMBER>` for summary and comment count
+
+**2. Review and categorise into four tiers**
+
+- **Critical/Important** – Security, correctness, data integrity, or blocking merge. Address before marking ready.
+- **Medium Importance** – Readability, maintainability, consistency, or clear best-practice improvements. Address when reasonable.
+- **Low Importance** – Minor style or optional suggestions. Address if quick; otherwise document or defer.
+- **No Action Needed / Negligible / Incorrect** – Out of scope, wrong context, or disagree with suggestion. No code change; reply or resolve with brief explanation.
+
+**3. Triage and fix**
+
+- Work through Critical and Important first, then Medium, then Low as time allows.
+- For "No Action Needed", decide whether to reply (e.g. "Out of scope for this PR") or resolve without change.
+- Follow normal pre-commit steps (lint, format, type-check) before committing.
+
+**4. Commit and push changes**
+
+- Follow **Commit Permissions** and **Commit Message Format** in this document.
+- Use a single commit for review fixes when logical (e.g. `fix(pr): address review comments`) or separate commits per theme if the change set is large.
+- Push to the same branch; the MR/PR will update automatically.
+
+**5. Respond on the MR/PR**
+
+- **Option A:** Reply to each comment where you made a change, briefly explaining what you did, then resolve the thread.
+- **Option B:** Post a single new comment on the PR summarising how you addressed feedback (by tier or by topic) and resolve threads as "Fixed" or "Won't fix" with a short note where helpful.
+- For "No Action Needed" items, reply once explaining why no change was made and resolve.
+
 ## Workflow Summary
 
 ### Before Committing
@@ -154,6 +189,14 @@ refactor/simplify-service-layer
 2. ✅ Create in draft mode
 3. ✅ Use MR template if available
 4. ✅ Write concise description
+
+### When Addressing MR Comments
+
+1. ✅ Use `gh pr view <PR_NUMBER> --comments` / `gh api` to retrieve all comments
+2. ✅ Categorise into Critical, Medium, Low, No Action Needed
+3. ✅ Triage and fix; run lint/format/type-check before committing
+4. ✅ Commit and push (with user permission)
+5. ✅ Reply per-comment or post one summary comment; resolve threads
 
 ## References
 
