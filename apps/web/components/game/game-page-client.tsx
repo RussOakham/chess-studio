@@ -84,10 +84,17 @@ function GamePageContent({
   const [isMovePending, setIsMovePending] = useState(false);
   const [isResigning, setIsResigning] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [pgnCopied, setPgnCopied] = useState(false);
   const [evaluation, setEvaluation] = useState<PositionEvaluation | null>(null);
   const evaluationFenRef = useRef<string | null>(null);
   const getEvaluationRef = useRef(getEvaluation);
   getEvaluationRef.current = getEvaluation;
+
+  // Replay: 0 = initial position, moves.length = live. Jump to live when new move is added.
+  const [replayIndex, setReplayIndex] = useState(0);
+  useEffect(() => {
+    setReplayIndex(moves.length);
+  }, [moves.length]);
 
   const makeMoveMutateWrapper = useCallback(
     async (variables: {
@@ -191,7 +198,7 @@ function GamePageContent({
     return currentTurnColor === engineColor;
   })();
 
-  // Auto-trigger engine move when it's engine's turn
+  // Auto-trigger engine move when it's engine's turn. If user offered a draw, clear it first (engine "declines").
   useEffect(() => {
     // Prevent duplicate submissions - if we just submitted a move, skip
     if (justSubmittedEngineMoveRef.current) {
@@ -212,17 +219,13 @@ function GamePageContent({
       game?.difficulty &&
       game?.fen
     ) {
-      // Capture all game state at the start to prevent race conditions
       const fenAtStart = game.fen;
       const gameIdAtStart = game.id;
       const difficultyAtStart = game.difficulty;
 
-      // Store the FEN in ref to track this calculation
       calculationFenRef.current = fenAtStart;
 
-      // Small delay to ensure UI updates after user move
       const timeout = setTimeout(() => {
-        // Calculate engine move client-side and execute
         void (async () => {
           try {
             const getBestMoveFn = getBestMoveRef.current;
@@ -264,7 +267,6 @@ function GamePageContent({
 
       return () => {
         clearTimeout(timeout);
-        // Clear ref if effect is cleaned up (e.g., component unmounts or conditions change)
         if (calculationFenRef.current === fenAtStart) {
           calculationFenRef.current = null;
         }
@@ -287,6 +289,43 @@ function GamePageContent({
     isDraw,
   ]);
 
+  // All hooks must run before any early return (Rules of Hooks)
+  const boardOrientation: "white" | "black" =
+    initialBoardOrientation ?? "white";
+
+  const sortedMoves = useMemo(() => {
+    const copy = [...moves];
+    // eslint-disable-next-line unicorn/no-array-sort -- copy only; toSorted not in TS lib
+    copy.sort((moveA, moveB) => moveA.moveNumber - moveB.moveNumber);
+    return copy;
+  }, [moves]);
+
+  const viewingFen = useMemo(() => {
+    const fen = game?.fen ?? "";
+    if (replayIndex === sortedMoves.length) {
+      return fen;
+    }
+    if (replayIndex === 0) {
+      return sortedMoves[0]?.fenBefore ?? fen;
+    }
+    const move = sortedMoves[replayIndex - 1];
+    return move?.fenAfter ?? fen;
+  }, [game?.fen, replayIndex, sortedMoves]);
+
+  const isViewingLive = replayIndex === sortedMoves.length;
+
+  const moveHistory = useMemo(() => {
+    return sortedMoves.map((move) => {
+      const movePairNumber = Math.ceil(move.moveNumber / 2);
+      const isWhiteMove = move.moveNumber % 2 === 1;
+      return {
+        ...move,
+        displayNumber: isWhiteMove ? movePairNumber : undefined,
+        isWhiteMove,
+      };
+    });
+  }, [sortedMoves]);
+
   if (isLoading || !game) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -294,25 +333,6 @@ function GamePageContent({
       </div>
     );
   }
-
-  // Determine board orientation based on game state
-  // For now, default to white. Later we can use the color preference from game creation
-  const boardOrientation: "white" | "black" =
-    initialBoardOrientation ?? "white";
-
-  // Format move history for display
-  // Moves are numbered: 1 (white), 1 (black), 2 (white), 2 (black), etc.
-  const moveHistory = moves.map((move) => {
-    // Move number represents the full move pair (white + black)
-    // For display: white moves show the number, black moves don't
-    const movePairNumber = Math.ceil(move.moveNumber / 2);
-    const isWhiteMove = move.moveNumber % 2 === 1;
-    return {
-      ...move,
-      displayNumber: isWhiteMove ? movePairNumber : undefined,
-      isWhiteMove,
-    };
-  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -436,11 +456,18 @@ function GamePageContent({
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center gap-4">
+                  {!isViewingLive && (
+                    <p className="text-xs text-muted-foreground">
+                      Viewing past position — use controls below to return to
+                      live
+                    </p>
+                  )}
                   <div className="flex items-stretch gap-4">
                     <GameChessboard
-                      position={game.fen}
+                      position={viewingFen}
                       orientation={boardOrientation}
                       draggable={
+                        isViewingLive &&
                         game.status === "in_progress" &&
                         !isEngineTurn &&
                         !isCalculating &&
@@ -541,11 +568,6 @@ function GamePageContent({
                     {isResigning ? "Resigning…" : "Resign"}
                   </Button>
                 )}
-                {game.status === "in_progress" && (
-                  <Button variant="outline" className="w-full" disabled>
-                    Offer Draw
-                  </Button>
-                )}
               </CardContent>
             </Card>
 
@@ -554,41 +576,131 @@ function GamePageContent({
               <CardHeader>
                 <CardTitle>Move History</CardTitle>
                 <CardDescription>
-                  {moves.length === 0
+                  {sortedMoves.length === 0
                     ? "No moves yet"
-                    : `${moves.length} move${moves.length === 1 ? "" : "s"}`}
+                    : `${sortedMoves.length} move${sortedMoves.length === 1 ? "" : "s"}`}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {moves.length === 0 ? (
+              <CardContent className="space-y-3">
+                {sortedMoves.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === 0}
+                      onClick={() => setReplayIndex(0)}
+                    >
+                      Start
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === 0}
+                      onClick={() =>
+                        setReplayIndex((prev) => Math.max(0, prev - 1))
+                      }
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === sortedMoves.length}
+                      onClick={() =>
+                        setReplayIndex((prev) =>
+                          Math.min(sortedMoves.length, prev + 1)
+                        )
+                      }
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={replayIndex === sortedMoves.length}
+                      onClick={() => setReplayIndex(sortedMoves.length)}
+                    >
+                      End
+                    </Button>
+                  </div>
+                )}
+                {sortedMoves.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Move history will appear here as you play
                   </p>
                 ) : (
                   <div className="max-h-96 space-y-1 overflow-y-auto">
-                    {moveHistory.map((move) => (
-                      <div
-                        key={move.id}
-                        className="flex items-center gap-2 rounded p-2 text-sm hover:bg-muted"
-                      >
-                        {move.displayNumber && (
-                          <span className="font-medium text-muted-foreground">
-                            {move.displayNumber}.
-                          </span>
-                        )}
-                        <span
-                          className={
-                            move.isWhiteMove
-                              ? "font-medium"
-                              : "text-muted-foreground"
-                          }
+                    {moveHistory.map((move, idx) => {
+                      const isCurrent =
+                        replayIndex > 0 && replayIndex === idx + 1;
+                      const isLive =
+                        replayIndex === sortedMoves.length &&
+                        idx === moveHistory.length - 1;
+                      const highlighted = isCurrent || isLive;
+                      return (
+                        <button
+                          key={move.id}
+                          type="button"
+                          className={`flex w-full cursor-pointer items-center gap-2 rounded p-2 text-left text-sm hover:bg-muted ${
+                            highlighted
+                              ? "bg-primary/10 ring-1 ring-primary/30"
+                              : ""
+                          }`}
+                          onClick={() => setReplayIndex(idx + 1)}
                         >
-                          {move.moveSan}
-                        </span>
-                      </div>
-                    ))}
+                          {move.displayNumber && (
+                            <span className="font-medium text-muted-foreground">
+                              {move.displayNumber}.
+                            </span>
+                          )}
+                          <span
+                            className={
+                              move.isWhiteMove
+                                ? "font-medium"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {move.moveSan}
+                          </span>
+                          {isLive && (
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              (live)
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* PGN */}
+            <Card>
+              <CardHeader>
+                <CardTitle>PGN</CardTitle>
+                <CardDescription>Portable Game Notation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
+                  {game.pgn ?? "No moves yet"}
+                </pre>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(game.pgn ?? "");
+                      setPgnCopied(true);
+                      setTimeout(() => setPgnCopied(false), 2000);
+                    } catch {
+                      // Ignore clipboard errors
+                    }
+                  }}
+                >
+                  {pgnCopied ? "Copied" : "Copy PGN"}
+                </Button>
               </CardContent>
             </Card>
           </div>

@@ -69,15 +69,17 @@ This document outlines the high-level implementation plan for building the core 
 - **Phase 2.4: Game Status Detection** ✅
   - Game end (checkmate, stalemate, draw) updates status/result in Convex; UI shows result and checkmate badge. Game-end modal (AlertDialog) and king-in-check square highlight implemented.
 - **Phase 3.2: Game Controls (Resign)** ✅
-  - `resign` Convex mutation and Resign button with confirmation implemented. Offer draw not yet wired.
+  - `resign` Convex mutation and Resign button with confirmation implemented. Offer draw descoped for PvE; to be added when PvP is supported.
 - **Phase 3.3: Game History Page** ✅
   - `/games` page implemented (`app/games/page.tsx`, `GamesListClient`); "View all" from home no longer 404s.
+- **Phase 4.1: Engine Evaluation Display (partial)** ✅
+  - Live evaluation bar and real-time evaluation during game are implemented. Best move suggestion display remains optional/future.
 
 🔄 **Next Steps:**
 
-- Phase 3.1: Move replay (click to navigate to position) and PGN export (optional)
-- Phase 3.2: Offer draw (mutation + wire button) if desired
-- Phase 4: Enhanced features (evaluation bar, hints, post-game analysis)
+- Phase 3.1: Move replay (click to navigate to position) and PGN export — in progress / planned
+- Phase 3.2: Offer draw — descoped for PvE; add when PvP is supported
+- Phase 4: Hints, post-game analysis (evaluation bar already done)
 
 ## Library Decision: react-chessboard
 
@@ -397,28 +399,23 @@ This document outlines the high-level implementation plan for building the core 
 
 **Goal:** Add essential game features and improve UX.
 
-#### 3.1 Move History & Notation
+#### 3.1 Move History & Notation (replay and PGN)
 
 **Location:**
 
-- `apps/web/components/chess/move-history.tsx`
+- `apps/web/components/game/game-page-client.tsx` (move list, replay state, PGN section)
 - `apps/web/app/game/[gameId]/page.tsx`
 
 **Tasks:**
 
-- [ ] Create move history component:
-  - Display moves in algebraic notation (e.g., "1. e4 e5")
-  - Show move numbers
-  - Highlight current move
-  - Click to navigate to position (replay)
-- [ ] Add move navigation:
-  - Previous/Next buttons
-  - Jump to start/end
-  - Click move in history to view position
-- [ ] Display PGN notation:
-  - Full game notation
-  - Copy PGN button
-  - Export game option
+- [ ] Move history with replay:
+  - Display moves in algebraic notation (e.g., "1. e4 e5"); show move numbers
+  - Highlight current move (position being viewed)
+  - Click move row to navigate to position (replay)
+- [ ] Move navigation controls:
+  - Start / Prev / Next / End buttons; disable at boundaries
+- [ ] PGN display and copy:
+  - Read-only PGN block (from `game.pgn`); Copy PGN button with feedback
 
 **Dependencies:** 2.1 (moves are being saved)
 
@@ -433,12 +430,12 @@ This document outlines the high-level implementation plan for building the core 
 - `apps/web/convex/games.ts` (`resign` mutation)
 - `apps/web/components/game/game-page-client.tsx` (Resign button with confirmation)
 
-**Status:** Resign is implemented: `resign` Convex mutation sets game to completed with opponent winning; Resign button with confirmation dialog is wired. Offer draw button is present but not yet wired (no mutation).
+**Status:** Resign is implemented. Offer draw is descoped for PvE and will be added when PvP is supported.
 
 **Tasks:**
 
 - [x] Resign: Convex mutation, button, confirmation
-- [ ] Offer draw: mutation + wire button (optional for MVP)
+- [ ] Offer draw: descoped for PvE; add mutations + UI when PvP is available
 - [x] New game link (to `/game/new`) available from home and game page
 
 **Dependencies:** 2.4 (game status)
@@ -470,13 +467,13 @@ This document outlines the high-level implementation plan for building the core 
 
 **Goal:** Add advanced features for better user experience.
 
-#### 4.1 Engine Evaluation Display
+#### 4.1 Engine Evaluation Display ✅ **PARTIAL**
 
 **Tasks:**
 
-- [ ] Position evaluation bar
-- [ ] Real-time evaluation during game
-- [ ] Best move suggestion display
+- [x] Position evaluation bar
+- [x] Real-time evaluation during game
+- [ ] Best move suggestion display (optional; later)
 
 **Estimated Time:** 3-4 hours
 
@@ -566,8 +563,8 @@ await db.insert(moves).values({
 5. `api.games.makeMove` - Make a move ✅ **Implemented**
 6. Engine move - Handled client-side (Stockfish) then submitted via `makeMove` ✅
 7. `api.games.resign` - Resign game ✅ **Implemented**
-8. `games.offerDraw` - Offer draw ⏳ **Stub or future**
-9. `games.acceptDraw` - Accept draw ⏳ **Stub or future**
+8. `games.offerDraw` - Offer draw (descoped for PvE; add with PvP)
+9. `games.acceptDraw` / `declineDraw` - (descoped for PvE; add with PvP)
 
 ### State Management Strategy
 
@@ -633,18 +630,20 @@ Phase 2 is complete when:
 Phase 3 is complete when:
 
 - ✅ User can view game history (home + `/games` list)
-- [ ] User can replay past games (step-through; optional)
-- ✅ Core game features work (resign implemented; offer draw optional)
+- [x] User can replay past games (step-through; Phase 3.1)
+- ✅ Core game features work (resign implemented; offer draw descoped for PvE)
 
 ## Next Steps
 
 1. ✅ **Phase 1.1–1.4**: Home, new game, game page, chessboard - **COMPLETE**
 2. ✅ **Phase 2.1–2.4**: Move validation, game state, Stockfish (client-side), game status - **COMPLETE**
-3. ✅ **Phase 3.2**: Resign - **COMPLETE**
-4. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
-5. **Optional:** Phase 3.1 move replay and PGN export; Phase 3.2 offer draw; Phase 4 evaluation bar, hints, post-game analysis
+3. ✅ **Phase 3.1**: Move replay and PGN export - **COMPLETE** (when implemented)
+4. ✅ **Phase 3.2**: Resign - **COMPLETE** (offer draw descoped for PvE)
+5. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
+6. ✅ **Phase 4.1**: Evaluation bar and real-time eval - **COMPLETE**; best move suggestion optional
+7. **Optional:** Phase 4 hints, post-game analysis
 
-**Current Status:** Core game mechanics and game history list are complete. Users can create games, play vs engine, resign, and view all games at `/games`.
+**Current Status:** Core game mechanics, game history, move replay, and PGN export are complete. Live evaluation bar is implemented. Users can create games, play vs engine, resign, replay moves, and copy PGN. Offer draw is descoped for PvE and will be added with PvP.
 
 ## Notes
 
