@@ -52,4 +52,28 @@ function getGameOverMessage(result: GameResult | undefined): string {
   return "Draw";
 }
 
-export { getGameOverMessage, getKingSquareInCheck, getStatusDescription };
+/** Square styles for highlighting (e.g. king in check). */
+type KingInCheckSquareStyles = Record<string, { boxShadow: string }>;
+
+/** Styles for the king-in-check square, or undefined if not in check. */
+function getKingInCheckSquareStyles(
+  chess: Chess | null
+): KingInCheckSquareStyles | undefined {
+  const square = getKingSquareInCheck(chess);
+  if (!square) {
+    return undefined;
+  }
+  return {
+    [square]: {
+      boxShadow: "inset 0 0 0 3px rgba(220, 38, 38, 0.8)",
+    },
+  };
+}
+
+export type { KingInCheckSquareStyles };
+export {
+  getGameOverMessage,
+  getKingSquareInCheck,
+  getKingInCheckSquareStyles,
+  getStatusDescription,
+};
