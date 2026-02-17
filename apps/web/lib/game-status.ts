@@ -70,27 +70,9 @@ function getKingInCheckSquareStyles(
   };
 }
 
-/** Styles for hint from/to squares (distinct from king-in-check). */
-function getHintSquareStyles(
-  from: string | undefined,
-  to: string | undefined
-): Record<string, { boxShadow: string }> | undefined {
-  if (!from || !to) {
-    return undefined;
-  }
-  const hintStyle = {
-    boxShadow: "inset 0 0 0 3px rgba(34, 197, 94, 0.8)",
-  };
-  return {
-    [from]: hintStyle,
-    [to]: hintStyle,
-  };
-}
-
 export type { KingInCheckSquareStyles };
 export {
   getGameOverMessage,
-  getHintSquareStyles,
   getKingSquareInCheck,
   getKingInCheckSquareStyles,
   getStatusDescription,
