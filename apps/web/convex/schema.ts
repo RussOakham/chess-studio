@@ -22,6 +22,7 @@ export default defineSchema({
         v.literal("draw")
       )
     ),
+    drawOfferedBy: v.optional(v.union(v.literal("white"), v.literal("black"))),
     difficulty: v.union(
       v.literal("easy"),
       v.literal("medium"),

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { ComponentProps, CSSProperties } from "react";
 
 import { Chess } from "chess.js";
 import { useMemo, useState } from "react";
@@ -8,6 +8,11 @@ import { Chessboard } from "react-chessboard";
 
 /** Styles keyed by square (e.g. "e1") for highlighting (e.g. king in check). */
 type CustomSquareStyles = Record<string, CSSProperties>;
+
+/** Arrow tuple: [from, to, optional color] per react-chessboard customArrows. */
+type BoardArrow = [string, string, string?];
+
+type ChessboardArrow = ComponentProps<typeof Chessboard>["customArrows"];
 
 interface ChessboardWrapperProps {
   /** FEN string representing the current board position */
@@ -24,9 +29,11 @@ interface ChessboardWrapperProps {
   boardWidth?: number;
   /** Optional per-square styles (e.g. highlight king in check) */
   customSquareStyles?: CustomSquareStyles;
+  /** Optional arrows to draw (e.g. hint move) – [from, to, color?][] */
+  customArrows?: BoardArrow[];
 }
 
-export function ChessboardWrapper({
+function ChessboardWrapper({
   position,
   orientation = "white",
   draggable = true,
@@ -34,6 +41,7 @@ export function ChessboardWrapper({
   showCoordinates = true,
   boardWidth,
   customSquareStyles,
+  customArrows,
 }: ChessboardWrapperProps) {
   // Initialize chess instance with the current position
   // Update when position changes
@@ -139,6 +147,10 @@ export function ChessboardWrapper({
           customDarkSquareStyle={darkSquareStyle}
           customLightSquareStyle={lightSquareStyle}
           customSquareStyles={customSquareStyles}
+          customArrows={
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- hint from/to are valid Square strings
+            customArrows as ChessboardArrow
+          }
           showBoardNotation={showCoordinates}
         />
       </div>
@@ -146,4 +158,5 @@ export function ChessboardWrapper({
   );
 }
 
-export type { CustomSquareStyles };
+export type { BoardArrow, CustomSquareStyles };
+export { ChessboardWrapper };
