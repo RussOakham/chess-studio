@@ -74,12 +74,14 @@ This document outlines the high-level implementation plan for building the core 
   - `/games` page implemented (`app/games/page.tsx`, `GamesListClient`); "View all" from home no longer 404s.
 - **Phase 4.1: Engine Evaluation Display (partial)** ✅
   - Live evaluation bar and real-time evaluation during game are implemented. Best move suggestion display remains optional/future.
+- **Phase 4.2: AI Move Hints** ✅
+  - "Get Hint" via `useHint` hook; engine best-move request; suggested move displayed and highlighted on board. Convex games schema includes optional `drawOfferedBy` for future PvP draw flow.
 
 🔄 **Next Steps:**
 
 - Phase 3.1: Move replay (click to navigate to position) and PGN export — in progress / planned
 - Phase 3.2: Offer draw — descoped for PvE; add when PvP is supported
-- Phase 4: Hints, post-game analysis (evaluation bar already done)
+- **Phase 4.3: Post-game analysis** — next feature (engine review, mistakes/blunders, best moves, AI summary)
 
 ## Library Decision: react-chessboard
 
@@ -479,14 +481,22 @@ This document outlines the high-level implementation plan for building the core 
 
 ---
 
-#### 4.2 AI Move Hints
+#### 4.2 AI Move Hints ✅ **COMPLETE**
+
+**Location:**
+
+- `apps/web/lib/hooks/use-hint.ts` (hint request from Stockfish)
+- `apps/web/lib/chess-notation.ts` (notation helpers)
+- `apps/web/components/chess/game-chessboard.tsx`, `game-page-client.tsx` (hint UI and board highlight)
+
+**Status:** ✅ **Complete** - "Get Hint" requests best move from engine; suggested move is displayed and highlighted on the board.
 
 **Tasks:**
 
-- [ ] "Get Hint" button
-- [ ] Request hint from engine
-- [ ] Display suggested move
-- [ ] Highlight hint on board
+- [x] "Get Hint" button
+- [x] Request hint from engine
+- [x] Display suggested move
+- [x] Highlight hint on board
 
 **Estimated Time:** 2-3 hours
 
@@ -641,9 +651,10 @@ Phase 3 is complete when:
 4. ✅ **Phase 3.2**: Resign - **COMPLETE** (offer draw descoped for PvE)
 5. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
 6. ✅ **Phase 4.1**: Evaluation bar and real-time eval - **COMPLETE**; best move suggestion optional
-7. **Optional:** Phase 4 hints, post-game analysis
+7. ✅ **Phase 4.2**: AI move hints - **COMPLETE**
+8. **Next:** Phase 4.3 Post-game analysis (engine review, mistakes/blunders, best moves, AI summary)
 
-**Current Status:** Core game mechanics, game history, move replay, and PGN export are complete. Live evaluation bar is implemented. Users can create games, play vs engine, resign, replay moves, and copy PGN. Offer draw is descoped for PvE and will be added with PvP.
+**Current Status:** Core game mechanics, game history, move replay, and PGN export are complete. Live evaluation bar and move hints are implemented. Users can create games, play vs engine, get hints, resign, replay moves, and copy PGN. Next up: post-game analysis (Phase 4.3). Offer draw is descoped for PvE and will be added with PvP.
 
 ## Notes
 

@@ -6,7 +6,7 @@ import { Chess } from "chess.js";
 import { useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
-import type { CustomSquareStyles } from "./chessboard";
+import type { BoardArrow, CustomSquareStyles } from "./chessboard";
 
 import { ChessboardWrapper } from "./chessboard";
 
@@ -19,6 +19,8 @@ interface GameChessboardProps {
   onMoveSuccess?: () => void;
   /** Optional square styles (e.g. king in check highlight) */
   customSquareStyles?: CustomSquareStyles;
+  /** Optional arrows (e.g. hint move) */
+  customArrows?: BoardArrow[];
 }
 
 export function GameChessboard({
@@ -29,6 +31,7 @@ export function GameChessboard({
   gameId,
   onMoveSuccess,
   customSquareStyles,
+  customArrows,
 }: GameChessboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
@@ -112,6 +115,7 @@ export function GameChessboard({
         draggable={draggable && status === "in_progress" && !isPending}
         onMove={handleMove}
         customSquareStyles={customSquareStyles}
+        customArrows={customArrows}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
 import {
   getGameOverMessage,
@@ -36,6 +37,7 @@ import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
 import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
 import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
 import { useGame } from "@/lib/hooks/use-game";
+import { useHint } from "@/lib/hooks/use-hint";
 import { useMakeMove } from "@/lib/hooks/use-make-move";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
@@ -157,10 +159,6 @@ function GamePageContent({
   });
 
   const isGameOver = game?.status === "completed";
-  const customSquareStyles = useMemo(
-    () => getKingInCheckSquareStyles(chess),
-    [chess]
-  );
   const gameOverMessage = getGameOverMessage(game?.result);
 
   // All hooks must run before any early return (Rules of Hooks)
@@ -175,6 +173,32 @@ function GamePageContent({
     isViewingLive,
     moveHistory,
   } = useReplay(moves, game?.fen);
+
+  const hintEnabled =
+    game?.status === "in_progress" &&
+    !isEngineTurn &&
+    isViewingLive &&
+    isStockfishReady;
+  const { hint, requestHint, isHintLoading } = useHint({
+    fen: viewingFen,
+    difficulty: game?.difficulty,
+    getBestMove,
+    enabled: Boolean(hintEnabled),
+  });
+
+  const customSquareStyles = useMemo(
+    () => getKingInCheckSquareStyles(chess),
+    [chess]
+  );
+
+  const customArrows = useMemo(
+    (): [string, string, string][] =>
+      hint ? [[hint.from, hint.to, "rgb(34, 197, 94)"]] : [],
+    [hint]
+  );
+
+  const hintSan =
+    hint && getSanForMove(viewingFen, hint.from, hint.to, hint.promotion);
 
   if (isLoading || !game) {
     return (
@@ -287,6 +311,7 @@ function GamePageContent({
                       gameId={game.id}
                       onMoveSuccess={undefined}
                       customSquareStyles={customSquareStyles}
+                      customArrows={customArrows}
                     />
                     {game.status === "in_progress" && isStockfishReady && (
                       <EvaluationBar
@@ -351,6 +376,27 @@ function GamePageContent({
                 <CardTitle>Game Controls</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {game.status === "in_progress" && isStockfishReady && (
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={
+                      isEngineTurn ||
+                      !isViewingLive ||
+                      isCalculating ||
+                      isHintLoading ||
+                      !game?.difficulty
+                    }
+                    onClick={() => void requestHint()}
+                  >
+                    {isHintLoading ? "Thinking…" : "Get Hint"}
+                  </Button>
+                )}
+                {game.status === "in_progress" && hint && (
+                  <p className="text-sm text-muted-foreground">
+                    {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+                  </p>
+                )}
                 {game.status === "in_progress" && (
                   <Button
                     variant="destructive"
