@@ -8,13 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { memo } from "react";
+import { memo, useMemo } from "react";
+
+type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
+
+interface MoveAnnotation {
+  moveNumber: number;
+  type: MoveAnnotationType;
+  bestMoveSan?: string;
+}
 
 interface MoveHistoryItem {
   id: string;
   displayNumber?: number;
   isWhiteMove: boolean;
   moveSan: string;
+  moveNumber?: number;
 }
 
 interface MoveHistoryCardProps {
@@ -22,6 +31,7 @@ interface MoveHistoryCardProps {
   replayIndex: number;
   setReplayIndex: (value: number | ((prev: number) => number)) => void;
   moveHistory: MoveHistoryItem[];
+  moveAnnotations?: MoveAnnotation[] | null;
 }
 
 const moveItemStyle = {
@@ -29,12 +39,53 @@ const moveItemStyle = {
   containIntrinsicSize: "0 2.5rem",
 };
 
+function annotationBadge(type: MoveAnnotationType): string {
+  switch (type) {
+    case "blunder": {
+      return "??";
+    }
+    case "mistake": {
+      return "?";
+    }
+    case "best": {
+      return "!!";
+    }
+    default: {
+      return "";
+    }
+  }
+}
+
+function getAnnotationBadgeClassName(
+  type: MoveAnnotationType | undefined
+): string {
+  if (type === "blunder") {
+    return "font-medium text-destructive";
+  }
+  if (type === "mistake") {
+    return "text-amber-600 dark:text-amber-400";
+  }
+  return "text-primary";
+}
+
 function MoveHistoryCardComponent({
   sortedMovesLength,
   replayIndex,
   setReplayIndex,
   moveHistory,
+  moveAnnotations,
 }: MoveHistoryCardProps) {
+  const annotationByMoveNumber = useMemo(() => {
+    if (!moveAnnotations?.length) {
+      return new Map<number, MoveAnnotation>();
+    }
+    const annotationMap = new Map<number, MoveAnnotation>();
+    for (const annotation of moveAnnotations) {
+      annotationMap.set(annotation.moveNumber, annotation);
+    }
+    return annotationMap;
+  }, [moveAnnotations]);
+
   return (
     <Card>
       <CardHeader>
@@ -96,10 +147,26 @@ function MoveHistoryCardComponent({
                 replayIndex === sortedMovesLength &&
                 idx === moveHistory.length - 1;
               const highlighted = isCurrent || isLive;
-              return (
+              const annotation =
+                move.moveNumber != null
+                  ? annotationByMoveNumber.get(move.moveNumber)
+                  : undefined;
+              const badge = annotation
+                ? annotationBadge(annotation.type)
+                : null;
+              const tooltipText =
+                annotation &&
+                (annotation.type === "blunder" ||
+                  annotation.type === "mistake") &&
+                annotation.bestMoveSan
+                  ? `Best move: ${annotation.bestMoveSan}`
+                  : undefined;
+
+              const row = (
                 <button
                   key={move.id}
                   type="button"
+                  title={tooltipText}
                   className={`flex w-full cursor-pointer items-center gap-2 rounded p-2 text-left text-sm hover:bg-muted ${
                     highlighted ? "bg-primary/10 ring-1 ring-primary/30" : ""
                   }`}
@@ -118,6 +185,13 @@ function MoveHistoryCardComponent({
                   >
                     {move.moveSan}
                   </span>
+                  {badge ? (
+                    <span
+                      className={getAnnotationBadgeClassName(annotation?.type)}
+                    >
+                      {badge}
+                    </span>
+                  ) : null}
                   {isLive ? (
                     <span className="ml-auto text-xs text-muted-foreground">
                       (live)
@@ -125,6 +199,8 @@ function MoveHistoryCardComponent({
                   ) : null}
                 </button>
               );
+
+              return row;
             })}
           </div>
         )}
@@ -133,5 +209,7 @@ function MoveHistoryCardComponent({
   );
 }
 
-export const MoveHistoryCard = memo(MoveHistoryCardComponent);
-export type { MoveHistoryItem };
+const MoveHistoryCard = memo(MoveHistoryCardComponent);
+
+export { MoveHistoryCard };
+export type { MoveAnnotationType, MoveHistoryItem };

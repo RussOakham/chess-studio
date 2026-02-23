@@ -50,12 +50,26 @@ export default defineSchema({
     .index("by_gameId", ["gameId"])
     .index("by_gameId_moveNumber", ["gameId", "moveNumber"]),
 
-  /** Reserved for future use (e.g. post-game analysis, AI summary). */
+  /** Post-game analysis: summary, key moments, suggestions, per-move annotations. */
   game_reviews: defineTable({
     gameId: v.id("games"),
     summary: v.string(),
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
+    moveAnnotations: v.optional(
+      v.array(
+        v.object({
+          moveNumber: v.number(),
+          type: v.union(
+            v.literal("blunder"),
+            v.literal("mistake"),
+            v.literal("good"),
+            v.literal("best")
+          ),
+          bestMoveSan: v.optional(v.string()),
+        })
+      )
+    ),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 });
