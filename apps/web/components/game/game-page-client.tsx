@@ -38,11 +38,12 @@ import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
 import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
 import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
 import { useGame } from "@/lib/hooks/use-game";
+import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useHint } from "@/lib/hooks/use-hint";
 import { useMakeMove } from "@/lib/hooks/use-make-move";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
-import { useConvexConnectionState, useMutation } from "convex/react";
+import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -116,6 +117,23 @@ function GamePageContent({
   const [isResigning, setIsResigning] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
+
+  const review = useQuery(
+    api.reviews.getByGameId,
+    game ? { gameId: game._id } : "skip"
+  );
+  const {
+    runAnalysis,
+    isAnalyzing,
+    progress,
+    error: analysisError,
+  } = useGameAnalysis({
+    gameId,
+    game: game ?? undefined,
+    moves: moves ?? [],
+    getEvaluation,
+    getBestMove,
+  });
 
   const { makeMove, justSubmittedEngineMoveRef } = useMakeMove(gameId);
   const { isEngineGame, isEngineTurn } = useEngineTurn(game, chess);
@@ -434,7 +452,82 @@ function GamePageContent({
               replayIndex={replayIndex}
               setReplayIndex={setReplayIndex}
               moveHistory={moveHistory}
+              moveAnnotations={review?.moveAnnotations}
             />
+
+            {/* Post-game analysis */}
+            {game.status === "completed" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Game Analysis</CardTitle>
+                  <CardDescription>
+                    Engine review: mistakes, blunders, and suggestions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {review === undefined && (
+                    <p className="text-sm text-muted-foreground">Loading…</p>
+                  )}
+                  {review === null && (
+                    <>
+                      {analysisError && (
+                        <p className="text-sm text-destructive">
+                          {analysisError}
+                        </p>
+                      )}
+                      {isAnalyzing && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            Analyzing…
+                            {progress &&
+                              ` Move ${progress.completed} of ${progress.total}`}
+                          </p>
+                        </div>
+                      )}
+                      {!isAnalyzing && (
+                        <Button
+                          className="w-full"
+                          disabled={!isStockfishReady || moves.length === 0}
+                          onClick={() => void runAnalysis()}
+                        >
+                          Analyze game
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {review !== undefined && review !== null && (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm font-medium">Summary</p>
+                        <p className="text-sm text-muted-foreground">
+                          {review.summary}
+                        </p>
+                      </div>
+                      {review.keyMoments && review.keyMoments.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium">Key moments</p>
+                          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                            {review.keyMoments.map((moment) => (
+                              <li key={moment}>{moment}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {review.suggestions && review.suggestions.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium">Suggestions</p>
+                          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                            {review.suggestions.map((suggestion) => (
+                              <li key={suggestion}>{suggestion}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* PGN */}
             <Card>

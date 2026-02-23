@@ -76,12 +76,14 @@ This document outlines the high-level implementation plan for building the core 
   - Live evaluation bar and real-time evaluation during game are implemented. Best move suggestion display remains optional/future.
 - **Phase 4.2: AI Move Hints** ✅
   - "Get Hint" via `useHint` hook; engine best-move request; suggested move displayed and highlighted on board. Convex games schema includes optional `drawOfferedBy` for future PvP draw flow.
+- **Phase 4.3: Post-Game Analysis** ✅
+  - Client-side Stockfish analysis of completed games; results stored in `game_reviews` (summary, key moments, suggestions, move annotations). "Analyze game" / "View analysis" on game page; move list shows ??/?/!! badges and best-move tooltips.
 
 🔄 **Next Steps:**
 
-- Phase 3.1: Move replay (click to navigate to position) and PGN export — in progress / planned
+- Phase 3.1: Move replay and PGN export — ✅ complete (see Phase 3.1 section)
 - Phase 3.2: Offer draw — descoped for PvE; add when PvP is supported
-- **Phase 4.3: Post-game analysis** — next feature (engine review, mistakes/blunders, best moves, AI summary)
+- **Phase 4.3: Post-game analysis** — ✅ complete (engine review, mistakes/blunders, best moves; rule-based summary; AI summary optional)
 
 ## Library Decision: react-chessboard
 
@@ -401,22 +403,26 @@ This document outlines the high-level implementation plan for building the core 
 
 **Goal:** Add essential game features and improve UX.
 
-#### 3.1 Move History & Notation (replay and PGN)
+#### 3.1 Move History & Notation (replay and PGN) ✅ **COMPLETE**
 
 **Location:**
 
-- `apps/web/components/game/game-page-client.tsx` (move list, replay state, PGN section)
+- `apps/web/components/game/move-history-card.tsx` (move list, replay index, Start/Prev/Next/End)
+- `apps/web/lib/hooks/use-replay.ts` (replayIndex, viewingFen, setReplayIndex)
+- `apps/web/components/game/game-page-client.tsx` (replay state, PGN section)
 - `apps/web/app/game/[gameId]/page.tsx`
+
+**Status:** ✅ **Complete** - Move replay and PGN export implemented.
 
 **Tasks:**
 
-- [ ] Move history with replay:
+- [x] Move history with replay:
   - Display moves in algebraic notation (e.g., "1. e4 e5"); show move numbers
-  - Highlight current move (position being viewed)
+  - Highlight current move (position being viewed); "(live)" for current position
   - Click move row to navigate to position (replay)
-- [ ] Move navigation controls:
+- [x] Move navigation controls:
   - Start / Prev / Next / End buttons; disable at boundaries
-- [ ] PGN display and copy:
+- [x] PGN display and copy:
   - Read-only PGN block (from `game.pgn`); Copy PGN button with feedback
 
 **Dependencies:** 2.1 (moves are being saved)
@@ -458,7 +464,7 @@ This document outlines the high-level implementation plan for building the core 
 
 - [x] Games list page at `/games` with Convex list query
 - [x] Display games with status, result, date; link to game page
-- [ ] Replay (step through moves) and PGN export (optional)
+- [x] Replay (step through moves) and PGN export (on game page; Phase 3.1)
 - [ ] Pagination if needed (currently limit 100)
 
 **Dependencies:** Phase 1 & 2 (games exist)
@@ -502,14 +508,24 @@ This document outlines the high-level implementation plan for building the core 
 
 ---
 
-#### 4.3 Post-Game Analysis
+#### 4.3 Post-Game Analysis ✅ **COMPLETE**
+
+**Location:**
+
+- `apps/web/convex/reviews.ts` (query `getByGameId`, mutation `save`)
+- `apps/web/lib/run-game-analysis.ts` (client-side Stockfish analysis)
+- `apps/web/lib/hooks/use-game-analysis.ts` (hook: run analysis, save review)
+- `apps/web/components/game/game-page-client.tsx` (Analyze game / View analysis panel)
+- `apps/web/components/game/move-history-card.tsx` (move annotations: ??, ?, !!)
+
+**Status:** ✅ **Complete** - Post-game analysis runs client-side; results stored in `game_reviews`; UI shows summary, key moments, suggestions, and move list badges.
 
 **Tasks:**
 
-- [ ] Engine review of completed game
-- [ ] Highlight mistakes/blunders
-- [ ] Show best moves at key positions
-- [ ] AI-generated game summary
+- [x] Engine review of completed game (client-side Stockfish over each position; save to Convex `game_reviews`)
+- [x] Highlight mistakes/blunders (move list badges ?? blunder, ? mistake, !! best; tooltip with best move when applicable)
+- [x] Show best moves at key positions (key moments and per-move `bestMoveSan` in annotations)
+- [ ] AI-generated game summary (optional follow-up; MVP uses rule-based summary)
 
 **Estimated Time:** 6-8 hours
 
@@ -652,9 +668,9 @@ Phase 3 is complete when:
 5. ✅ **Phase 3.3**: Game history page (`/games`) - **COMPLETE**
 6. ✅ **Phase 4.1**: Evaluation bar and real-time eval - **COMPLETE**; best move suggestion optional
 7. ✅ **Phase 4.2**: AI move hints - **COMPLETE**
-8. **Next:** Phase 4.3 Post-game analysis (engine review, mistakes/blunders, best moves, AI summary)
+8. ✅ **Phase 4.3**: Post-game analysis - **COMPLETE** (engine review, mistakes/blunders, best moves, rule-based summary; AI summary optional)
 
-**Current Status:** Core game mechanics, game history, move replay, and PGN export are complete. Live evaluation bar and move hints are implemented. Users can create games, play vs engine, get hints, resign, replay moves, and copy PGN. Next up: post-game analysis (Phase 4.3). Offer draw is descoped for PvE and will be added with PvP.
+**Current Status:** Core game mechanics, game history, move replay, PGN export, and post-game analysis are complete. Users can create games, play vs engine, get hints, resign, replay moves, copy PGN, and analyze completed games (summary, key moments, suggestions, move badges). Offer draw is descoped for PvE and will be added with PvP.
 
 ## Notes
 
