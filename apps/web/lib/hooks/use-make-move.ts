@@ -32,12 +32,21 @@ export function useMakeMove(gameId: string) {
     async (variables: { from: string; to: string; promotion?: string }) => {
       setMoveError(null);
       setIsMovePending(true);
+      /* eslint-disable typescript-eslint/prefer-optional-chain -- type narrowing for Convex validator */
+      const promotion =
+        variables.promotion === "q" ||
+        variables.promotion === "r" ||
+        variables.promotion === "b" ||
+        variables.promotion === "n"
+          ? variables.promotion
+          : undefined;
+      /* eslint-enable typescript-eslint/prefer-optional-chain */
       try {
         await makeMoveMutation({
           gameId: toGameId(gameId),
           from: variables.from,
           to: variables.to,
-          promotion: variables.promotion,
+          promotion,
         });
         if (resetRefTimeoutIdRef.current !== null) {
           clearTimeout(resetRefTimeoutIdRef.current);

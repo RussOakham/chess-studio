@@ -3,6 +3,7 @@ import type { GenericCtx } from "@convex-dev/better-auth";
 import { createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth/minimal";
+import { v } from "convex/values";
 
 import type { DataModel } from "./_generated/dataModel";
 
@@ -47,8 +48,10 @@ const createAuth = (ctx: GenericCtx<DataModel>) => {
   });
 };
 
+// TODO: Replace with strict userValidator matching Better Auth user shape (id, email, name, etc.)
 const getCurrentUser = query({
   args: {},
+  returns: v.any(),
   handler: async (ctx) => {
     return authComponent.safeGetAuthUser(ctx);
   },

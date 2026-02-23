@@ -77,13 +77,22 @@ export function GameChessboard({
       // Continue with server call
     }
 
+    /* eslint-disable typescript-eslint/prefer-optional-chain -- type narrowing for Convex validator */
+    const promotion =
+      move.promotion === "q" ||
+      move.promotion === "r" ||
+      move.promotion === "b" ||
+      move.promotion === "n"
+        ? move.promotion
+        : undefined;
+    /* eslint-enable typescript-eslint/prefer-optional-chain */
     setIsPending(true);
     try {
       await makeMoveMutation({
         gameId: toGameId(gameId),
         from: move.from,
         to: move.to,
-        promotion: move.promotion,
+        promotion,
       });
       setOptimisticFen(null);
       onMoveSuccess?.();
