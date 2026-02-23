@@ -58,15 +58,27 @@ function applyMove(
   move: { from: string; to: string; san: string; uci: string };
 } {
   const chess = new Chess();
-  try {
-    chess.load(game.fen);
-  } catch {
-    throw new Error("Invalid game position");
+  const pgnTrimmed = game.pgn?.trim();
+  if (pgnTrimmed) {
+    try {
+      chess.loadPgn(pgnTrimmed);
+    } catch {
+      throw new Error("Invalid game PGN");
+    }
+  } else {
+    try {
+      chess.load(game.fen);
+    } catch {
+      throw new Error("Invalid game position");
+    }
   }
-  const move = chess.move({ from, to, promotion });
-  if (move === null) {
-    throw new Error("Invalid move");
-  }
+  const move = (() => {
+    try {
+      return chess.move({ from, to, promotion });
+    } catch {
+      throw new Error("Invalid move");
+    }
+  })();
   const { status: currentStatus, result: currentResult } = game;
   let status: GameStatus = currentStatus;
   let result: GameResult | undefined = currentResult;
