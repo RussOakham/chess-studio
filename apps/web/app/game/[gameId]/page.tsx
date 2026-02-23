@@ -1,9 +1,17 @@
-import { GamePageClient } from "@/components/game/game-page-client";
 import { api } from "@/convex/_generated/api";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
 import { toGameId } from "@/lib/convex-id";
+import dynamic from "next/dynamic";
 import { notFound, redirect } from "next/navigation";
+
+const GamePageClient = dynamic(
+  async () => {
+    const mod = await import("@/components/game/game-page-client");
+    return mod.GamePageClient;
+  },
+  { ssr: false }
+);
 
 interface GamePageProps {
   params: Promise<{ gameId: string }>;

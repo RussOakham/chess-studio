@@ -2,7 +2,7 @@
 
 import type { DifficultyLevel } from "@repo/chess";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, startTransition } from "react";
 
 interface HintMove {
   from: string;
@@ -41,16 +41,20 @@ function useHint(options: {
     setHint(null);
     try {
       const result = await getBestMove(fen, difficulty);
-      setHint({
-        from: result.from,
-        to: result.to,
-        promotion: result.promotion,
+      startTransition(() => {
+        setHint({
+          from: result.from,
+          to: result.to,
+          promotion: result.promotion,
+        });
+        setIsHintLoading(false);
       });
     } catch (error) {
       console.error("Hint request failed:", error);
-      setHint(null);
-    } finally {
-      setIsHintLoading(false);
+      startTransition(() => {
+        setHint(null);
+        setIsHintLoading(false);
+      });
     }
   }, [fen, difficulty, enabled, getBestMove, isHintLoading]);
 

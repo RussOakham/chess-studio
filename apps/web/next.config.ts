@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // Removed turbopack.root to prevent scanning entire monorepo
   // Workspace packages are already accessible via pnpm workspaces
 
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+
   // Configure to handle stockfish package (Web Worker-based, client-only)
   // Mark as external for server builds to prevent SSR bundling issues
   serverExternalPackages: ["stockfish"],

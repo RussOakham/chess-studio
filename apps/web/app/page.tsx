@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function Home() {
   const session = await getSession();
@@ -34,7 +35,15 @@ export default async function Home() {
           </div>
         </div>
 
-        <HomeGamesList />
+        <Suspense
+          fallback={
+            <div className="space-y-8 py-4">
+              <p className="text-muted-foreground">Loading games…</p>
+            </div>
+          }
+        >
+          <HomeGamesList />
+        </Suspense>
       </main>
     </div>
   );
