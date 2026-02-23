@@ -10,6 +10,7 @@ import type { DataModel } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
+import { authUserValidator } from "./validators";
 
 const siteUrl = process.env.SITE_URL;
 if (!siteUrl) {
@@ -48,10 +49,9 @@ const createAuth = (ctx: GenericCtx<DataModel>) => {
   });
 };
 
-// TODO: Replace with strict userValidator matching Better Auth user shape (id, email, name, etc.)
 const getCurrentUser = query({
   args: {},
-  returns: v.any(),
+  returns: v.union(authUserValidator, v.null()),
   handler: async (ctx) => {
     return authComponent.safeGetAuthUser(ctx);
   },

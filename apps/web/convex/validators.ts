@@ -47,4 +47,31 @@ const makeMoveReturnMoveValidator = v.object({
   uci: v.string(),
 });
 
-export { gameValidator, makeMoveReturnMoveValidator, moveValidator };
+/**
+ * Validator for Better Auth user document (matches @convex-dev/better-auth component user table).
+ * Uses v.string() for _id because the user table lives in the component schema.
+ */
+const authUserValidator = v.object({
+  _id: v.string(),
+  _creationTime: v.number(),
+  name: v.string(),
+  email: v.string(),
+  emailVerified: v.boolean(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  image: v.optional(v.union(v.string(), v.null())),
+  userId: v.optional(v.union(v.string(), v.null())),
+  twoFactorEnabled: v.optional(v.union(v.boolean(), v.null())),
+  isAnonymous: v.optional(v.union(v.boolean(), v.null())),
+  username: v.optional(v.union(v.string(), v.null())),
+  displayUsername: v.optional(v.union(v.string(), v.null())),
+  phoneNumber: v.optional(v.union(v.string(), v.null())),
+  phoneNumberVerified: v.optional(v.union(v.boolean(), v.null())),
+});
+
+export {
+  authUserValidator,
+  gameValidator,
+  makeMoveReturnMoveValidator,
+  moveValidator,
+};
