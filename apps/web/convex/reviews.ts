@@ -12,6 +12,7 @@ import { mutation, query } from "./_generated/server";
 const MAX_KEY_MOMENTS = 20;
 const MAX_SUGGESTIONS = 10;
 const MAX_MOVE_ANNOTATIONS = 500;
+const MAX_SUMMARY_LENGTH = 10_000;
 
 async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -131,6 +132,16 @@ const save = mutation({
       throw new Error("Only completed games can be analyzed");
     }
 
+    const summaryTrimmed = args.summary.trim();
+    if (summaryTrimmed.length === 0) {
+      throw new Error("Summary is required");
+    }
+    if (summaryTrimmed.length > MAX_SUMMARY_LENGTH) {
+      throw new Error(
+        `Summary must be ${MAX_SUMMARY_LENGTH} characters or less`
+      );
+    }
+
     const keyMoments = (args.keyMoments ?? []).slice(0, MAX_KEY_MOMENTS);
     const suggestions = (args.suggestions ?? []).slice(0, MAX_SUGGESTIONS);
     const moveAnnotations = (args.moveAnnotations ?? []).slice(
@@ -139,7 +150,7 @@ const save = mutation({
     );
 
     return await saveReviewInternal(ctx, args.gameId, {
-      summary: args.summary,
+      summary: summaryTrimmed,
       keyMoments,
       suggestions,
       moveAnnotations,

@@ -1,0 +1,36 @@
+---
+description: "When to run Convex and Vercel React best-practices reviews"
+globs: ["**/convex/**/*.ts", "**/components/**/*.tsx", "**/app/**/*.tsx", "**/lib/hooks/*.ts"]
+alwaysApply: false
+---
+
+# Convex and React Best-Practices Review
+
+When **implementing or significantly modifying** Convex backend code or React/Next.js UI, run the following checks so changes align with Convex and Vercel React best practices.
+
+## Convex Backend (`convex/**/*.ts`)
+
+After adding or changing Convex queries, mutations, actions, or schema:
+
+1. **Run the Convex reviewer** (convex-reviewer subagent) on the modified Convex files.
+2. Address any findings (auth, argument/return validation, thin handlers, error handling, query patterns, no `Date.now()` in queries).
+3. Optionally reference project Convex rules under `@.cursor/rules` and agent-requestable Convex rules (argument-validation, authentication-checks, error-handling-patterns, function-organization, query-optimization, schema-design, etc.) when implementing.
+
+## React / Next.js (components, app routes, hooks)
+
+After adding or changing React components, pages, or client-side data fetching:
+
+1. **Consider the Vercel React best-practices skill** when writing or reviewing React/Next.js code. Use the skill when tasks involve:
+   - React components or Next.js pages
+   - Data fetching (client or server)
+   - Performance or re-render optimization
+   - Bundle size or loading behavior
+2. Fetch specific rules from the skill when relevant (e.g. `rerender-*`, `client-*`, `server-*`, `bundle-*`).
+3. Apply patterns that match the project’s existing approach (e.g. Convex `useQuery`/`useMutation` for client data; memo where it enables early returns or avoids expensive work).
+
+## When to Run
+
+- **Convex**: New or changed `convex/**` files (queries, mutations, actions, schema).
+- **React**: New or changed UI in `components/`, `app/`, or `lib/hooks/` that affect rendering, data flow, or performance.
+
+Running these checks before considering the work complete helps keep the codebase aligned with Convex and Vercel React best practices.

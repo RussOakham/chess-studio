@@ -96,3 +96,4 @@ Husky + lint-staged runs:
 - ESLint config: `@eslint.config.mjs`
 - Pre-commit: `@.husky/` (if exists)
 - Contributing guide: `@CONTRIBUTING.md`
+- Convex and React best-practices review (when touching backend or UI): `@.cursor/rules/convex-react-review.mdc`
