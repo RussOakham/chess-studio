@@ -87,13 +87,12 @@ async function runGameAnalysisImpl(
       const { fenBefore, fenAfter } = move;
       const turn = fenBefore.split(" ")[1] === "b" ? "black" : "white";
 
-      /* Sequential per-move analysis to avoid overloading Stockfish worker. */
-      // eslint-disable-next-line no-await-in-loop -- intentional: avoid overloading Stockfish
-      const [evalBefore, bestMoveResult, evalAfter] = await Promise.all([
-        getEvaluation(fenBefore),
-        getBestMove(fenBefore, analysisDepth),
-        getEvaluation(fenAfter),
-      ]);
+      /* Sequential calls so Stockfish's isCalculating guard isn't tripped. */
+      /* eslint-disable no-await-in-loop -- intentional: sequential per-move analysis */
+      const evalBefore = await getEvaluation(fenBefore);
+      const bestMoveResult = await getBestMove(fenBefore, analysisDepth);
+      const evalAfter = await getEvaluation(fenAfter);
+      /* eslint-enable no-await-in-loop */
 
       const cpBefore = evalToCp(evalBefore);
       const cpAfter = evalToCp(evalAfter);
