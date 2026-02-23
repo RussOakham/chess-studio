@@ -200,10 +200,9 @@ const makeMove = mutation({
     const existingMoves = await ctx.db
       .query("moves")
       .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
-      .order("asc")
-      .take(GET_MOVES_CAP);
-    const lastMove =
-      existingMoves.length > 0 ? existingMoves[existingMoves.length - 1] : null;
+      .order("desc")
+      .take(1);
+    const lastMove = existingMoves.length > 0 ? existingMoves[0] : null;
     const moveNumber = (lastMove?.moveNumber ?? 0) + 1;
 
     await ctx.db.insert("moves", {

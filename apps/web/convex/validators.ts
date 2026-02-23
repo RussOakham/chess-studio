@@ -3,6 +3,7 @@ import { v } from "convex/values";
 /** Validator for a game document (matches games table). */
 const gameValidator = v.object({
   _id: v.id("games"),
+  _creationTime: v.number(),
   userId: v.string(),
   status: v.union(
     v.literal("waiting"),
@@ -29,6 +30,7 @@ const gameValidator = v.object({
 /** Validator for a move document (matches moves table). */
 const moveValidator = v.object({
   _id: v.id("moves"),
+  _creationTime: v.number(),
   gameId: v.id("games"),
   moveNumber: v.number(),
   moveSan: v.string(),
