@@ -35,7 +35,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_userId", ["userId"])
-    .index("by_updatedAt", ["updatedAt"])
     .index("by_userId_updatedAt", ["userId", "updatedAt"]),
 
   moves: defineTable({
@@ -51,6 +50,7 @@ export default defineSchema({
     .index("by_gameId", ["gameId"])
     .index("by_gameId_moveNumber", ["gameId", "moveNumber"]),
 
+  /** Reserved for future use (e.g. post-game analysis, AI summary). */
   game_reviews: defineTable({
     gameId: v.id("games"),
     summary: v.string(),

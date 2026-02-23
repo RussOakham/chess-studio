@@ -158,9 +158,9 @@ pnpm type-check
 
 ### File Naming
 
-- Components: `PascalCase.tsx`
-- Utilities: `camelCase.ts`
-- Types: `camelCase.ts` or `types.ts`
+- Components: `kebab-case.tsx` (e.g. `game-page-client.tsx`, `move-history-card.tsx`) — this repo uses kebab-case for component filenames, not PascalCase.
+- Utilities: `kebab-case.ts`
+- Types: `kebab-case.types.ts` or `types.ts`
 - Config files: `kebab-case.config.js`
 
 ### Imports

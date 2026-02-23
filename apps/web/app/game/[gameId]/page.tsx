@@ -1,4 +1,4 @@
-import { GamePageClient } from "@/components/game/game-page-client";
+import { GamePageClientLoader } from "@/components/game/game-page-client-loader";
 import { api } from "@/convex/_generated/api";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
@@ -35,7 +35,7 @@ export default async function GamePage({ params }: GamePageProps) {
   const boardOrientation: "white" | "black" = "white";
 
   return (
-    <GamePageClient
+    <GamePageClientLoader
       gameId={gameId}
       initialBoardOrientation={boardOrientation}
     />

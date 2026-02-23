@@ -7,11 +7,18 @@ import {
   getViewingFen,
   sortMovesByNumber,
 } from "@/lib/game-replay";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  startTransition,
+} from "react";
 
 /**
  * Replay state for navigating through game moves.
  * replayIndex 0 = start position, moves.length = live.
+ * setReplayIndex is wrapped in startTransition so replay navigation stays non-blocking.
  */
 export function useReplay<Move extends ReplayMove>(
   moves: Move[],
@@ -22,6 +29,13 @@ export function useReplay<Move extends ReplayMove>(
   useEffect(() => {
     setReplayIndex(moves.length);
   }, [moves.length]);
+
+  const setReplayIndexTransition = useCallback(
+    (value: number | ((prev: number) => number)) => {
+      startTransition(() => setReplayIndex(value));
+    },
+    []
+  );
 
   const sortedMoves = useMemo(() => sortMovesByNumber(moves), [moves]);
 
@@ -39,7 +53,7 @@ export function useReplay<Move extends ReplayMove>(
 
   return {
     replayIndex,
-    setReplayIndex,
+    setReplayIndex: setReplayIndexTransition,
     sortedMoves,
     viewingFen,
     isViewingLive,

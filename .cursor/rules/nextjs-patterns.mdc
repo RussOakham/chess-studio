@@ -56,7 +56,7 @@ export function GamePageClient({ gameId }: { gameId: string }) {
 
 - **Pages**: `page.tsx` (App Router convention)
 - **Layouts**: `layout.tsx`
-- **Components**: `PascalCase.tsx` (e.g., `GamePageClient.tsx`)
+- **Components**: `kebab-case.tsx` (e.g. `game-page-client.tsx`, `move-history-card.tsx`) — repo convention is kebab-case for component filenames.
 - **Utilities**: `camelCase.ts` (e.g., `use-game.ts`)
 - **Types**: `camelCase.ts` or `types.ts`
 

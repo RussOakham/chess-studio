@@ -84,7 +84,7 @@ Husky + lint-staged runs:
 
 ### File Naming
 
-- Components: `kebab-case.tsx`
+- Components: `kebab-case.tsx` (repo convention; do not use PascalCase for component filenames)
 - Utilities: `kebab-case.ts`
 - Types: `kebab-case.types.ts` or `types.ts`
 - Config: `kebab-case.config.js`

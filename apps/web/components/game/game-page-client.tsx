@@ -2,6 +2,7 @@
 
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import { MoveHistoryCard } from "@/components/game/move-history-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -428,108 +429,12 @@ function GamePageContent({
             </Card>
 
             {/* Move History */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Move History</CardTitle>
-                <CardDescription>
-                  {sortedMoves.length === 0
-                    ? "No moves yet"
-                    : `${sortedMoves.length} move${sortedMoves.length === 1 ? "" : "s"}`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {sortedMoves.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={replayIndex === 0}
-                      onClick={() => setReplayIndex(0)}
-                    >
-                      Start
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={replayIndex === 0}
-                      onClick={() =>
-                        setReplayIndex((prev) => Math.max(0, prev - 1))
-                      }
-                    >
-                      Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={replayIndex === sortedMoves.length}
-                      onClick={() =>
-                        setReplayIndex((prev) =>
-                          Math.min(sortedMoves.length, prev + 1)
-                        )
-                      }
-                    >
-                      Next
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={replayIndex === sortedMoves.length}
-                      onClick={() => setReplayIndex(sortedMoves.length)}
-                    >
-                      End
-                    </Button>
-                  </div>
-                )}
-                {sortedMoves.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Move history will appear here as you play
-                  </p>
-                ) : (
-                  <div className="max-h-96 space-y-1 overflow-y-auto">
-                    {moveHistory.map((move, idx) => {
-                      const isCurrent =
-                        replayIndex > 0 && replayIndex === idx + 1;
-                      const isLive =
-                        replayIndex === sortedMoves.length &&
-                        idx === moveHistory.length - 1;
-                      const highlighted = isCurrent || isLive;
-                      return (
-                        <button
-                          key={move.id}
-                          type="button"
-                          className={`flex w-full cursor-pointer items-center gap-2 rounded p-2 text-left text-sm hover:bg-muted ${
-                            highlighted
-                              ? "bg-primary/10 ring-1 ring-primary/30"
-                              : ""
-                          }`}
-                          onClick={() => setReplayIndex(idx + 1)}
-                        >
-                          {move.displayNumber && (
-                            <span className="font-medium text-muted-foreground">
-                              {move.displayNumber}.
-                            </span>
-                          )}
-                          <span
-                            className={
-                              move.isWhiteMove
-                                ? "font-medium"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            {move.moveSan}
-                          </span>
-                          {isLive && (
-                            <span className="ml-auto text-xs text-muted-foreground">
-                              (live)
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <MoveHistoryCard
+              sortedMovesLength={sortedMoves.length}
+              replayIndex={replayIndex}
+              setReplayIndex={setReplayIndex}
+              moveHistory={moveHistory}
+            />
 
             {/* PGN */}
             <Card>
