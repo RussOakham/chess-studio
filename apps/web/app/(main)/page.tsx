@@ -1,6 +1,6 @@
 import { ConvexUserBadge } from "@/components/auth/convex-user-badge";
 import { HomeGamesList } from "@/components/home/home-games-list";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { getSession } from "@/lib/auth-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,8 +26,8 @@ export default async function Home() {
               <ConvexUserBadge />
             </p>
           </div>
-          <Link href="/game/new">
-            <Button size="lg">New Game</Button>
+          <Link href="/game/new" className={buttonVariants({ size: "lg" })}>
+            New Game
           </Link>
         </div>
 

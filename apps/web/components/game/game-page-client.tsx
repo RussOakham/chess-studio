@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { getSanForMove } from "@/lib/chess-notation";
@@ -355,7 +355,7 @@ function GamePageContent({
                 <span className="text-muted-foreground">
                   <span className="font-medium text-foreground">Status:</span>{" "}
                   <span className="capitalize">
-                    {game.status.replace("_", " ")}
+                    {game.status.replaceAll("_", " ")}
                   </span>
                 </span>
                 {game.status === "in_progress" && currentTurn && (
@@ -375,7 +375,7 @@ function GamePageContent({
                         Result:
                       </span>{" "}
                       <span className="capitalize">
-                        {game.result.replace("_", " ")}
+                        {game.result.replaceAll("_", " ")}
                       </span>
                     </span>
                   </>
@@ -466,12 +466,12 @@ function GamePageContent({
                   href={reviewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full"
+                  className={
+                    buttonVariants({ size: "lg" }) + " inline-flex w-full"
+                  }
                   aria-label="Open Game Review in new tab"
                 >
-                  <Button className="w-full" size="lg">
-                    Game Review
-                  </Button>
+                  Game Review
                 </a>
                 {/* Secondary: New Game, Rematch */}
                 <div className="flex gap-2">

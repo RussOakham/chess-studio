@@ -2,8 +2,9 @@
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import type { ServerSession } from "@/lib/auth-server";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -27,14 +28,18 @@ function NavLinks() {
             ? pathname === "/"
             : pathname === href || pathname.startsWith(`${href}/`);
         return (
-          <Link key={href} href={href}>
-            <Button
-              variant={active ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              size="sm"
-            >
-              {label}
-            </Button>
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              buttonVariants({
+                variant: active ? "secondary" : "ghost",
+                size: "sm",
+              }),
+              "w-full justify-start"
+            )}
+          >
+            {label}
           </Link>
         );
       })}

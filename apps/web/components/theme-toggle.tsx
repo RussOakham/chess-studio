@@ -15,7 +15,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-transparent bg-transparent outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="relative inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-transparent bg-transparent outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Toggle theme"
       >
         <Sun className="size-4 scale-100 rotate-0 transition-transform dark:scale-0 dark:-rotate-90" />

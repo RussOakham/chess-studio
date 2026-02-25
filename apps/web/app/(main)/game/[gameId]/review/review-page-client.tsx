@@ -32,15 +32,13 @@ function moveQualityCounts(
   moveAnnotations: { moveNumber: number; type: string }[] | undefined
 ) {
   if (!moveAnnotations?.length) {
-    return { brilliant: 0, great: 0, best: 0, mistake: 0, miss: 0, blunder: 0 };
+    return { great: 0, best: 0, mistake: 0, blunder: 0 };
   }
   return {
-    brilliant: moveAnnotations.filter((a) => a.type === "best").length,
-    great: moveAnnotations.filter((a) => a.type === "good").length,
-    best: moveAnnotations.filter((a) => a.type === "best").length,
-    mistake: moveAnnotations.filter((a) => a.type === "mistake").length,
-    miss: 0,
-    blunder: moveAnnotations.filter((a) => a.type === "blunder").length,
+    great: moveAnnotations.filter((ann) => ann.type === "good").length,
+    best: moveAnnotations.filter((ann) => ann.type === "best").length,
+    mistake: moveAnnotations.filter((ann) => ann.type === "mistake").length,
+    blunder: moveAnnotations.filter((ann) => ann.type === "blunder").length,
   };
 }
 

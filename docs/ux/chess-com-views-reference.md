@@ -20,7 +20,7 @@ Chess.com opens Game Review in a **new browser tab** (e.g. from Match view, the 
 
 ### Light and dark mode
 
-Chess.com supports both **light** and **dark** themes (the reference screenshots are dark mode). We should support both:
+Chess.com supports both **light** and **dark** themes (the reference screenshots are dark mode). Support both:
 
 - **UI toggle:** Provide a theme switcher (e.g. in the nav/settings area) so users can choose light or dark.
 - **Persistence:** Store the user’s choice (e.g. `localStorage` or account preference) and apply it on load.

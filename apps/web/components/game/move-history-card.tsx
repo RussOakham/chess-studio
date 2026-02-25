@@ -230,13 +230,18 @@ function MoveHistoryCardComponent({
                         key={`row-${rowIndex}-black`}
                         type="button"
                         title={blackTooltip}
+                        disabled={!blackMove}
                         className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left text-muted-foreground hover:bg-muted hover:text-foreground ${
                           blackHighlighted
                             ? "bg-primary/10 ring-1 ring-primary/30"
                             : ""
-                        }`}
+                        }${!blackMove ? " cursor-default" : ""}`}
                         style={moveItemStyle}
-                        onClick={() => setReplayIndex(blackReplayIdx)}
+                        onClick={
+                          blackMove
+                            ? () => setReplayIndex(blackReplayIdx)
+                            : undefined
+                        }
                       >
                         {blackMove ? (
                           <>
