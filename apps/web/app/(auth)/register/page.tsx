@@ -1,12 +1,11 @@
 "use client";
 
-import type { RegisterFormData } from "@/lib/validations/auth";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signUp } from "@/lib/auth-client";
+import type { RegisterFormData } from "@/lib/validations/auth";
 import { registerSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";

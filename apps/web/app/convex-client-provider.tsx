@@ -1,11 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { ConvexAuthErrorBoundary } from "@/components/auth/convex-auth-error-boundary";
 import { authClient } from "@/lib/auth-client";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
+import type { ReactNode } from "react";
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 if (!CONVEX_URL) {

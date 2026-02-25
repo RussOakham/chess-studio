@@ -1,7 +1,5 @@
 "use client";
 
-import type { NewGameFormData } from "@/lib/validations/game";
-
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
+import type { NewGameFormData } from "@/lib/validations/game";
 import { newGameSchema } from "@/lib/validations/game";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";

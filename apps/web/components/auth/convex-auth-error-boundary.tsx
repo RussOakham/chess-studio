@@ -1,8 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { isConvexAuthError } from "@/lib/auth-error";
+import type { ReactNode } from "react";
 import { Component } from "react";
 
 interface Props {

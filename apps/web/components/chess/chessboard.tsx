@@ -1,8 +1,7 @@
 "use client";
 
-import type { ComponentProps, CSSProperties } from "react";
-
 import { Chess } from "chess.js";
+import type { ComponentProps, CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
 

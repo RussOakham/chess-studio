@@ -7,7 +7,6 @@ import { useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
 import type { BoardArrow, CustomSquareStyles } from "./chessboard";
-
 import { ChessboardWrapper } from "./chessboard";
 
 interface GameChessboardProps {
@@ -97,9 +96,13 @@ export function GameChessboard({
       setOptimisticFen(null);
       onMoveSuccess?.();
       setError(null);
-    } catch (error: unknown) {
+    } catch (makeMoveError: unknown) {
       setOptimisticFen(null);
-      setError(error instanceof Error ? error.message : "Failed to make move");
+      setError(
+        makeMoveError instanceof Error
+          ? makeMoveError.message
+          : "Failed to make move"
+      );
       if (errorClearTimerRef.current !== null) {
         clearTimeout(errorClearTimerRef.current);
       }

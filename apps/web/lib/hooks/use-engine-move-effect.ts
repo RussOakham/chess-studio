@@ -1,7 +1,6 @@
 "use client";
 
 import type { DifficultyLevel } from "@repo/chess";
-
 import { useEffect, useRef } from "react";
 
 /** Ref that is set true when the engine move is submitted, cleared after delay. */
