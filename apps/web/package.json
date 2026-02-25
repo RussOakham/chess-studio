@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next dev",
-    "build": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next build",
+    "build": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- sh -c 'export NODE_ENV=production && next build'",
     "start": "doppler run --project chess-studio --config ${DOPPLER_CONFIG:-dev} -- next start",
     "lint": "eslint .",
     "type-check": "tsgo --noEmit --project tsconfig.typecheck.json",
