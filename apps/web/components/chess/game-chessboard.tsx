@@ -20,6 +20,8 @@ interface GameChessboardProps {
   customSquareStyles?: CustomSquareStyles;
   /** Optional arrows (e.g. hint move) */
   customArrows?: BoardArrow[];
+  /** Optional board width in px; when set, board fills container up to this size */
+  boardWidth?: number;
 }
 
 export function GameChessboard({
@@ -31,6 +33,7 @@ export function GameChessboard({
   onMoveSuccess,
   customSquareStyles,
   customArrows,
+  boardWidth,
 }: GameChessboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
@@ -128,6 +131,7 @@ export function GameChessboard({
         onMove={handleMove}
         customSquareStyles={customSquareStyles}
         customArrows={customArrows}
+        boardWidth={boardWidth}
       />
     </div>
   );

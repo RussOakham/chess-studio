@@ -15,7 +15,14 @@ import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface ReviewPageClientProps {
   gameId: string;
@@ -118,108 +125,144 @@ function ReviewMidReview({
         )
       : undefined;
 
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(560);
+  useLayoutEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) {
+      return;
+    }
+    function updateSize() {
+      if (!el) {
+        return;
+      }
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const side = Math.min(w, h);
+      setBoardSize(Math.max(200, side - 32));
+    }
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div className="flex min-h-full flex-col gap-4 bg-background p-4 lg:flex-row lg:gap-6 lg:p-6">
-      <div className="flex flex-col items-center gap-2">
-        <div className="rounded border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-          Engine
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
+      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+        {/* Center: board column (grows to fill height; board scales to fit) */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+          <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            Engine
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+            <div
+              ref={boardContainerRef}
+              className="flex aspect-square h-full max-w-full items-center justify-center"
+            >
+              <GameChessboard
+                position={viewingFen}
+                orientation="white"
+                draggable={false}
+                status="completed"
+                gameId={game._id}
+                customSquareStyles={undefined}
+                boardWidth={boardSize}
+              />
+            </div>
+          </div>
+          <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            You
+          </div>
         </div>
-        <GameChessboard
-          position={viewingFen}
-          orientation="white"
-          draggable={false}
-          status="completed"
-          gameId={game._id}
-          customSquareStyles={undefined}
-        />
-        <div className="rounded border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-          You
-        </div>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-4 lg:max-w-md">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Game Review</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/game/${gameId}/review`)}
-          >
-            Back to overview
-          </Button>
-        </div>
-        <Card className="bg-card">
-          <CardContent className="pt-6">
-            {currentMove != null ? (
-              <>
-                <div className="flex gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
-                    ♔
+
+        {/* Right: review details + move history (move history grows to fill) */}
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+          <div className="flex shrink-0 items-center justify-between">
+            <h2 className="text-lg font-semibold">Game Review</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/game/${gameId}/review`)}
+            >
+              Back to overview
+            </Button>
+          </div>
+          <Card className="shrink-0 bg-card">
+            <CardContent className="pt-6">
+              {currentMove != null ? (
+                <>
+                  <div className="flex gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
+                      ♔
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="text-sm font-medium">
+                        Move {currentMove.moveNumber}: {currentMove.moveSan}
+                        {currentAnnotation && (
+                          <span className="ml-1 text-primary">
+                            {currentAnnotation.type === "best"
+                              ? "!!"
+                              : currentAnnotation.type === "good"
+                                ? "!"
+                                : currentAnnotation.type === "mistake"
+                                  ? "?"
+                                  : "??"}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {currentAnnotation?.type === "best" ||
+                        currentAnnotation?.type === "good"
+                          ? "Good move."
+                          : currentAnnotation?.bestMoveSan
+                            ? `Best: ${currentAnnotation.bestMoveSan}`
+                            : "Review this move."}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      Move {currentMove.moveNumber}: {currentMove.moveSan}
-                      {currentAnnotation && (
-                        <span className="ml-1 text-primary">
-                          {currentAnnotation.type === "best"
-                            ? "!!"
-                            : currentAnnotation.type === "good"
-                              ? "!"
-                              : currentAnnotation.type === "mistake"
-                                ? "?"
-                                : "??"}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {currentAnnotation?.type === "best" ||
-                      currentAnnotation?.type === "good"
-                        ? "Good move."
-                        : currentAnnotation?.bestMoveSan
-                          ? `Best: ${currentAnnotation.bestMoveSan}`
-                          : "Review this move."}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  className="mt-4 w-full"
-                  size="lg"
-                  onClick={() =>
-                    setReplayIndexAndUrl((p) => Math.min(moves.length, p + 1))
-                  }
-                  disabled={replayIndex >= moves.length}
-                >
-                  Next
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  Start position. Use the move list or Next to step through.
-                </p>
-                <Button
-                  className="mt-4 w-full"
-                  size="lg"
-                  onClick={() => setReplayIndexAndUrl(1)}
-                  disabled={moves.length === 0}
-                >
-                  Next
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <MoveHistoryCard
-          sortedMovesLength={sortedMoves.length}
-          replayIndex={replayIndex}
-          setReplayIndex={setReplayIndexAndUrl}
-          moveHistory={moveHistory}
-          moveAnnotations={
-            (review.moveAnnotations ?? undefined) as
-              | MoveAnnotation[]
-              | undefined
-          }
-        />
-      </div>
+                  <Button
+                    className="mt-4 w-full"
+                    size="lg"
+                    onClick={() =>
+                      setReplayIndexAndUrl((p) => Math.min(moves.length, p + 1))
+                    }
+                    disabled={replayIndex >= moves.length}
+                  >
+                    Next
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Start position. Use the move list or Next to step through.
+                  </p>
+                  <Button
+                    className="mt-4 w-full"
+                    size="lg"
+                    onClick={() => setReplayIndexAndUrl(1)}
+                    disabled={moves.length === 0}
+                  >
+                    Next
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          <MoveHistoryCard
+            className="flex min-h-0 flex-1 flex-col"
+            sortedMovesLength={sortedMoves.length}
+            replayIndex={replayIndex}
+            setReplayIndex={setReplayIndexAndUrl}
+            moveHistory={moveHistory}
+            moveAnnotations={
+              (review.moveAnnotations ?? undefined) as
+                | MoveAnnotation[]
+                | undefined
+            }
+          />
+        </div>
+      </main>
     </div>
   );
 }

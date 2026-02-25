@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
@@ -44,7 +38,14 @@ import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -212,6 +213,28 @@ function GamePageContent({
   const hintSan =
     hint && getSanForMove(viewingFen, hint.from, hint.to, hint.promotion);
 
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(560);
+  useLayoutEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) {
+      return;
+    }
+    function updateSize() {
+      if (!el) {
+        return;
+      }
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const side = Math.min(w, h);
+      setBoardSize(Math.max(200, side - 32));
+    }
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   if (isLoading || !game) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -224,7 +247,7 @@ function GamePageContent({
   const reviewUrl = `/game/${gameId}/review`;
 
   return (
-    <div className="min-h-full bg-background">
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
       <AlertDialog
         open={isGameOver && !gameOverDismissed}
         onOpenChange={(open) => {
@@ -249,10 +272,10 @@ function GamePageContent({
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="flex flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
-        {/* Center: board with player strips */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+        {/* Center: board column (grows to fill height; board scales to fit) */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
             <span className="font-medium text-muted-foreground">
               {opponentLabel}
             </span>
@@ -269,9 +292,39 @@ function GamePageContent({
               </>
             )}
           </div>
-          <div className="relative flex flex-col items-center gap-2">
+          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+            <div
+              ref={boardContainerRef}
+              className="flex aspect-square h-full max-w-full items-center justify-center"
+            >
+              <div className="relative flex items-stretch gap-4">
+                <GameChessboard
+                  position={viewingFen}
+                  orientation={boardOrientation}
+                  draggable={
+                    isViewingLive &&
+                    game.status === "in_progress" &&
+                    !isEngineTurn &&
+                    !isCalculating &&
+                    !makeMove.isPending
+                  }
+                  status={game.status}
+                  gameId={game.id}
+                  onMoveSuccess={undefined}
+                  customSquareStyles={customSquareStyles}
+                  customArrows={customArrows}
+                  boardWidth={boardSize}
+                />
+                {game.status === "in_progress" && isStockfishReady && (
+                  <EvaluationBar
+                    evaluation={evaluation}
+                    orientation={boardOrientation}
+                  />
+                )}
+              </div>
+            </div>
             {!isViewingLive && (
-              <p className="text-xs text-muted-foreground">
+              <p className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
                 Viewing past position — use controls to return to live
               </p>
             )}
@@ -284,140 +337,66 @@ function GamePageContent({
                 />
               </div>
             )}
-            <div className="flex items-stretch gap-4">
-              <GameChessboard
-                position={viewingFen}
-                orientation={boardOrientation}
-                draggable={
-                  isViewingLive &&
-                  game.status === "in_progress" &&
-                  !isEngineTurn &&
-                  !isCalculating &&
-                  !makeMove.isPending
-                }
-                status={game.status}
-                gameId={game.id}
-                onMoveSuccess={undefined}
-                customSquareStyles={customSquareStyles}
-                customArrows={customArrows}
-              />
-              {game.status === "in_progress" && isStockfishReady && (
-                <EvaluationBar
-                  evaluation={evaluation}
-                  orientation={boardOrientation}
-                />
-              )}
-            </div>
           </div>
-          <div className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
             <span className="font-medium text-muted-foreground">You</span>
           </div>
         </div>
 
-        {/* Right panel */}
-        <div className="flex min-w-0 flex-1 flex-col gap-6 lg:max-w-md">
-          {/* Game Info Panel */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Game Info</CardTitle>
+        {/* Right panel: scrollable content + controls at bottom */}
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+          {/* Game Info: horizontal (shrink-0 so Move History can grow) */}
+          <Card className="shrink-0">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base">Game Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium">Status</p>
-                <p className="text-sm text-muted-foreground capitalize">
-                  {game.status.replace("_", " ")}
-                </p>
-              </div>
-              {game.status === "in_progress" && currentTurn && (
-                <div>
-                  <p className="text-sm font-medium">Turn</p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {currentTurn}
-                  </p>
-                </div>
-              )}
-              {game.result && (
-                <div>
-                  <p className="text-sm font-medium">Result</p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {game.result.replace("_", " ")}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium">Created</p>
-                <p className="text-sm text-muted-foreground">
+            <CardContent className="py-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Status:</span>{" "}
+                  <span className="capitalize">
+                    {game.status.replace("_", " ")}
+                  </span>
+                </span>
+                {game.status === "in_progress" && currentTurn && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">Turn:</span>{" "}
+                      <span className="capitalize">{currentTurn}</span>
+                    </span>
+                  </>
+                )}
+                {game.result && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Result:
+                      </span>{" "}
+                      <span className="capitalize">
+                        {game.result.replace("_", " ")}
+                      </span>
+                    </span>
+                  </>
+                )}
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Created:</span>{" "}
                   {new Date(game.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium">Last Updated</p>
-                <p className="text-sm text-muted-foreground">
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Updated:</span>{" "}
                   {new Date(game.updatedAt).toLocaleDateString()}
-                </p>
+                </span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Game Controls */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Game Controls</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {game.status === "in_progress" && isStockfishReady && (
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  disabled={
-                    isEngineTurn ||
-                    !isViewingLive ||
-                    isCalculating ||
-                    isHintLoading ||
-                    !game?.difficulty
-                  }
-                  onClick={() => void requestHint()}
-                >
-                  {isHintLoading ? "Thinking…" : "Get Hint"}
-                </Button>
-              )}
-              {game.status === "in_progress" && hint && (
-                <p className="text-sm text-muted-foreground">
-                  {hintSan ? `Hint: ${hintSan}` : "Hint available"}
-                </p>
-              )}
-              {game.status === "in_progress" && (
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  disabled={isResigning}
-                  onClick={async () => {
-                    if (
-                      !globalThis.confirm(
-                        "Are you sure you want to resign? This will end the game."
-                      )
-                    ) {
-                      return;
-                    }
-                    setIsResigning(true);
-                    try {
-                      await resignMutation({
-                        gameId: toGameId(gameId),
-                      });
-                    } catch (error) {
-                      console.error("Resign error:", error);
-                      setIsResigning(false);
-                    }
-                  }}
-                >
-                  {isResigning ? "Resigning…" : "Resign"}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Move History */}
+          {/* Move History: grows to fill space */}
           <MoveHistoryCard
+            className="flex min-h-0 flex-1 flex-col"
             sortedMovesLength={sortedMoves.length}
             replayIndex={replayIndex}
             setReplayIndex={setReplayIndex}
@@ -515,20 +494,19 @@ function GamePageContent({
             </Card>
           )}
 
-          {/* PGN */}
-          <Card>
-            <CardHeader>
-              <CardTitle>PGN</CardTitle>
-              <CardDescription>Portable Game Notation</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          {/* PGN: accordion */}
+          <details className="group rounded-lg border border-border bg-card">
+            <summary className="cursor-pointer list-none px-4 py-3 font-medium">
+              PGN (Portable Game Notation)
+            </summary>
+            <div className="border-t border-border px-4 pt-2 pb-4">
               <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
                 {game.pgn ?? "No moves yet"}
               </pre>
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className="mt-2 w-full"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(game.pgn ?? "");
@@ -541,8 +519,62 @@ function GamePageContent({
               >
                 {pgnCopied ? "Copied" : "Copy PGN"}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </details>
+
+          {/* Game Controls: horizontal, at bottom */}
+          <div className="mt-auto shrink-0 border-t border-border pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {game.status === "in_progress" && isStockfishReady && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={
+                    isEngineTurn ||
+                    !isViewingLive ||
+                    isCalculating ||
+                    isHintLoading ||
+                    !game?.difficulty
+                  }
+                  onClick={() => void requestHint()}
+                >
+                  {isHintLoading ? "Thinking…" : "Hint"}
+                </Button>
+              )}
+              {game.status === "in_progress" && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isResigning}
+                  onClick={async () => {
+                    if (
+                      !globalThis.confirm(
+                        "Are you sure you want to resign? This will end the game."
+                      )
+                    ) {
+                      return;
+                    }
+                    setIsResigning(true);
+                    try {
+                      await resignMutation({
+                        gameId: toGameId(gameId),
+                      });
+                    } catch (error) {
+                      console.error("Resign error:", error);
+                      setIsResigning(false);
+                    }
+                  }}
+                >
+                  {isResigning ? "Resigning…" : "Resign"}
+                </Button>
+              )}
+            </div>
+            {game.status === "in_progress" && hint && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+              </p>
+            )}
+          </div>
         </div>
       </main>
     </div>
