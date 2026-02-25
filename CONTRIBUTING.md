@@ -73,6 +73,10 @@ chess-game/
 - `pnpm format` - Format all files with oxfmt
 - `pnpm clean` - Clean all build artifacts
 
+### Building (apps/web with Doppler)
+
+The web app build runs under Doppler (e.g. `dev` config). **The Next.js build must run with `NODE_ENV=production`** so that prerendering of `/_global-error` and `/_not-found` does not hit a React context bug (`useContext`/`useState` null). The `apps/web` build script and CI both set `NODE_ENV=production` before `next build`; do not run `next build` for the web app with a development `NODE_ENV`.
+
 ### Package-Specific Scripts
 
 Each package/app has its own scripts. Run them with:
