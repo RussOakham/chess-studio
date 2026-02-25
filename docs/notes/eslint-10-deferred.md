@@ -1,6 +1,6 @@
 # ESLint 10 upgrade deferred
 
-**Date:** 2025-02-25  
+**Date:** 2026-02-25  
 **Reason:** Blocked by `@convex-dev/eslint-plugin` (and its dependency `@typescript-eslint/utils@8.49`) not supporting ESLint 10.
 
 ## Verification outcome
@@ -20,5 +20,5 @@
 
 ## Next.js / React / Tailwind patch upgrades deferred
 
-**Date:** 2025-02-25  
+**Date:** 2026-02-25  
 **Reason:** `pnpm build` fails during prerender of `/_global-error` with `TypeError: Cannot read properties of null (reading 'useContext')` (Next.js internals). This occurs with both Next 16.1.1 and 16.1.6, so it is treated as a pre-existing build issue. Next, React, React DOM, eslint-config-next, and tailwindcss were not upgraded in this cycle to avoid coupling the dependency upgrade with a separate build fix.
