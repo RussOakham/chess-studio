@@ -75,9 +75,11 @@ export function useGameAnalysis({
         suggestions: result.suggestions,
         moveAnnotations: result.moveAnnotations,
       });
-    } catch (error) {
+    } catch (gameAnalysisError: unknown) {
       const message =
-        error instanceof Error ? error.message : "Analysis failed";
+        gameAnalysisError instanceof Error
+          ? gameAnalysisError.message
+          : "Analysis failed";
       setError(message);
     } finally {
       setIsAnalyzing(false);

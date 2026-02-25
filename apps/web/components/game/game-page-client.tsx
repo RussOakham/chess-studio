@@ -508,6 +508,7 @@ function GamePageContent({
                           <p className="text-sm font-medium">Key moments</p>
                           <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                             {review.keyMoments.map((moment, index) => (
+                              // oxlint-disable-next-line react/no-array-index-key
                               <li key={`${moment}-${index}`}>{moment}</li>
                             ))}
                           </ul>
@@ -518,6 +519,7 @@ function GamePageContent({
                           <p className="text-sm font-medium">Suggestions</p>
                           <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                             {review.suggestions.map((suggestion, index) => (
+                              // oxlint-disable-next-line react/no-array-index-key
                               <li key={`${suggestion}-${index}`}>
                                 {suggestion}
                               </li>
