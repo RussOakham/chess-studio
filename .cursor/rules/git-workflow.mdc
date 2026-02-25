@@ -131,6 +131,11 @@ refactor/simplify-service-layer
 - Note any breaking changes
 - Include testing instructions if needed
 
+### Build verification before creating a draft MR
+
+- Before creating a draft MR, run a **full build** (`pnpm build`). If the build fails, triage the errors, fix them, and re-run the build until it passes.
+- Do not open the draft MR until the build succeeds locally. This prevents remote CI/CD from failing on build errors as soon as the MR is created.
+
 ### Handling MR/PR Comments
 
 When addressing reviewer feedback (e.g. CodeRabbit, human reviewers):
@@ -182,13 +187,15 @@ When addressing reviewer feedback (e.g. CodeRabbit, human reviewers):
 1. ✅ Ask user for explicit permission
 2. ✅ Confirm branch name follows conventions
 3. ✅ Ensure all commits are properly formatted
+4. ✅ If branch has an open MR: run `pnpm build` and fix any failures before pushing
 
 ### Before Creating MR
 
 1. ✅ Only when user explicitly requests
-2. ✅ Create in draft mode
-3. ✅ Use MR template if available
-4. ✅ Write concise description
+2. ✅ Run `pnpm build`; if it fails, triage and fix until build passes
+3. ✅ Create in draft mode
+4. ✅ Use MR template if available
+5. ✅ Write concise description
 
 ### When Addressing MR Comments
 

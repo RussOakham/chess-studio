@@ -1,5 +1,5 @@
 ---
-description: "TypeScript conventions: type imports, strict mode, UUID v7, and type safety patterns"
+description: "TypeScript conventions: type imports, strict mode, and type safety patterns"
 globs: ["**/*.ts", "**/*.tsx"]
 alwaysApply: false
 ---
@@ -14,68 +14,33 @@ Follow these TypeScript conventions for consistency and type safety.
 
 ```typescript
 // ✅ Correct
-import type { Game } from "@/lib/data-access/games.repository";
+import type { Doc, Id } from "convex/_generated/dataModel";
 import type { Context } from "./context";
-import { db, games } from "@repo/db"; // Value imports
+import { useQuery } from "convex/react"; // Value imports
 
 // ❌ Incorrect
-import { Game, GamesRepository } from "@/lib/data-access/games.repository";
+import { Doc, Id, useQuery } from "convex/react"; // Mixing type and value without type import
 ```
 
 **Exception**: When importing both types and values from the same module, you can use regular imports, but prefer type imports when possible.
 
-## UUID v7
+## Game and Move Types (Convex)
 
-**All IDs use UUID v7 (time-ordered UUIDs):**
+Game and move data live in Convex. Use Convex-generated types instead of inferring from a separate schema or repository:
 
-- Database schema uses `uuid_generate_v7()` for default values
-- Zod schemas use `z.uuidv7()` for validation
-- Type definitions should use `string` type (UUIDs are strings)
+- **Document types**: `Doc<"games">`, `Doc<"moves">` from `convex/_generated/dataModel`
+- **ID types**: `Id<"games">`, `Id<"moves">` from `convex/_generated/dataModel`
+- **API types**: Use the generated `api` from `convex/_generated/api`; function args and return types flow from Convex validators
 
-**Example:**
+See `@apps/web/convex/schema.ts`, `@apps/web/convex/games.ts`, and `@.cursor/rules/architecture-patterns.mdc`.
 
-```typescript
-// Schema
-id: uuid("id").primaryKey().default(sql`uuid_generate_v7()`)
+## UUID v7 (Non-Convex IDs)
 
-// Validation
-z.object({ gameId: z.uuidv7() })
+Where UUIDs are used outside Convex (e.g. external APIs, legacy schema):
 
-// Type
-type Game = { id: string; /* ... */ }
-```
-
-## Type Safety Patterns
-
-### 1. Infer Types from Drizzle Schema
-
-```typescript
-import type { InferSelectModel } from "@repo/db";
-import { games } from "@repo/db";
-
-export type Game = InferSelectModel<typeof games>;
-```
-
-### 2. Use Zod for Runtime Validation
-
-```typescript
-import { z } from "zod";
-
-export const newGameSchema = z.object({
-  difficulty: z.enum(["easy", "medium", "hard"]),
-  color: z.enum(["white", "black", "random"]),
-});
-```
-
-### 3. Type tRPC Router
-
-```typescript
-// routers/_app.ts
-export type AppRouter = typeof appRouter;
-
-// client.ts
-import type { AppRouter } from "./routers/_app";
-```
+- Use UUID v7 (time-ordered) where appropriate
+- Type definitions: `string` for UUID values
+- **Note**: Convex table IDs use Convex's `Id<"tableName">` type, not UUID v7.
 
 ## Strict Mode
 
@@ -95,38 +60,20 @@ Use proper error types:
 if (error instanceof Error) {
   // Handle error
 }
-
-// ✅ Correct - tRPC errors
-throw new TRPCError({
-  code: "NOT_FOUND",
-  message: "Game not found",
-});
 ```
+
+Throw clear errors with messages; in Convex handlers, throw for exceptional cases and return `null` for expected “not found” cases (see `@.cursor/rules/convex.mdc`).
 
 ## Path Aliases
 
 Use path aliases consistently:
 
 - `@/` - `apps/web/` (web app root)
-- `@repo/db` - `packages/db`
 - `@repo/chess` - `packages/chess`
 - `@repo/types` - `packages/types`
 
-## Type Definitions
-
-### API Types
-
-- Location: `apps/web/lib/types/api.ts`
-- Define request/response types for API boundaries
-
-### Domain Types
-
-- Infer from database schema using `InferSelectModel`
-- Export from repository files
-
 ## References
 
-- Schema example: `@packages/db/src/schema/index.ts`
-- Type inference: `@apps/web/lib/data-access/games.repository.ts`
-- Validation schemas: `@apps/web/lib/validations/`
-- tRPC types: `@apps/web/lib/trpc/routers/_app.ts`
+- Convex schema and types: `@apps/web/convex/schema.ts`, `@apps/web/convex/_generated/dataModel.d.ts`
+- Architecture: `@.cursor/rules/architecture-patterns.mdc`
+- Convex rules: `@.cursor/rules/convex.mdc`
