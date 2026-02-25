@@ -1,4 +1,5 @@
 import { ConvexClientProvider } from "@/app/convex-client-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { getToken } from "@/lib/auth-server";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
@@ -30,11 +31,13 @@ export default async function RootLayout({
     // Fall back to client-side auth flow
   }
   return (
-    <html lang="en" className={roboto.variable}>
+    <html lang="en" className={roboto.variable} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <ConvexClientProvider initialToken={token}>
-          {children}
-        </ConvexClientProvider>
+        <ThemeProvider>
+          <ConvexClientProvider initialToken={token}>
+            {children}
+          </ConvexClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -8,11 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { memo, useMemo } from "react";
+import React, { memo, useMemo } from "react";
 
 type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
 
-interface MoveAnnotation {
+export interface MoveAnnotation {
   moveNumber: number;
   type: MoveAnnotationType;
   bestMoveSan?: string;
@@ -32,6 +32,8 @@ interface MoveHistoryCardProps {
   setReplayIndex: (value: number | ((prev: number) => number)) => void;
   moveHistory: MoveHistoryItem[];
   moveAnnotations?: MoveAnnotation[] | null;
+  /** Optional class for the card container (e.g. flex-1 min-h-0 to fill space) */
+  className?: string;
 }
 
 const moveItemStyle = {
@@ -74,6 +76,7 @@ function MoveHistoryCardComponent({
   setReplayIndex,
   moveHistory,
   moveAnnotations,
+  className,
 }: MoveHistoryCardProps) {
   const annotationByMoveNumber = useMemo(() => {
     if (!moveAnnotations?.length) {
@@ -87,8 +90,8 @@ function MoveHistoryCardComponent({
   }, [moveAnnotations]);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={className}>
+      <CardHeader className="shrink-0">
         <CardTitle>Move History</CardTitle>
         <CardDescription>
           {sortedMovesLength === 0
@@ -96,9 +99,9 @@ function MoveHistoryCardComponent({
             : `${sortedMovesLength} move${sortedMovesLength === 1 ? "" : "s"}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col space-y-3">
         {sortedMovesLength > 0 ? (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex shrink-0 flex-wrap gap-1">
             <Button
               variant="outline"
               size="sm"
@@ -140,68 +143,128 @@ function MoveHistoryCardComponent({
             Move history will appear here as you play
           </p>
         ) : (
-          <div className="max-h-96 space-y-1 overflow-y-auto">
-            {moveHistory.map((move, idx) => {
-              const isCurrent = replayIndex > 0 && replayIndex === idx + 1;
-              const isLive =
-                replayIndex === sortedMovesLength &&
-                idx === moveHistory.length - 1;
-              const highlighted = isCurrent || isLive;
-              const annotation =
-                move.moveNumber != null
-                  ? annotationByMoveNumber.get(move.moveNumber)
-                  : undefined;
-              const badge = annotation
-                ? annotationBadge(annotation.type)
-                : null;
-              const tooltipText =
-                annotation &&
-                (annotation.type === "blunder" ||
-                  annotation.type === "mistake") &&
-                annotation.bestMoveSan
-                  ? `Best move: ${annotation.bestMoveSan}`
-                  : undefined;
-
-              const row = (
-                <button
-                  key={move.id}
-                  type="button"
-                  title={tooltipText}
-                  className={`flex w-full cursor-pointer items-center gap-2 rounded p-2 text-left text-sm hover:bg-muted ${
-                    highlighted ? "bg-primary/10 ring-1 ring-primary/30" : ""
-                  }`}
-                  style={moveItemStyle}
-                  onClick={() => setReplayIndex(idx + 1)}
-                >
-                  {move.displayNumber != null ? (
-                    <span className="font-medium text-muted-foreground">
-                      {move.displayNumber}.
-                    </span>
-                  ) : null}
-                  <span
-                    className={
-                      move.isWhiteMove ? "font-medium" : "text-muted-foreground"
-                    }
-                  >
-                    {move.moveSan}
-                  </span>
-                  {badge ? (
-                    <span
-                      className={getAnnotationBadgeClassName(annotation?.type)}
-                    >
-                      {badge}
-                    </span>
-                  ) : null}
-                  {isLive ? (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      (live)
-                    </span>
-                  ) : null}
-                </button>
-              );
-
-              return row;
-            })}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="grid grid-cols-[minmax(2rem,auto)_1fr_1fr] gap-x-2 gap-y-0.5 text-sm">
+              <div className="py-2 font-medium text-muted-foreground" />
+              <div className="py-2 font-medium text-muted-foreground">
+                White
+              </div>
+              <div className="py-2 font-medium text-muted-foreground">
+                Black
+              </div>
+              {Array.from(
+                { length: Math.ceil(moveHistory.length / 2) },
+                (_, rowIndex) => {
+                  const whiteIdx = 2 * rowIndex;
+                  const blackIdx = 2 * rowIndex + 1;
+                  const whiteMove = moveHistory[whiteIdx];
+                  const blackMove = moveHistory[blackIdx];
+                  const whiteReplayIdx = whiteIdx + 1;
+                  const blackReplayIdx = blackIdx + 1;
+                  const whiteHighlighted =
+                    replayIndex === whiteReplayIdx ||
+                    (replayIndex === sortedMovesLength &&
+                      whiteIdx === moveHistory.length - 1);
+                  const blackHighlighted =
+                    replayIndex === blackReplayIdx ||
+                    (replayIndex === sortedMovesLength &&
+                      blackIdx === moveHistory.length - 1);
+                  const whiteAnnotation =
+                    whiteMove?.moveNumber != null
+                      ? annotationByMoveNumber.get(whiteMove.moveNumber)
+                      : undefined;
+                  const blackAnnotation =
+                    blackMove?.moveNumber != null
+                      ? annotationByMoveNumber.get(blackMove.moveNumber)
+                      : undefined;
+                  const whiteBadge = whiteAnnotation
+                    ? annotationBadge(whiteAnnotation.type)
+                    : null;
+                  const blackBadge = blackAnnotation
+                    ? annotationBadge(blackAnnotation.type)
+                    : null;
+                  const whiteTooltip =
+                    whiteAnnotation &&
+                    (whiteAnnotation.type === "blunder" ||
+                      whiteAnnotation.type === "mistake") &&
+                    whiteAnnotation.bestMoveSan
+                      ? `Best move: ${whiteAnnotation.bestMoveSan}`
+                      : undefined;
+                  const blackTooltip =
+                    blackAnnotation &&
+                    (blackAnnotation.type === "blunder" ||
+                      blackAnnotation.type === "mistake") &&
+                    blackAnnotation.bestMoveSan
+                      ? `Best move: ${blackAnnotation.bestMoveSan}`
+                      : undefined;
+                  return (
+                    <React.Fragment key={`row-${rowIndex}`}>
+                      <div className="flex items-center py-1.5 font-medium text-muted-foreground">
+                        {rowIndex + 1}.
+                      </div>
+                      <button
+                        type="button"
+                        title={whiteTooltip}
+                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left hover:bg-muted ${
+                          whiteHighlighted
+                            ? "bg-primary/10 ring-1 ring-primary/30"
+                            : ""
+                        }`}
+                        style={moveItemStyle}
+                        onClick={() => setReplayIndex(whiteReplayIdx)}
+                      >
+                        <span className="font-medium">
+                          {whiteMove?.moveSan}
+                        </span>
+                        {whiteBadge ? (
+                          <span
+                            className={getAnnotationBadgeClassName(
+                              whiteAnnotation?.type
+                            )}
+                          >
+                            {whiteBadge}
+                          </span>
+                        ) : null}
+                      </button>
+                      <button
+                        key={`row-${rowIndex}-black`}
+                        type="button"
+                        title={blackTooltip}
+                        disabled={!blackMove}
+                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left text-muted-foreground hover:bg-muted hover:text-foreground ${
+                          blackHighlighted
+                            ? "bg-primary/10 ring-1 ring-primary/30"
+                            : ""
+                        }${!blackMove ? " cursor-default" : ""}`}
+                        style={moveItemStyle}
+                        onClick={
+                          blackMove
+                            ? () => setReplayIndex(blackReplayIdx)
+                            : undefined
+                        }
+                      >
+                        {blackMove ? (
+                          <>
+                            <span>{blackMove.moveSan}</span>
+                            {blackBadge ? (
+                              <span
+                                className={getAnnotationBadgeClassName(
+                                  blackAnnotation?.type
+                                )}
+                              >
+                                {blackBadge}
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </button>
+                    </React.Fragment>
+                  );
+                }
+              )}
+            </div>
           </div>
         )}
       </CardContent>

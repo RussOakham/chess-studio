@@ -135,7 +135,7 @@ function ChessboardWrapper({
 
   return (
     <div className="flex w-full items-center justify-center p-4">
-      <div className="w-full max-w-[600px]">
+      <div className={boardWidth != null ? "w-full" : "w-full max-w-[600px]"}>
         <Chessboard
           position={validPosition}
           onPieceDrop={onPieceDrop}

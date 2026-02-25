@@ -13,21 +13,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { buttonVariants, Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
 import {
   getGameOverMessage,
   getKingInCheckSquareStyles,
-  getStatusDescription,
 } from "@/lib/game-status";
 import {
   getTurnStatusColor,
@@ -44,9 +37,15 @@ import { useMakeMove } from "@/lib/hooks/use-make-move";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -122,12 +121,7 @@ function GamePageContent({
     api.reviews.getByGameId,
     game ? { gameId: game._id } : "skip"
   );
-  const {
-    runAnalysis,
-    isAnalyzing,
-    progress,
-    error: analysisError,
-  } = useGameAnalysis({
+  const { isAnalyzing, progress } = useGameAnalysis({
     gameId,
     game: game ?? undefined,
     moves: moves ?? [],
@@ -219,6 +213,28 @@ function GamePageContent({
   const hintSan =
     hint && getSanForMove(viewingFen, hint.from, hint.to, hint.promotion);
 
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(560);
+  useLayoutEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) {
+      return;
+    }
+    function updateSize() {
+      if (!el) {
+        return;
+      }
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const side = Math.min(w, h);
+      setBoardSize(Math.max(200, side - 32));
+    }
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   if (isLoading || !game) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -227,8 +243,11 @@ function GamePageContent({
     );
   }
 
+  const opponentLabel = `Engine (${game.difficulty})`;
+  const reviewUrl = `/game/${gameId}/review`;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
       <AlertDialog
         open={isGameOver && !gameOverDismissed}
         onOpenChange={(open) => {
@@ -253,314 +272,308 @@ function GamePageContent({
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="container mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Game {gameId.slice(0, 8)}</h1>
-            <div className="mt-1 flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">
-                Status:{" "}
-                <span className="capitalize">
-                  {game.status.replace("_", " ")}
+      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+        {/* Center: board column (grows to fill height; board scales to fit) */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="font-medium text-muted-foreground">
+              {opponentLabel}
+            </span>
+            {game.status === "in_progress" && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground capitalize">
+                  {currentTurn}
                 </span>
-              </p>
-              {game.status === "in_progress" && currentTurn && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <p className="text-sm text-muted-foreground">
-                    Turn: <span className="capitalize">{currentTurn}</span>
-                  </p>
-                </>
-              )}
-              {isInCheck && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <Badge variant="destructive">Check</Badge>
-                </>
-              )}
-              {isCheckmate && <Badge variant="destructive">Checkmate</Badge>}
-              {isStalemate && <Badge variant="secondary">Stalemate</Badge>}
-              {isDraw && <Badge variant="secondary">Draw</Badge>}
-            </div>
+                {isInCheck && <Badge variant="destructive">Check</Badge>}
+                {isCheckmate && <Badge variant="destructive">Checkmate</Badge>}
+                {isStalemate && <Badge variant="secondary">Stalemate</Badge>}
+                {isDraw && <Badge variant="secondary">Draw</Badge>}
+              </>
+            )}
           </div>
-          <Link href="/">
-            <Button variant="outline">Back to Home</Button>
-          </Link>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Chessboard Area */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="relative">
-                <CardTitle>Chessboard</CardTitle>
-                <CardDescription>
-                  {getStatusDescription(game.status)}
-                </CardDescription>
-                {/* Fixed-size status indicator (always rendered to prevent CLS) */}
-                {game.status === "in_progress" && (
-                  <TurnStatusIndicator
-                    makeMove={makeMove}
-                    isEngineTurn={isEngineTurn}
-                    isCalculating={isCalculating}
+          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+            <div
+              ref={boardContainerRef}
+              className="flex aspect-square h-full max-w-full items-center justify-center"
+            >
+              <div className="relative flex items-stretch gap-4">
+                <GameChessboard
+                  position={viewingFen}
+                  orientation={boardOrientation}
+                  draggable={
+                    isViewingLive &&
+                    game.status === "in_progress" &&
+                    !isEngineTurn &&
+                    !isCalculating &&
+                    !makeMove.isPending
+                  }
+                  status={game.status}
+                  gameId={game.id}
+                  onMoveSuccess={undefined}
+                  customSquareStyles={customSquareStyles}
+                  customArrows={customArrows}
+                  boardWidth={boardSize}
+                />
+                {game.status === "in_progress" && isStockfishReady && (
+                  <EvaluationBar
+                    evaluation={evaluation}
+                    orientation={boardOrientation}
                   />
                 )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4">
-                  {!isViewingLive && (
-                    <p className="text-xs text-muted-foreground">
-                      Viewing past position — use controls below to return to
-                      live
-                    </p>
-                  )}
-                  <div className="flex items-stretch gap-4">
-                    <GameChessboard
-                      position={viewingFen}
-                      orientation={boardOrientation}
-                      draggable={
-                        isViewingLive &&
-                        game.status === "in_progress" &&
-                        !isEngineTurn &&
-                        !isCalculating &&
-                        !makeMove.isPending
-                      }
-                      status={game.status}
-                      gameId={game.id}
-                      onMoveSuccess={undefined}
-                      customSquareStyles={customSquareStyles}
-                      customArrows={customArrows}
-                    />
-                    {game.status === "in_progress" && isStockfishReady && (
-                      <EvaluationBar
-                        evaluation={evaluation}
-                        orientation={boardOrientation}
-                      />
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            {!isViewingLive && (
+              <p className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
+                Viewing past position — use controls to return to live
+              </p>
+            )}
+            {game.status === "in_progress" && (
+              <div className="absolute top-2 right-2">
+                <TurnStatusIndicator
+                  makeMove={makeMove}
+                  isEngineTurn={isEngineTurn}
+                  isCalculating={isCalculating}
+                />
+              </div>
+            )}
           </div>
+          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="font-medium text-muted-foreground">You</span>
+          </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Game Info Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Game Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium">Status</p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {game.status.replace("_", " ")}
-                  </p>
-                </div>
+        {/* Right panel: scrollable content + controls at bottom */}
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+          {/* Game Info: horizontal (shrink-0 so Move History can grow) */}
+          <Card className="shrink-0">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base">Game Info</CardTitle>
+            </CardHeader>
+            <CardContent className="py-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Status:</span>{" "}
+                  <span className="capitalize">
+                    {game.status.replaceAll("_", " ")}
+                  </span>
+                </span>
                 {game.status === "in_progress" && currentTurn && (
-                  <div>
-                    <p className="text-sm font-medium">Turn</p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {currentTurn}
-                    </p>
-                  </div>
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">Turn:</span>{" "}
+                      <span className="capitalize">{currentTurn}</span>
+                    </span>
+                  </>
                 )}
                 {game.result && (
-                  <div>
-                    <p className="text-sm font-medium">Result</p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {game.result.replace("_", " ")}
-                    </p>
-                  </div>
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Result:
+                      </span>{" "}
+                      <span className="capitalize">
+                        {game.result.replaceAll("_", " ")}
+                      </span>
+                    </span>
+                  </>
                 )}
-                <div>
-                  <p className="text-sm font-medium">Created</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(game.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Last Updated</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(game.updatedAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Created:</span>{" "}
+                  {new Date(game.createdAt).toLocaleDateString()}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Updated:</span>{" "}
+                  {new Date(game.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Game Controls */}
+          {/* Move History: grows to fill space */}
+          <MoveHistoryCard
+            className="flex min-h-0 flex-1 flex-col"
+            sortedMovesLength={sortedMoves.length}
+            replayIndex={replayIndex}
+            setReplayIndex={setReplayIndex}
+            moveHistory={moveHistory}
+            moveAnnotations={review?.moveAnnotations}
+          />
+
+          {/* Post-game: Match view (bot message, stats, CTAs) */}
+          {game.status === "completed" && (
             <Card>
               <CardHeader>
-                <CardTitle>Game Controls</CardTitle>
+                <CardTitle>Play Bots</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {game.status === "in_progress" && isStockfishReady && (
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    disabled={
-                      isEngineTurn ||
-                      !isViewingLive ||
-                      isCalculating ||
-                      isHintLoading ||
-                      !game?.difficulty
-                    }
-                    onClick={() => void requestHint()}
-                  >
-                    {isHintLoading ? "Thinking…" : "Get Hint"}
-                  </Button>
-                )}
-                {game.status === "in_progress" && hint && (
-                  <p className="text-sm text-muted-foreground">
-                    {hintSan ? `Hint: ${hintSan}` : "Hint available"}
-                  </p>
-                )}
-                {game.status === "in_progress" && (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    disabled={isResigning}
-                    onClick={async () => {
-                      if (
-                        !globalThis.confirm(
-                          "Are you sure you want to resign? This will end the game."
-                        )
-                      ) {
-                        return;
-                      }
-                      setIsResigning(true);
-                      try {
-                        await resignMutation({
-                          gameId: toGameId(gameId),
-                        });
-                      } catch (error) {
-                        console.error("Resign error:", error);
-                        setIsResigning(false);
-                      }
-                    }}
-                  >
-                    {isResigning ? "Resigning…" : "Resign"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Move History */}
-            <MoveHistoryCard
-              sortedMovesLength={sortedMoves.length}
-              replayIndex={replayIndex}
-              setReplayIndex={setReplayIndex}
-              moveHistory={moveHistory}
-              moveAnnotations={review?.moveAnnotations}
-            />
-
-            {/* Post-game analysis */}
-            {game.status === "completed" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Game Analysis</CardTitle>
-                  <CardDescription>
-                    Engine review: mistakes, blunders, and suggestions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {review === undefined && (
-                    <p className="text-sm text-muted-foreground">Loading…</p>
-                  )}
-                  {review === null && (
-                    <>
-                      {analysisError && (
-                        <p className="text-sm text-destructive">
-                          {analysisError}
-                        </p>
-                      )}
-                      {isAnalyzing && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">
-                            Analyzing…
-                            {progress &&
-                              ` Move ${progress.completed} of ${progress.total}`}
-                          </p>
-                        </div>
-                      )}
-                      {!isAnalyzing && (
-                        <Button
-                          className="w-full"
-                          disabled={!isStockfishReady || moves.length === 0}
-                          onClick={() => void runAnalysis()}
-                        >
-                          Analyze game
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  {review !== undefined && review !== null && (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium">Summary</p>
-                        <p className="text-sm text-muted-foreground">
-                          {review.summary}
-                        </p>
-                      </div>
-                      {review.keyMoments && review.keyMoments.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium">Key moments</p>
-                          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                            {review.keyMoments.map((moment, index) => (
-                              // oxlint-disable-next-line react/no-array-index-key
-                              <li key={`${moment}-${index}`}>{moment}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {review.suggestions && review.suggestions.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium">Suggestions</p>
-                          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                            {review.suggestions.map((suggestion, index) => (
-                              // oxlint-disable-next-line react/no-array-index-key
-                              <li key={`${suggestion}-${index}`}>
-                                {suggestion}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+              <CardContent className="space-y-4">
+                {/* Bot message */}
+                <div className="flex gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
+                    ♔
+                  </div>
+                  <div className="min-w-0 flex-1 rounded-lg rounded-tl-none bg-muted/50 px-3 py-2 text-sm text-foreground">
+                    Great game! Open Game Review to see how you did.
+                  </div>
+                </div>
+                {/* Opening placeholder */}
+                <p className="text-xs text-muted-foreground">
+                  Game complete · Review available below
+                </p>
+                {/* Summary stats from moveAnnotations */}
+                {review?.moveAnnotations &&
+                  review.moveAnnotations.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {(() => {
+                        const great = review.moveAnnotations.filter(
+                          (a) => a.type === "good"
+                        ).length;
+                        const best = review.moveAnnotations.filter(
+                          (a) => a.type === "best"
+                        ).length;
+                        return (
+                          <>
+                            {great > 0 && (
+                              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <span className="text-primary">!</span>
+                                {great} Great
+                              </span>
+                            )}
+                            {best > 0 && (
+                              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <span className="text-primary">★</span>
+                                {best} Best
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                {isAnalyzing && (
+                  <p className="text-sm text-muted-foreground">
+                    Analyzing…
+                    {progress &&
+                      ` Move ${progress.completed} of ${progress.total}`}
+                  </p>
+                )}
+                {/* Primary CTA: Game Review (new tab) */}
+                <a
+                  href={reviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={
+                    buttonVariants({ size: "lg" }) + " inline-flex w-full"
+                  }
+                  aria-label="Open Game Review in new tab"
+                >
+                  Game Review
+                </a>
+                {/* Secondary: New Game, Rematch */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => router.push("/game/new")}
+                  >
+                    + New Game
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => router.push("/game/new")}
+                  >
+                    Rematch
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            {/* PGN */}
-            <Card>
-              <CardHeader>
-                <CardTitle>PGN</CardTitle>
-                <CardDescription>Portable Game Notation</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
-                  {game.pgn ?? "No moves yet"}
-                </pre>
+          {/* PGN: accordion */}
+          <details className="group rounded-lg border border-border bg-card">
+            <summary className="cursor-pointer list-none px-4 py-3 font-medium">
+              PGN (Portable Game Notation)
+            </summary>
+            <div className="border-t border-border px-4 pt-2 pb-4">
+              <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
+                {game.pgn ?? "No moves yet"}
+              </pre>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(game.pgn ?? "");
+                    setPgnCopied(true);
+                    setTimeout(() => setPgnCopied(false), 2000);
+                  } catch {
+                    // Ignore clipboard errors
+                  }
+                }}
+              >
+                {pgnCopied ? "Copied" : "Copy PGN"}
+              </Button>
+            </div>
+          </details>
+
+          {/* Game Controls: horizontal, at bottom */}
+          <div className="mt-auto shrink-0 border-t border-border pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {game.status === "in_progress" && isStockfishReady && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="w-full"
+                  disabled={
+                    isEngineTurn ||
+                    !isViewingLive ||
+                    isCalculating ||
+                    isHintLoading ||
+                    !game?.difficulty
+                  }
+                  onClick={() => void requestHint()}
+                >
+                  {isHintLoading ? "Thinking…" : "Hint"}
+                </Button>
+              )}
+              {game.status === "in_progress" && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isResigning}
                   onClick={async () => {
+                    if (
+                      !globalThis.confirm(
+                        "Are you sure you want to resign? This will end the game."
+                      )
+                    ) {
+                      return;
+                    }
+                    setIsResigning(true);
                     try {
-                      await navigator.clipboard.writeText(game.pgn ?? "");
-                      setPgnCopied(true);
-                      setTimeout(() => setPgnCopied(false), 2000);
-                    } catch {
-                      // Ignore clipboard errors
+                      await resignMutation({
+                        gameId: toGameId(gameId),
+                      });
+                    } catch (error) {
+                      console.error("Resign error:", error);
+                      setIsResigning(false);
                     }
                   }}
                 >
-                  {pgnCopied ? "Copied" : "Copy PGN"}
+                  {isResigning ? "Resigning…" : "Resign"}
                 </Button>
-              </CardContent>
-            </Card>
+              )}
+            </div>
+            {game.status === "in_progress" && hint && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+              </p>
+            )}
           </div>
         </div>
       </main>
