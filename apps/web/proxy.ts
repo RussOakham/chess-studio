@@ -1,8 +1,7 @@
 // Next.js proxy for route protection
 
-import type { NextRequest } from "next/server";
-
 import { getSessionCookie } from "better-auth/cookies";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // oxlint-disable-next-line import/group-exports

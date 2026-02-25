@@ -1,9 +1,8 @@
 "use client";
 
-import type { DifficultyLevel, PositionEvaluation } from "@repo/chess";
-
 import { getSanForMove } from "@/lib/chess-notation";
 import { sortMovesByNumber } from "@/lib/game-replay";
+import type { DifficultyLevel, PositionEvaluation } from "@repo/chess";
 
 /** Centipawn equivalent for mate (for drop calculation). */
 const MATE_CP = 10000;

@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReplayMove } from "@/lib/game-replay";
-
 import {
   formatMoveHistory,
   getViewingFen,

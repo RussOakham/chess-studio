@@ -1,7 +1,6 @@
 "use client";
 
 import type { DifficultyLevel } from "@repo/chess";
-
 import { useCallback, useEffect, useState, startTransition } from "react";
 
 interface HintMove {

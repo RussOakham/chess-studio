@@ -7,7 +7,6 @@ import { useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 
 import type { BoardArrow, CustomSquareStyles } from "./chessboard";
-
 import { ChessboardWrapper } from "./chessboard";
 
 interface GameChessboardProps {

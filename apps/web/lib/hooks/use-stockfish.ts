@@ -5,7 +5,6 @@ import type {
   PositionEvaluation,
   StockfishInstance,
 } from "@repo/chess";
-
 import {
   getEngineDepth,
   calculateBestMove,

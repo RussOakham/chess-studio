@@ -1,7 +1,6 @@
 "use client";
 
 import type { PositionEvaluation } from "@repo/chess";
-
 import { useMemo } from "react";
 
 const CP_CLAMP = 500;

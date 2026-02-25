@@ -1,7 +1,6 @@
 "use client";
 
 import type { PositionEvaluation } from "@repo/chess";
-
 import { useEffect, useRef, useState } from "react";
 
 const DEBOUNCE_MS = 250;

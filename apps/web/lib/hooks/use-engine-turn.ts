@@ -1,7 +1,6 @@
 "use client";
 
 import type { Chess } from "chess.js";
-
 import { useMemo } from "react";
 
 /** Game doc shape with color and difficulty (for engine detection). */

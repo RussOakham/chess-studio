@@ -1,15 +1,14 @@
 "use client";
 
+import { api } from "@/convex/_generated/api";
+import { toGameId } from "@/lib/convex-id";
 import type {
   AnalysisMove,
   GameAnalysisResult,
   GameForAnalysis,
 } from "@/lib/run-game-analysis";
-import type { PositionEvaluation } from "@repo/chess";
-
-import { api } from "@/convex/_generated/api";
-import { toGameId } from "@/lib/convex-id";
 import { runGameAnalysis } from "@/lib/run-game-analysis";
+import type { PositionEvaluation } from "@repo/chess";
 import { useMutation } from "convex/react";
 import { useCallback, useState } from "react";
 
