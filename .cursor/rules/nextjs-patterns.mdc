@@ -14,20 +14,28 @@ This project uses Next.js 16 with the App Router. Follow these patterns for cons
 
 - **No directive needed** - components are Server Components by default
 - **Use for**: Data fetching, static content, SEO-friendly pages
-- **Can use**: Direct database access, tRPC server caller, file system, etc.
+- **Can use**: Convex server-side (e.g. `authServer.fetchAuthQuery` for auth checks), file system, etc.
 - **Cannot use**: React hooks, browser APIs, event handlers
 
 **Example:**
 
 ```tsx
 // app/game/[gameId]/page.tsx
-import { createCaller } from "@/lib/trpc/server";
+import { api } from "@/convex/_generated/api";
+import { authServer, getSession } from "@/lib/auth-server";
+import { toGameId } from "@/lib/convex-id";
+import { notFound, redirect } from "next/navigation";
 
-export default async function GamePage({ params }: { params: { gameId: string } }) {
-  const trpc = await createCaller();
-  const game = await trpc.games.getById({ gameId: params.gameId });
-  
-  return <GamePageClient gameId={params.gameId} initialGame={game} />;
+export default async function GamePage({ params }: { params: Promise<{ gameId: string }> }) {
+  const { gameId } = await params;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  try {
+    await authServer.fetchAuthQuery(api.games.getById, { gameId: toGameId(gameId) });
+  } catch (error) {
+    // handle not found / auth error → notFound() or redirect("/login")
+  }
+  return <GamePageClientLoader gameId={gameId} initialBoardOrientation="white" />;
 }
 ```
 
@@ -35,7 +43,7 @@ export default async function GamePage({ params }: { params: { gameId: string } 
 
 - **Requires**: `"use client"` directive at the top
 - **Use for**: Interactivity, hooks, browser APIs, event handlers
-- **Can use**: All React features, tRPC React Query hooks
+- **Can use**: All React features, Convex `useQuery` / `useMutation`, custom hooks
 - **Pattern**: Create wrapper components for interactive features
 
 **Example:**
@@ -57,8 +65,8 @@ export function GamePageClient({ gameId }: { gameId: string }) {
 - **Pages**: `page.tsx` (App Router convention)
 - **Layouts**: `layout.tsx`
 - **Components**: `kebab-case.tsx` (e.g. `game-page-client.tsx`, `move-history-card.tsx`) — repo convention is kebab-case for component filenames.
-- **Utilities**: `camelCase.ts` (e.g., `use-game.ts`)
-- **Types**: `camelCase.ts` or `types.ts`
+- **Utilities and hooks**: `kebab-case.ts` (e.g. `use-game.ts`, `convex-id.ts`)
+- **Types**: `kebab-case.types.ts` or `types.ts`
 
 ## Route Structure
 
@@ -70,15 +78,15 @@ export function GamePageClient({ gameId }: { gameId: string }) {
 
 ### Server Components
 
-- Use `createCaller()` from `@/lib/trpc/server` for server-side tRPC calls
-- Fetch data directly in page components
-- Pass data as props to Client Components
+- Use Convex server-side where needed (e.g. `authServer.fetchAuthQuery(api.games.getById, ...)` for auth or preflight checks)
+- Fetch or validate in page/layout; pass minimal props to Client Components
+- See `@apps/web/lib/auth-server.ts` and `@.cursor/rules/architecture-patterns.mdc`
 
 ### Client Components
 
-- Use `trpc` hooks from `@/lib/trpc/client` with React Query
-- Use custom hooks like `useGame()` for complex state management
-- Implement optimistic updates for better UX
+- Use Convex `useQuery` and `useMutation` (e.g. `useQuery(api.games.getById, { gameId })`); data stays in sync via Convex subscriptions
+- Use custom hooks like `useGame()` for composed state and loading
+- Implement optimistic updates where it improves UX
 
 ## Component Organization
 
@@ -94,13 +102,15 @@ components/
 
 1. **Default to Server Components** - Only use Client Components when needed
 2. **Minimize Client Component boundaries** - Keep Client Components small and focused
-3. **Use path aliases**: `@/components`, `@/lib`, `@repo/db`, etc.
+3. **Use path aliases**: `@/components`, `@/lib`, `@repo/chess`, etc.
 4. **Type props explicitly** - Use TypeScript interfaces for component props
 5. **Extract reusable logic** - Create custom hooks for complex state management
+6. **Performance** - For bundle size, streaming, and rendering (e.g. `next/dynamic`, Suspense, conditional rendering), follow the **Vercel React best-practices** skill when relevant.
 
 ## References
 
 - Server component example: `@apps/web/app/game/[gameId]/page.tsx`
 - Client component example: `@apps/web/components/game/game-page-client.tsx`
 - Custom hook example: `@apps/web/lib/hooks/use-game.ts`
-- tRPC server caller: `@apps/web/lib/trpc/server.ts`
+- Convex auth/server: `@apps/web/lib/auth-server.ts`, `@apps/web/app/convex-client-provider.tsx`
+- Architecture: `@.cursor/rules/architecture-patterns.mdc`

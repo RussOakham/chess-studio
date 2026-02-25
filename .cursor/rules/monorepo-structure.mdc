@@ -13,14 +13,16 @@ This project uses a pnpm workspace with Turbo for monorepo management.
 ```text
 chess-studio/
 ├── apps/
-│   └── web/              # Next.js application
+│   └── web/              # Next.js application (game/move data in apps/web/convex/)
 ├── packages/
-│   ├── db/              # Database schema and client (Drizzle ORM)
+│   ├── db/              # Database schema and client (Drizzle ORM; not used for game/move data)
 │   ├── chess/           # Chess logic and utilities
 │   ├── types/           # Shared TypeScript types
 │   └── config/          # Shared configurations
 └── docs/                # Documentation
 ```
+
+**Game and move data** live in **Convex** (`apps/web/convex/`), not in `packages/db`. See `@.cursor/rules/architecture-patterns.mdc`.
 
 ## Package Naming
 
