@@ -90,13 +90,13 @@ function ReviewMidReview({
   const { replayIndex, setReplayIndex, sortedMoves, viewingFen, moveHistory } =
     useReplay(moves, game.fen);
 
-  const [urlSynced, setUrlSynced] = useState(false);
   useEffect(() => {
-    if (urlIndex !== null && !urlSynced) {
-      setReplayIndex(Math.min(urlIndex, moves.length));
-      setUrlSynced(true);
+    if (urlIndex === null) return;
+    const clamped = Math.min(Math.max(0, urlIndex), moves.length);
+    if (clamped !== replayIndex) {
+      setReplayIndex(clamped);
     }
-  }, [urlIndex, urlSynced, moves.length, setReplayIndex]);
+  }, [urlIndex, moves.length, replayIndex, setReplayIndex]);
 
   const setReplayIndexAndUrl = useCallback(
     (value: number | ((prev: number) => number)) => {
