@@ -1,5 +1,4 @@
 import { ConvexUserBadge } from "@/components/auth/convex-user-badge";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { HomeGamesList } from "@/components/home/home-games-list";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth-server";
@@ -15,7 +14,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-full bg-background">
       <main className="container mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -27,12 +26,9 @@ export default async function Home() {
               <ConvexUserBadge />
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/game/new">
-              <Button size="lg">New Game</Button>
-            </Link>
-            <SignOutButton />
-          </div>
+          <Link href="/game/new">
+            <Button size="lg">New Game</Button>
+          </Link>
         </div>
 
         <Suspense

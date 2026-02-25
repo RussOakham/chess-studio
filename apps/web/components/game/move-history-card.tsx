@@ -12,7 +12,7 @@ import { memo, useMemo } from "react";
 
 type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
 
-interface MoveAnnotation {
+export interface MoveAnnotation {
   moveNumber: number;
   type: MoveAnnotationType;
   bestMoveSan?: string;
