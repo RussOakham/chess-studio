@@ -24,6 +24,7 @@ export function LoginForm() {
     setError: setFormError,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { rememberMe: true },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -31,6 +32,7 @@ export function LoginForm() {
       const result = await signIn.email({
         email: data.email,
         password: data.password,
+        rememberMe: data.rememberMe ?? true,
       });
 
       if (result.error) {
@@ -96,6 +98,22 @@ export function LoginForm() {
               <FieldError>{errors.password.message}</FieldError>
             )}
           </Field>
+          <div className="flex flex-row items-center justify-start gap-1.5">
+            <input
+              id="rememberMe"
+              type="checkbox"
+              {...register("rememberMe")}
+              disabled={isSubmitting}
+              className="size-4 shrink-0 rounded border-input"
+              aria-invalid={errors.rememberMe ? "true" : "false"}
+            />
+            <FieldLabel
+              htmlFor="rememberMe"
+              className="shrink-0 cursor-pointer font-normal"
+            >
+              Remember me
+            </FieldLabel>
+          </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
