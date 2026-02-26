@@ -1,6 +1,6 @@
 import { ConvexUserBadge } from "@/components/auth/convex-user-badge";
 import { HomeGamesList } from "@/components/home/home-games-list";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { getSession } from "@/lib/auth-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
