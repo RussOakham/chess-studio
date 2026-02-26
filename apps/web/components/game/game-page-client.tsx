@@ -530,13 +530,14 @@ function GamePageContent({
             </div>
           </details>
 
-          {/* Game Controls: horizontal, at bottom */}
+          {/* Game Controls: full-width, prominent, side by side */}
           <div className="mt-auto shrink-0 border-t border-border pt-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid w-full grid-cols-2 gap-2">
               {game.status === "in_progress" && isStockfishReady && (
                 <Button
                   variant="secondary"
-                  size="sm"
+                  size="lg"
+                  className="w-full"
                   disabled={
                     isEngineTurn ||
                     !isViewingLive ||
@@ -552,7 +553,8 @@ function GamePageContent({
               {game.status === "in_progress" && (
                 <Button
                   variant="destructive"
-                  size="sm"
+                  size="lg"
+                  className="w-full"
                   disabled={isResigning}
                   onClick={async () => {
                     if (

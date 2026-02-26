@@ -101,10 +101,11 @@ function MoveHistoryCardComponent({
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col space-y-3">
         {sortedMovesLength > 0 ? (
-          <div className="flex shrink-0 flex-wrap gap-1">
+          <div className="grid shrink-0 grid-cols-4 gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="default"
+              className="w-full"
               disabled={replayIndex === 0}
               onClick={() => setReplayIndex(0)}
             >
@@ -112,7 +113,8 @@ function MoveHistoryCardComponent({
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
+              className="w-full"
               disabled={replayIndex === 0}
               onClick={() => setReplayIndex((prev) => Math.max(0, prev - 1))}
             >
@@ -120,7 +122,8 @@ function MoveHistoryCardComponent({
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
+              className="w-full"
               disabled={replayIndex === sortedMovesLength}
               onClick={() =>
                 setReplayIndex((prev) => Math.min(sortedMovesLength, prev + 1))
@@ -130,7 +133,8 @@ function MoveHistoryCardComponent({
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
+              className="w-full"
               disabled={replayIndex === sortedMovesLength}
               onClick={() => setReplayIndex(sortedMovesLength)}
             >
