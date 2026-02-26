@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
 import {
@@ -33,6 +34,7 @@ import { useMakeMove } from "@/lib/hooks/use-make-move";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
+import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -46,6 +48,8 @@ import {
 interface GamePageClientProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
+  /** Display name for the human player (e.g. email until usernames exist). */
+  userDisplayName?: string;
 }
 
 /**
@@ -104,6 +108,7 @@ function TurnStatusIndicator({
 function GamePageContent({
   gameId,
   initialBoardOrientation,
+  userDisplayName = "You",
 }: GamePageClientProps) {
   const {
     game,
@@ -202,6 +207,11 @@ function GamePageContent({
     moveHistory,
   } = useReplay(moves, game?.fen);
 
+  const capturedPieces = useMemo(
+    () => getCapturedPieces(moves.slice(0, replayIndex)),
+    [moves, replayIndex]
+  );
+
   const hintEnabled =
     game?.status === "in_progress" &&
     !isEngineTurn &&
@@ -295,20 +305,71 @@ function GamePageContent({
       <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
         {/* Center: board column (grows to fill height; board scales to fit) */}
         <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
-          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-            <span className="font-medium text-muted-foreground">
-              {opponentLabel}
-            </span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">{opponentColorLabel}</span>
-            {game.status === "in_progress" && (
-              <>
-                {isInCheck && <Badge variant="destructive">Check</Badge>}
-                {isCheckmate && <Badge variant="destructive">Checkmate</Badge>}
-                {isStalemate && <Badge variant="secondary">Stalemate</Badge>}
-                {isDraw && <Badge variant="secondary">Draw</Badge>}
-              </>
-            )}
+          <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+            <div
+              className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <Bot className="size-5" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-foreground">
+                  {opponentLabel}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {opponentColorLabel}
+                </span>
+                {game.status === "in_progress" && (
+                  <>
+                    {isInCheck && (
+                      <Badge variant="destructive" className="shrink-0">
+                        Check
+                      </Badge>
+                    )}
+                    {isCheckmate && (
+                      <Badge variant="destructive" className="shrink-0">
+                        Checkmate
+                      </Badge>
+                    )}
+                    {isStalemate && (
+                      <Badge variant="secondary" className="shrink-0">
+                        Stalemate
+                      </Badge>
+                    )}
+                    {isDraw && (
+                      <Badge variant="secondary" className="shrink-0">
+                        Draw
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </div>
+              {(() => {
+                const opponentCaptured =
+                  playerColor === "white"
+                    ? capturedPieces.black
+                    : capturedPieces.white;
+                const symbols = capturedToSymbols(opponentCaptured);
+                if (symbols.length === 0) return null;
+                return (
+                  <div
+                    className="flex flex-wrap items-center gap-1.5 leading-none"
+                    aria-label={`Captured: ${symbols.join(" ")}`}
+                  >
+                    {symbols.map((sym, idx) => (
+                      <span
+                        key={`${idx}-${sym}`}
+                        className="inline-flex min-w-[1.25rem] items-center justify-center text-2xl"
+                        style={{ fontSize: "1.5rem" }}
+                      >
+                        {sym}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             <div
@@ -347,10 +408,47 @@ function GamePageContent({
               </p>
             )}
           </div>
-          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-            <span className="font-medium text-muted-foreground">You</span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">{playerColorLabel}</span>
+          <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+            <div
+              className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <User className="size-5" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-foreground">
+                  {userDisplayName}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {playerColorLabel}
+                </span>
+              </div>
+              {(() => {
+                const playerCaptured =
+                  playerColor === "white"
+                    ? capturedPieces.white
+                    : capturedPieces.black;
+                const symbols = capturedToSymbols(playerCaptured);
+                if (symbols.length === 0) return null;
+                return (
+                  <div
+                    className="flex flex-wrap items-center gap-1.5 leading-none"
+                    aria-label={`Captured: ${symbols.join(" ")}`}
+                  >
+                    {symbols.map((sym, idx) => (
+                      <span
+                        key={`${idx}-${sym}`}
+                        className="inline-flex min-w-[1.25rem] items-center justify-center text-2xl"
+                        style={{ fontSize: "1.5rem" }}
+                      >
+                        {sym}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
 
@@ -612,6 +710,7 @@ export function GamePageClient(props: GamePageClientProps) {
       key={connectionRefreshKey}
       gameId={props.gameId}
       initialBoardOrientation={props.initialBoardOrientation}
+      userDisplayName={props.userDisplayName}
     />
   );
 }

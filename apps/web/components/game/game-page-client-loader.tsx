@@ -13,16 +13,20 @@ const GamePageClient = dynamic(
 interface GamePageClientLoaderProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
+  /** Display name for the human player (e.g. email until usernames exist). */
+  userDisplayName?: string;
 }
 
 export function GamePageClientLoader({
   gameId,
   initialBoardOrientation,
+  userDisplayName,
 }: GamePageClientLoaderProps) {
   return (
     <GamePageClient
       gameId={gameId}
       initialBoardOrientation={initialBoardOrientation}
+      userDisplayName={userDisplayName}
     />
   );
 }

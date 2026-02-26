@@ -37,10 +37,13 @@ export default async function GamePage({ params }: GamePageProps) {
   const boardOrientation: "white" | "black" =
     game?.color === "black" ? "black" : "white";
 
+  const userDisplayName = session.user.name ?? session.user.email ?? "You";
+
   return (
     <GamePageClientLoader
       gameId={gameId}
       initialBoardOrientation={boardOrientation}
+      userDisplayName={userDisplayName}
     />
   );
 }
