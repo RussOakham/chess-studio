@@ -22,11 +22,7 @@ import {
   getGameOverMessage,
   getKingInCheckSquareStyles,
 } from "@/lib/game-status";
-import {
-  getTurnStatusColor,
-  getTurnStatusLabel,
-  getTurnStatusText,
-} from "@/lib/game-turn-status";
+import { getTurnStatusLabel } from "@/lib/game-turn-status";
 import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
 import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
 import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
@@ -52,31 +48,50 @@ interface GamePageClientProps {
   initialBoardOrientation?: "white" | "black";
 }
 
-/** Status dot and label for turn/engine state. */
+/**
+ * Turn cell for Game Info grid: "Turn:" + traffic light (white / yellow / black dot) + label.
+ * States: White (white dot), Engine thinking (yellow), Black (black dot). Error keeps red.
+ */
 function TurnStatusIndicator({
   makeMove,
   isEngineTurn,
   isCalculating,
+  currentTurn,
 }: {
   makeMove: { isError: boolean; isPending: boolean };
   isEngineTurn: boolean;
   isCalculating: boolean;
+  currentTurn: string | null;
 }) {
+  const isEngineActive = isEngineTurn || isCalculating || makeMove.isPending;
   const params = {
     isMoveError: makeMove.isError,
     isEngineTurn,
     isCalculating,
     isMovePending: makeMove.isPending,
   };
+
+  let dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
+  let label = "Black";
+  if (makeMove.isError) {
+    dotClass = "bg-red-500";
+    label = "Error";
+  } else if (isEngineActive) {
+    dotClass = "bg-yellow-500";
+    label = "Engine thinking";
+  } else if (currentTurn === "white") {
+    dotClass = "bg-white ring-1 ring-border";
+    label = "White";
+  }
+
   return (
-    <div className="absolute top-4 right-4 flex h-5 items-center gap-2">
+    <div className="flex h-5 items-center gap-2">
+      <span className="font-medium text-foreground">Turn:</span>
       <div
-        className={`h-3 w-3 shrink-0 rounded-full ${getTurnStatusColor(params)}`}
+        className={`h-3 w-3 shrink-0 rounded-full ${dotClass}`}
         aria-label={getTurnStatusLabel(params)}
       />
-      <span className="text-xs whitespace-nowrap text-muted-foreground">
-        {getTurnStatusText(params)}
-      </span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -246,6 +261,11 @@ function GamePageContent({
   const opponentLabel = `Engine (${game.difficulty})`;
   const reviewUrl = `/game/${gameId}/review`;
 
+  // Player color (stored game.color is always "white" | "black" after creation)
+  const playerColor = game.color === "random" ? "white" : game.color;
+  const playerColorLabel = playerColor === "white" ? "White" : "Black";
+  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <AlertDialog
@@ -279,12 +299,10 @@ function GamePageContent({
             <span className="font-medium text-muted-foreground">
               {opponentLabel}
             </span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">{opponentColorLabel}</span>
             {game.status === "in_progress" && (
               <>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground capitalize">
-                  {currentTurn}
-                </span>
                 {isInCheck && <Badge variant="destructive">Check</Badge>}
                 {isCheckmate && <Badge variant="destructive">Checkmate</Badge>}
                 {isStalemate && <Badge variant="secondary">Stalemate</Badge>}
@@ -328,68 +346,58 @@ function GamePageContent({
                 Viewing past position — use controls to return to live
               </p>
             )}
-            {game.status === "in_progress" && (
-              <div className="absolute top-2 right-2">
-                <TurnStatusIndicator
-                  makeMove={makeMove}
-                  isEngineTurn={isEngineTurn}
-                  isCalculating={isCalculating}
-                />
-              </div>
-            )}
           </div>
           <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
             <span className="font-medium text-muted-foreground">You</span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">{playerColorLabel}</span>
           </div>
         </div>
 
         {/* Right panel: scrollable content + controls at bottom */}
         <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
-          {/* Game Info: horizontal (shrink-0 so Move History can grow) */}
+          {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
               <CardTitle className="text-base">Game Info</CardTitle>
             </CardHeader>
             <CardContent className="py-2">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                <span className="text-muted-foreground">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Status:</span>{" "}
                   <span className="capitalize">
                     {game.status.replaceAll("_", " ")}
                   </span>
-                </span>
-                {game.status === "in_progress" && currentTurn && (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">
-                      <span className="font-medium text-foreground">Turn:</span>{" "}
-                      <span className="capitalize">{currentTurn}</span>
-                    </span>
-                  </>
-                )}
-                {game.result && (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  {game.status === "in_progress" ? (
+                    <TurnStatusIndicator
+                      makeMove={makeMove}
+                      isEngineTurn={isEngineTurn}
+                      isCalculating={isCalculating}
+                      currentTurn={currentTurn}
+                    />
+                  ) : game.result ? (
+                    <>
                       <span className="font-medium text-foreground">
                         Result:
                       </span>{" "}
                       <span className="capitalize">
                         {game.result.replaceAll("_", " ")}
                       </span>
-                    </span>
-                  </>
-                )}
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Created:</span>{" "}
                   {new Date(game.createdAt).toLocaleDateString()}
-                </span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">
+                </div>
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Updated:</span>{" "}
                   {new Date(game.updatedAt).toLocaleDateString()}
-                </span>
+                </div>
               </div>
             </CardContent>
           </Card>
