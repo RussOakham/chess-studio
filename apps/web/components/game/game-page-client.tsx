@@ -351,7 +351,9 @@ function GamePageContent({
                     ? capturedPieces.black
                     : capturedPieces.white;
                 const symbols = capturedToSymbols(opponentCaptured);
-                if (symbols.length === 0) return null;
+                if (symbols.length === 0) {
+                  return null;
+                }
                 return (
                   <div
                     className="flex flex-wrap items-center gap-1.5 leading-none"
@@ -430,7 +432,9 @@ function GamePageContent({
                     ? capturedPieces.white
                     : capturedPieces.black;
                 const symbols = capturedToSymbols(playerCaptured);
-                if (symbols.length === 0) return null;
+                if (symbols.length === 0) {
+                  return null;
+                }
                 return (
                   <div
                     className="flex flex-wrap items-center gap-1.5 leading-none"
