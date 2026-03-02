@@ -1,6 +1,8 @@
 "use client";
 
+import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import { EvaluationGraph } from "@/components/game/evaluation-graph";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
 import type {
   MoveAnnotation,
@@ -13,6 +15,7 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
+import type { PositionEvaluation } from "@repo/chess";
 import { useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -72,7 +75,10 @@ interface ReviewMidReviewProps {
       type: MoveAnnotationType;
       bestMoveSan?: string;
     }[];
+    evaluations?: number[];
   };
+  getEvaluation: (fen: string) => Promise<PositionEvaluation>;
+  isStockfishReady: boolean;
 }
 
 function ReviewMidReview({
@@ -80,6 +86,8 @@ function ReviewMidReview({
   game,
   moves,
   review,
+  getEvaluation,
+  isStockfishReady,
 }: ReviewMidReviewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -125,6 +133,61 @@ function ReviewMidReview({
         )
       : undefined;
 
+  const moveAnnotationsInOrder = useMemo(() => {
+    if (!review.moveAnnotations?.length) {
+      return undefined;
+    }
+    return sortedMoves.map((m) =>
+      review.moveAnnotations?.find((a) => a.moveNumber === m.moveNumber)
+    );
+  }, [review.moveAnnotations, sortedMoves]);
+
+  const reasoningForCurrentMove = useMemo(() => {
+    if (!currentAnnotation || !currentMove) {
+      return null;
+    }
+    if (
+      currentAnnotation.type === "blunder" ||
+      currentAnnotation.type === "mistake"
+    ) {
+      const keyMoment = review.keyMoments?.find((km) =>
+        km.includes(`Move ${currentMove.moveNumber}:`)
+      );
+      if (keyMoment) {
+        return keyMoment.replace(/^Move \d+: /, "").replace(/\.$/, "");
+      }
+      if (currentAnnotation.bestMoveSan) {
+        return `Best move was ${currentAnnotation.bestMoveSan}.`;
+      }
+      return null;
+    }
+    if (currentAnnotation.type === "best") {
+      return "That's the engine's best move in this position.";
+    }
+    if (currentAnnotation.type === "good") {
+      return "Strong move that keeps the advantage.";
+    }
+    return null;
+  }, [currentAnnotation, currentMove, review.keyMoments]);
+
+  const [evaluation, setEvaluation] = useState<PositionEvaluation | null>(null);
+  useEffect(() => {
+    if (!isStockfishReady || !viewingFen) {
+      setEvaluation(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const ev = await getEvaluation(viewingFen);
+      if (!cancelled) {
+        setEvaluation(ev);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewingFen, isStockfishReady, getEvaluation]);
+
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(560);
   useLayoutEffect(() => {
@@ -148,8 +211,8 @@ function ReviewMidReview({
   }, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-background">
-      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row lg:gap-6 lg:p-6">
         {/* Center: board column (grows to fill height; board scales to fit) */}
         <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
           <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
@@ -160,15 +223,20 @@ function ReviewMidReview({
               ref={boardContainerRef}
               className="flex aspect-square h-full max-w-full items-center justify-center"
             >
-              <GameChessboard
-                position={viewingFen}
-                orientation="white"
-                draggable={false}
-                status="completed"
-                gameId={game._id}
-                customSquareStyles={undefined}
-                boardWidth={boardSize}
-              />
+              <div className="flex items-stretch gap-4">
+                <GameChessboard
+                  position={viewingFen}
+                  orientation="white"
+                  draggable={false}
+                  status="completed"
+                  gameId={game._id}
+                  customSquareStyles={undefined}
+                  boardWidth={boardSize}
+                />
+                {isStockfishReady && (
+                  <EvaluationBar evaluation={evaluation} orientation="white" />
+                )}
+              </div>
             </div>
           </div>
           <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
@@ -176,8 +244,8 @@ function ReviewMidReview({
           </div>
         </div>
 
-        {/* Right: review details + move history (move history grows to fill) */}
-        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+        {/* Right: review details + move history (move history grows to fill, scrolls internally) */}
+        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden lg:w-auto lg:max-w-md">
           <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-lg font-semibold">Game Review</h2>
             <Button
@@ -212,12 +280,13 @@ function ReviewMidReview({
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {currentAnnotation?.type === "best" ||
-                        currentAnnotation?.type === "good"
-                          ? "Good move."
-                          : currentAnnotation?.bestMoveSan
-                            ? `Best: ${currentAnnotation.bestMoveSan}`
-                            : "Review this move."}
+                        {reasoningForCurrentMove ??
+                          (currentAnnotation?.type === "best" ||
+                          currentAnnotation?.type === "good"
+                            ? "Good move."
+                            : currentAnnotation?.bestMoveSan
+                              ? `Best: ${currentAnnotation.bestMoveSan}`
+                              : "Review this move.")}
                       </p>
                     </div>
                   </div>
@@ -261,6 +330,14 @@ function ReviewMidReview({
                 | undefined
             }
           />
+          {review.evaluations && review.evaluations.length > 0 && (
+            <EvaluationGraph
+              evaluations={review.evaluations}
+              moveAnnotationsInOrder={moveAnnotationsInOrder}
+              replayIndex={replayIndex}
+              className="shrink-0"
+            />
+          )}
         </div>
       </main>
     </div>
@@ -363,6 +440,8 @@ export function ReviewPageClient({ gameId }: ReviewPageClientProps) {
         game={game}
         moves={moves ?? []}
         review={review}
+        getEvaluation={getEvaluation}
+        isStockfishReady={isStockfishReady}
       />
     );
   }

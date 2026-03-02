@@ -59,6 +59,7 @@ const getByGameId = query({
       keyMoments: v.optional(v.array(v.string())),
       suggestions: v.optional(v.array(v.string())),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+      evaluations: v.optional(v.array(v.number())),
       createdAt: v.number(),
     }),
     v.null()
@@ -88,6 +89,7 @@ async function saveReviewInternal(
       type: "blunder" | "mistake" | "good" | "best";
       bestMoveSan?: string;
     }[];
+    evaluations: number[];
   }
 ): Promise<Id<"game_reviews">> {
   const now = Date.now();
@@ -102,6 +104,7 @@ async function saveReviewInternal(
       keyMoments: payload.keyMoments,
       suggestions: payload.suggestions,
       moveAnnotations: payload.moveAnnotations,
+      evaluations: payload.evaluations,
     });
     return existing._id;
   }
@@ -112,6 +115,7 @@ async function saveReviewInternal(
     keyMoments: payload.keyMoments,
     suggestions: payload.suggestions,
     moveAnnotations: payload.moveAnnotations,
+    evaluations: payload.evaluations,
     createdAt: now,
   });
 }
@@ -123,6 +127,7 @@ const save = mutation({
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+    evaluations: v.optional(v.array(v.number())),
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
@@ -147,12 +152,14 @@ const save = mutation({
       0,
       MAX_MOVE_ANNOTATIONS
     );
+    const evaluations = (args.evaluations ?? []).slice(0, MAX_MOVE_ANNOTATIONS);
 
     return await saveReviewInternal(ctx, args.gameId, {
       summary: summaryTrimmed,
       keyMoments,
       suggestions,
       moveAnnotations,
+      evaluations,
     });
   },
 });

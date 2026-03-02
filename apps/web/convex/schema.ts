@@ -70,6 +70,8 @@ export default defineSchema({
         })
       )
     ),
+    /** Evaluation in centipawns (White's perspective) per move: [start, after move 1, ...]. */
+    evaluations: v.optional(v.array(v.number())),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 });

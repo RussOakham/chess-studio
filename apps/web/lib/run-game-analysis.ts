@@ -35,6 +35,8 @@ interface GameAnalysisResult {
   keyMoments: string[];
   suggestions: string[];
   moveAnnotations: MoveAnnotation[];
+  /** Evaluation in centipawns (from White's perspective) after each move, in move order. */
+  evaluations: number[];
 }
 
 interface AnalysisMove {
@@ -71,12 +73,19 @@ async function runGameAnalysisImpl(
   const sorted = sortMovesByNumber(moves);
   const total = sorted.length;
   const moveAnnotations: MoveAnnotation[] = [];
+  const evaluations: number[] = [];
   const keyMoments: string[] = [];
   const analysisDepth: DifficultyLevel = "medium";
 
   let blunderCount = 0;
   let mistakeCount = 0;
   let bestCount = 0;
+
+  const startFen = sorted[0]?.fenBefore;
+  if (startFen) {
+    const startEval = await getEvaluation(startFen);
+    evaluations.push(evalToCp(startEval));
+  }
 
   for (let index = 0; index < sorted.length; index++) {
     const move = sorted[index];
@@ -138,6 +147,7 @@ async function runGameAnalysisImpl(
           ? { bestMoveSan }
           : {}),
       });
+      evaluations.push(cpAfter);
     }
   }
 
@@ -151,6 +161,7 @@ async function runGameAnalysisImpl(
     keyMoments,
     suggestions,
     moveAnnotations,
+    evaluations,
   };
 }
 

@@ -75,6 +75,29 @@ function getAnnotationBadgeClassName(
   return "text-primary";
 }
 
+function getAnnotationDotClass(type: MoveAnnotationType): string {
+  if (type === "blunder") {
+    return "bg-destructive";
+  }
+  if (type === "mistake") {
+    return "bg-amber-500";
+  }
+  if (type === "best") {
+    return "bg-emerald-500";
+  }
+  return "bg-emerald-400";
+}
+
+/** Chess.com-style colored dot for move quality (green/orange/red). */
+function AnnotationDot({ type }: { type: MoveAnnotationType }) {
+  return (
+    <span
+      className={`inline-block size-1.5 shrink-0 rounded-full ${getAnnotationDotClass(type)}`}
+      aria-hidden
+    />
+  );
+}
+
 function MoveHistoryCardComponent({
   sortedMovesLength,
   replayIndex,
@@ -214,7 +237,7 @@ function MoveHistoryCardComponent({
                       <button
                         type="button"
                         title={whiteTooltip}
-                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left hover:bg-muted ${
+                        className={`flex cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-left hover:bg-muted ${
                           whiteHighlighted
                             ? "bg-primary/10 ring-1 ring-primary/30"
                             : ""
@@ -222,6 +245,9 @@ function MoveHistoryCardComponent({
                         style={moveItemStyle}
                         onClick={() => setReplayIndex(whiteReplayIdx)}
                       >
+                        {whiteAnnotation ? (
+                          <AnnotationDot type={whiteAnnotation.type} />
+                        ) : null}
                         <span className="font-medium">
                           {whiteMove?.moveSan}
                         </span>
@@ -254,6 +280,9 @@ function MoveHistoryCardComponent({
                       >
                         {blackMove ? (
                           <>
+                            {blackAnnotation ? (
+                              <AnnotationDot type={blackAnnotation.type} />
+                            ) : null}
                             <span>{blackMove.moveSan}</span>
                             {blackBadge ? (
                               <span
