@@ -74,6 +74,8 @@ Husky + lint-staged runs:
 - Use type imports: `import type { ... }`
 - Handle promises properly (no floating promises)
 - Prefix unused variables with `_`: `_unusedParam`
+- **Exhaustive switch** (Cursor Team Kit rule): In switch statements over discriminated unions or enums, use a `never` check in the default case so new variants cause compile-time failures until handled (e.g. `default: { const _: never = value; return _; }`).
+- **No inline imports** (Cursor Team Kit rule): Keep imports at the top of the file. Dynamic `import()` inside `next/dynamic` for code-splitting is acceptable when documented (e.g. a brief comment).
 
 ### React/Next.js
 
@@ -88,6 +90,11 @@ Husky + lint-staged runs:
 - Utilities: `kebab-case.ts`
 - Types: `kebab-case.types.ts` or `types.ts`
 - Config: `kebab-case.config.js`
+
+## Cursor Team Kit (plugin)
+
+- **check-compiler-errors**: Run compile/type-check commands and report failures (e.g. `pnpm type-check`, `pnpm build`).
+- **deslop**: Remove AI-generated slop from branch diff (unnecessary comments, defensive try/catch, `any` casts, deep nesting) while keeping behavior unchanged.
 
 ## References
 

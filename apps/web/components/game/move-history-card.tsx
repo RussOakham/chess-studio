@@ -49,10 +49,15 @@ function annotationBadge(type: MoveAnnotationType): string {
     case "mistake": {
       return "?";
     }
+    case "good": {
+      return "!";
+    }
     case "best": {
       return "!!";
     }
     default: {
+      const _: never = type;
+      void _;
       return "";
     }
   }

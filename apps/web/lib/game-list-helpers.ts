@@ -1,5 +1,8 @@
 import type { Doc } from "@/convex/_generated/dataModel";
 
+/** Game status union from schema; use for exhaustive switch. */
+type GameStatus = Doc<"games">["status"];
+
 const ACTIVE_STATUSES = ["in_progress", "waiting"] as const;
 const RECENT_STATUSES = ["completed", "abandoned"] as const;
 
@@ -37,7 +40,7 @@ function formatBadgeText(game: Doc<"games">): string {
 /**
  * Short status label for game cards (e.g. "In Progress", "Completed").
  */
-function getStatusLabel(status: string): string {
+function getStatusLabel(status: GameStatus): string {
   switch (status) {
     case "in_progress": {
       return "In Progress";
@@ -48,21 +51,45 @@ function getStatusLabel(status: string): string {
     case "completed": {
       return "Completed";
     }
+    case "abandoned": {
+      return "Abandoned";
+    }
     default: {
+      const _: never = status;
+      void _;
       return "Abandoned";
     }
   }
 }
 
 /** Badge variant for status: default (in progress), secondary (completed), outline (other). */
-function getBadgeVariant(status: string): "default" | "secondary" | "outline" {
-  if (status === "in_progress") {
-    return "default";
+function getBadgeVariant(
+  status: GameStatus
+): "default" | "secondary" | "outline" {
+  switch (status) {
+    case "in_progress": {
+      return "default";
+    }
+    case "completed": {
+      return "secondary";
+    }
+    case "waiting":
+    case "abandoned": {
+      return "outline";
+    }
+    default: {
+      const _: never = status;
+      void _;
+      return "outline";
+    }
   }
-  if (status === "completed") {
-    return "secondary";
-  }
-  return "outline";
 }
 
-export { formatBadgeText, getBadgeVariant, getStatusLabel, isActive, isRecent };
+export {
+  formatBadgeText,
+  getBadgeVariant,
+  getStatusLabel,
+  isActive,
+  isRecent,
+  type GameStatus,
+};
