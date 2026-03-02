@@ -40,12 +40,29 @@ async function requireGameAccess(
 const moveAnnotationValidator = v.object({
   moveNumber: v.number(),
   type: v.union(
-    v.literal("blunder"),
-    v.literal("mistake"),
+    v.literal("brilliant"),
+    v.literal("great"),
+    v.literal("best"),
+    v.literal("excellent"),
     v.literal("good"),
-    v.literal("best")
+    v.literal("book"),
+    v.literal("inaccuracy"),
+    v.literal("mistake"),
+    v.literal("miss"),
+    v.literal("blunder")
   ),
   bestMoveSan: v.optional(v.string()),
+  evalBefore: v.optional(v.number()),
+  evalAfter: v.optional(v.number()),
+  isMate: v.optional(v.boolean()),
+  mateIn: v.optional(v.number()),
+});
+
+const moveEvaluationValidator = v.object({
+  moveNumber: v.number(),
+  evalAfter: v.number(),
+  isMate: v.optional(v.boolean()),
+  mateIn: v.optional(v.number()),
 });
 
 const getByGameId = query({
@@ -59,6 +76,7 @@ const getByGameId = query({
       keyMoments: v.optional(v.array(v.string())),
       suggestions: v.optional(v.array(v.string())),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+      moveEvaluations: v.optional(v.array(moveEvaluationValidator)),
       createdAt: v.number(),
     }),
     v.null()
@@ -75,6 +93,35 @@ const getByGameId = query({
   },
 });
 
+type MoveAnnotationType =
+  | "brilliant"
+  | "great"
+  | "best"
+  | "excellent"
+  | "good"
+  | "book"
+  | "inaccuracy"
+  | "mistake"
+  | "miss"
+  | "blunder";
+
+interface MoveAnnotationPayload {
+  moveNumber: number;
+  type: MoveAnnotationType;
+  bestMoveSan?: string;
+  evalBefore?: number;
+  evalAfter?: number;
+  isMate?: boolean;
+  mateIn?: number;
+}
+
+interface MoveEvaluationPayload {
+  moveNumber: number;
+  evalAfter: number;
+  isMate?: boolean;
+  mateIn?: number;
+}
+
 /** Internal: upsert game review after auth and validation. */
 async function saveReviewInternal(
   ctx: MutationCtx,
@@ -83,11 +130,8 @@ async function saveReviewInternal(
     summary: string;
     keyMoments: string[];
     suggestions: string[];
-    moveAnnotations: {
-      moveNumber: number;
-      type: "blunder" | "mistake" | "good" | "best";
-      bestMoveSan?: string;
-    }[];
+    moveAnnotations: MoveAnnotationPayload[];
+    moveEvaluations?: MoveEvaluationPayload[];
   }
 ): Promise<Id<"game_reviews">> {
   const now = Date.now();
@@ -102,6 +146,7 @@ async function saveReviewInternal(
       keyMoments: payload.keyMoments,
       suggestions: payload.suggestions,
       moveAnnotations: payload.moveAnnotations,
+      moveEvaluations: payload.moveEvaluations,
     });
     return existing._id;
   }
@@ -112,6 +157,7 @@ async function saveReviewInternal(
     keyMoments: payload.keyMoments,
     suggestions: payload.suggestions,
     moveAnnotations: payload.moveAnnotations,
+    moveEvaluations: payload.moveEvaluations,
     createdAt: now,
   });
 }
@@ -123,6 +169,7 @@ const save = mutation({
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+    moveEvaluations: v.optional(v.array(moveEvaluationValidator)),
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
@@ -147,12 +194,17 @@ const save = mutation({
       0,
       MAX_MOVE_ANNOTATIONS
     );
+    const moveEvaluations = (args.moveEvaluations ?? []).slice(
+      0,
+      MAX_MOVE_ANNOTATIONS
+    );
 
     return await saveReviewInternal(ctx, args.gameId, {
       summary: summaryTrimmed,
       keyMoments,
       suggestions,
       moveAnnotations,
+      moveEvaluations,
     });
   },
 });
