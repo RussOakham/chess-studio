@@ -74,6 +74,7 @@ export function useGameAnalysis({
         keyMoments: result.keyMoments,
         suggestions: result.suggestions,
         moveAnnotations: result.moveAnnotations,
+        moveEvaluations: result.moveEvaluations,
       });
     } catch (gameAnalysisError: unknown) {
       const message =
