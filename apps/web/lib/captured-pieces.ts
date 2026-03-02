@@ -45,11 +45,12 @@ function getCapturedPieces(moves: { moveUci: string }[]): CapturedBySide {
           : undefined;
       const moveResult = chess.move({ from, to, promotion });
       if (moveResult?.captured) {
-        // After move, turn switched: so the side that just moved is the opposite of chess.turn()
-        if (chess.turn() === "b") {
+        // Capturing side: moveResult.color. chess.js captured is always lowercase piece type.
+        // Result.white = black pieces captured (lowercase); result.black = white pieces captured (uppercase for PIECE_SYMBOLS).
+        if (moveResult.color === "w") {
           result.white.push(moveResult.captured);
         } else {
-          result.black.push(moveResult.captured);
+          result.black.push(moveResult.captured.toUpperCase());
         }
       }
     }

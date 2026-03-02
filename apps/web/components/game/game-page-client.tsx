@@ -208,8 +208,8 @@ function GamePageContent({
   } = useReplay(moves, game?.fen);
 
   const capturedPieces = useMemo(
-    () => getCapturedPieces(moves.slice(0, replayIndex)),
-    [moves, replayIndex]
+    () => getCapturedPieces(sortedMoves.slice(0, replayIndex)),
+    [sortedMoves, replayIndex]
   );
 
   const hintEnabled =

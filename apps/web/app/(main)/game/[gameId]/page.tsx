@@ -1,5 +1,6 @@
 import { GamePageClientLoader } from "@/components/game/game-page-client-loader";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
 import { toGameId } from "@/lib/convex-id";
@@ -17,7 +18,7 @@ export default async function GamePage({ params }: GamePageProps) {
     redirect("/login");
   }
 
-  let game: { color: "white" | "black" | "random" } | null = null;
+  let game: Doc<"games"> | null = null;
   try {
     game = await authServer.fetchAuthQuery(api.games.getById, {
       gameId: toGameId(gameId),
