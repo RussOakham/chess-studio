@@ -1,1 +1,4 @@
 apps/web/public/engine/*.wasm
+
+# Convex generated code - collapse in GitHub PR diffs
+apps/web/convex/_generated/* linguist-generated=true

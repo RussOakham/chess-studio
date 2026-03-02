@@ -177,4 +177,10 @@ Chess.com supports both **light** and **dark** themes (the reference screenshots
 | **Game review navigation** | Open Game Review in a new tab for separation of concerns (match vs analysis).                     |
 | **Theming**                | Support light and dark mode via a UI toggle; persist choice; ensure accents and contrast in both. |
 
+### Future: captured piece icons
+
+Unicode chess symbols (♙♟♜ etc.) used for “taken piece” tracking often don’t scale reliably with `font-size`. A future improvement is to replace them with **SVG or an icon set** (e.g. custom SVGs or a chess-icon package) so captured pieces render at a consistent, readable size across fonts and browsers.
+
+---
+
 Use this document as the UX reference when refactoring our match view, post-game entry, and game review flows to better match Chess.com’s structure and visual language.

@@ -16,17 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
 import {
   getGameOverMessage,
   getKingInCheckSquareStyles,
 } from "@/lib/game-status";
-import {
-  getTurnStatusColor,
-  getTurnStatusLabel,
-  getTurnStatusText,
-} from "@/lib/game-turn-status";
+import { getTurnStatusLabel } from "@/lib/game-turn-status";
 import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
 import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
 import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
@@ -37,6 +34,7 @@ import { useMakeMove } from "@/lib/hooks/use-make-move";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
+import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -50,33 +48,57 @@ import {
 interface GamePageClientProps {
   gameId: string;
   initialBoardOrientation?: "white" | "black";
+  /** Display name for the human player (e.g. email until usernames exist). */
+  userDisplayName?: string;
 }
 
-/** Status dot and label for turn/engine state. */
+/**
+ * Turn cell for Game Info grid: "Turn:" + traffic light (white / yellow / black dot) + label.
+ * States: White (white dot), Engine thinking (yellow), Black (black dot). Error keeps red.
+ */
 function TurnStatusIndicator({
   makeMove,
   isEngineTurn,
   isCalculating,
+  currentTurn,
 }: {
   makeMove: { isError: boolean; isPending: boolean };
   isEngineTurn: boolean;
   isCalculating: boolean;
+  currentTurn: string | null;
 }) {
+  const isEngineActive = isEngineTurn || isCalculating || makeMove.isPending;
   const params = {
     isMoveError: makeMove.isError,
     isEngineTurn,
     isCalculating,
     isMovePending: makeMove.isPending,
   };
+
+  let dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
+  let label = "Unknown";
+  if (makeMove.isError) {
+    dotClass = "bg-red-500";
+    label = "Error";
+  } else if (isEngineActive) {
+    dotClass = "bg-yellow-500";
+    label = "Engine thinking";
+  } else if (currentTurn === "white") {
+    dotClass = "bg-white ring-1 ring-border";
+    label = "White";
+  } else if (currentTurn === "black") {
+    dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
+    label = "Black";
+  }
+
   return (
-    <div className="absolute top-4 right-4 flex h-5 items-center gap-2">
+    <div className="flex h-5 items-center gap-2">
+      <span className="font-medium text-foreground">Turn:</span>
       <div
-        className={`h-3 w-3 shrink-0 rounded-full ${getTurnStatusColor(params)}`}
+        className={`h-3 w-3 shrink-0 rounded-full ${dotClass}`}
         aria-label={getTurnStatusLabel(params)}
       />
-      <span className="text-xs whitespace-nowrap text-muted-foreground">
-        {getTurnStatusText(params)}
-      </span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -89,6 +111,7 @@ function TurnStatusIndicator({
 function GamePageContent({
   gameId,
   initialBoardOrientation,
+  userDisplayName = "You",
 }: GamePageClientProps) {
   const {
     game,
@@ -187,6 +210,11 @@ function GamePageContent({
     moveHistory,
   } = useReplay(moves, game?.fen);
 
+  const capturedPieces = useMemo(
+    () => getCapturedPieces(sortedMoves.slice(0, replayIndex)),
+    [sortedMoves, replayIndex]
+  );
+
   const hintEnabled =
     game?.status === "in_progress" &&
     !isEngineTurn &&
@@ -246,6 +274,11 @@ function GamePageContent({
   const opponentLabel = `Engine (${game.difficulty})`;
   const reviewUrl = `/game/${gameId}/review`;
 
+  // Player color (stored game.color is always "white" | "black" after creation)
+  const playerColor = game.color === "random" ? "white" : game.color;
+  const playerColorLabel = playerColor === "white" ? "White" : "Black";
+  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <AlertDialog
@@ -275,22 +308,73 @@ function GamePageContent({
       <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
         {/* Center: board column (grows to fill height; board scales to fit) */}
         <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
-          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-            <span className="font-medium text-muted-foreground">
-              {opponentLabel}
-            </span>
-            {game.status === "in_progress" && (
-              <>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground capitalize">
-                  {currentTurn}
+          <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+            <div
+              className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <Bot className="size-5" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-foreground">
+                  {opponentLabel}
                 </span>
-                {isInCheck && <Badge variant="destructive">Check</Badge>}
-                {isCheckmate && <Badge variant="destructive">Checkmate</Badge>}
-                {isStalemate && <Badge variant="secondary">Stalemate</Badge>}
-                {isDraw && <Badge variant="secondary">Draw</Badge>}
-              </>
-            )}
+                <span className="text-sm text-muted-foreground">
+                  {opponentColorLabel}
+                </span>
+                {game.status === "in_progress" && (
+                  <>
+                    {isInCheck && (
+                      <Badge variant="destructive" className="shrink-0">
+                        Check
+                      </Badge>
+                    )}
+                    {isCheckmate && (
+                      <Badge variant="destructive" className="shrink-0">
+                        Checkmate
+                      </Badge>
+                    )}
+                    {isStalemate && (
+                      <Badge variant="secondary" className="shrink-0">
+                        Stalemate
+                      </Badge>
+                    )}
+                    {isDraw && (
+                      <Badge variant="secondary" className="shrink-0">
+                        Draw
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </div>
+              {(() => {
+                const opponentCaptured =
+                  playerColor === "white"
+                    ? capturedPieces.black
+                    : capturedPieces.white;
+                const symbols = capturedToSymbols(opponentCaptured);
+                if (symbols.length === 0) {
+                  return null;
+                }
+                return (
+                  <div
+                    className="flex flex-wrap items-center gap-1.5 leading-none"
+                    aria-label={`Captured: ${symbols.join(" ")}`}
+                  >
+                    {symbols.map((sym, idx) => (
+                      <span
+                        key={`${idx}-${sym}`}
+                        className="inline-flex min-w-[1.25rem] items-center justify-center text-2xl"
+                        style={{ fontSize: "1.5rem" }}
+                      >
+                        {sym}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             <div
@@ -328,68 +412,97 @@ function GamePageContent({
                 Viewing past position — use controls to return to live
               </p>
             )}
-            {game.status === "in_progress" && (
-              <div className="absolute top-2 right-2">
-                <TurnStatusIndicator
-                  makeMove={makeMove}
-                  isEngineTurn={isEngineTurn}
-                  isCalculating={isCalculating}
-                />
-              </div>
-            )}
           </div>
-          <div className="flex w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
-            <span className="font-medium text-muted-foreground">You</span>
+          <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+            <div
+              className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <User className="size-5" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-foreground">
+                  {userDisplayName}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {playerColorLabel}
+                </span>
+              </div>
+              {(() => {
+                const playerCaptured =
+                  playerColor === "white"
+                    ? capturedPieces.white
+                    : capturedPieces.black;
+                const symbols = capturedToSymbols(playerCaptured);
+                if (symbols.length === 0) {
+                  return null;
+                }
+                return (
+                  <div
+                    className="flex flex-wrap items-center gap-1.5 leading-none"
+                    aria-label={`Captured: ${symbols.join(" ")}`}
+                  >
+                    {symbols.map((sym, idx) => (
+                      <span
+                        key={`${idx}-${sym}`}
+                        className="inline-flex min-w-[1.25rem] items-center justify-center text-2xl"
+                        style={{ fontSize: "1.5rem" }}
+                      >
+                        {sym}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
 
         {/* Right panel: scrollable content + controls at bottom */}
         <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
-          {/* Game Info: horizontal (shrink-0 so Move History can grow) */}
+          {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
               <CardTitle className="text-base">Game Info</CardTitle>
             </CardHeader>
             <CardContent className="py-2">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                <span className="text-muted-foreground">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Status:</span>{" "}
                   <span className="capitalize">
                     {game.status.replaceAll("_", " ")}
                   </span>
-                </span>
-                {game.status === "in_progress" && currentTurn && (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">
-                      <span className="font-medium text-foreground">Turn:</span>{" "}
-                      <span className="capitalize">{currentTurn}</span>
-                    </span>
-                  </>
-                )}
-                {game.result && (
-                  <>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  {game.status === "in_progress" ? (
+                    <TurnStatusIndicator
+                      makeMove={makeMove}
+                      isEngineTurn={isEngineTurn}
+                      isCalculating={isCalculating}
+                      currentTurn={currentTurn}
+                    />
+                  ) : game.result ? (
+                    <>
                       <span className="font-medium text-foreground">
                         Result:
                       </span>{" "}
                       <span className="capitalize">
                         {game.result.replaceAll("_", " ")}
                       </span>
-                    </span>
-                  </>
-                )}
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Created:</span>{" "}
                   {new Date(game.createdAt).toLocaleDateString()}
-                </span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">
+                </div>
+                <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Updated:</span>{" "}
                   {new Date(game.updatedAt).toLocaleDateString()}
-                </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -522,13 +635,14 @@ function GamePageContent({
             </div>
           </details>
 
-          {/* Game Controls: horizontal, at bottom */}
+          {/* Game Controls: full-width, prominent, side by side */}
           <div className="mt-auto shrink-0 border-t border-border pt-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid w-full grid-cols-2 gap-2">
               {game.status === "in_progress" && isStockfishReady && (
                 <Button
                   variant="secondary"
-                  size="sm"
+                  size="lg"
+                  className="w-full"
                   disabled={
                     isEngineTurn ||
                     !isViewingLive ||
@@ -544,7 +658,8 @@ function GamePageContent({
               {game.status === "in_progress" && (
                 <Button
                   variant="destructive"
-                  size="sm"
+                  size="lg"
+                  className="w-full"
                   disabled={isResigning}
                   onClick={async () => {
                     if (
@@ -602,6 +717,7 @@ export function GamePageClient(props: GamePageClientProps) {
       key={connectionRefreshKey}
       gameId={props.gameId}
       initialBoardOrientation={props.initialBoardOrientation}
+      userDisplayName={props.userDisplayName}
     />
   );
 }

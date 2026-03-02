@@ -1,5 +1,6 @@
 import { GamePageClientLoader } from "@/components/game/game-page-client-loader";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
 import { toGameId } from "@/lib/convex-id";
@@ -17,8 +18,9 @@ export default async function GamePage({ params }: GamePageProps) {
     redirect("/login");
   }
 
+  let game: Doc<"games"> | null = null;
   try {
-    await authServer.fetchAuthQuery(api.games.getById, {
+    game = await authServer.fetchAuthQuery(api.games.getById, {
       gameId: toGameId(gameId),
     });
   } catch (error) {
@@ -32,12 +34,17 @@ export default async function GamePage({ params }: GamePageProps) {
     throw error;
   }
 
-  const boardOrientation: "white" | "black" = "white";
+  // Player at bottom: orientation = player's color (resolved; "random" only before insert)
+  const boardOrientation: "white" | "black" =
+    game?.color === "black" ? "black" : "white";
+
+  const userDisplayName = session.user.name ?? session.user.email ?? "You";
 
   return (
     <GamePageClientLoader
       gameId={gameId}
       initialBoardOrientation={boardOrientation}
+      userDisplayName={userDisplayName}
     />
   );
 }

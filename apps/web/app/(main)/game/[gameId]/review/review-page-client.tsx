@@ -91,7 +91,9 @@ function ReviewMidReview({
     useReplay(moves, game.fen);
 
   useEffect(() => {
-    if (urlIndex === null) return;
+    if (urlIndex === null) {
+      return;
+    }
     const clamped = Math.min(Math.max(0, urlIndex), moves.length);
     if (clamped !== replayIndex) {
       setReplayIndex(clamped);
