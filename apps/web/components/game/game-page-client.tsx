@@ -76,7 +76,7 @@ function TurnStatusIndicator({
   };
 
   let dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
-  let label = "Black";
+  let label = "Unknown";
   if (makeMove.isError) {
     dotClass = "bg-red-500";
     label = "Error";
@@ -86,6 +86,9 @@ function TurnStatusIndicator({
   } else if (currentTurn === "white") {
     dotClass = "bg-white ring-1 ring-border";
     label = "White";
+  } else if (currentTurn === "black") {
+    dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
+    label = "Black";
   }
 
   return (

@@ -1,4 +1,5 @@
 // oxlint-disable id-length
+import type { Doc } from "@/convex/_generated/dataModel";
 import { Chess } from "chess.js";
 
 /**
@@ -29,7 +30,7 @@ interface CapturedBySide {
  * white[] = pieces captured by white (black piece codes, lowercase).
  * black[] = pieces captured by black (white piece codes, uppercase).
  */
-function getCapturedPieces(moves: { moveUci: string }[]): CapturedBySide {
+function getCapturedPieces(moves: Doc<"moves">[]): CapturedBySide {
   const result: CapturedBySide = { white: [], black: [] };
   const chess = new Chess();
   for (const move of moves) {
