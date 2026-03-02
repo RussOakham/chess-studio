@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+/** Lazy load GamePageClient with ssr: false (code-split, no SSR). Inline import is intentional for Next.js dynamic(). */
 const GamePageClient = dynamic(
   async () => {
     const mod = await import("@/components/game/game-page-client");

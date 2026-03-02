@@ -135,13 +135,15 @@ refactor/simplify-service-layer
 
 - Before creating a draft MR, run a **full build** (`pnpm build`). If the build fails, triage the errors, fix them, and re-run the build until it passes.
 - Do not open the draft MR until the build succeeds locally. This prevents remote CI/CD from failing on build errors as soon as the MR is created.
+- For compile/type-check failures use **check-compiler-errors** (Cursor Team Kit). For CI failures on the branch use **fix-ci** or **loop-on-ci**, or the **ci-watcher** agent to monitor branch CI.
 
 ### Handling MR/PR Comments
 
 When addressing reviewer feedback (e.g. CodeRabbit, human reviewers):
 
-**1. Retrieve all comments via GitHub CLI**
+**1. Retrieve all comments**
 
+- Use the **get-pr-comments** skill (Cursor Team Kit) to fetch and summarize review comments from the active PR, or use GitHub CLI:
 - List PR comments: `gh pr view <PR_NUMBER> --comments` or `gh api repos/:owner/:repo/issues/<PR_NUMBER>/comments`
 - List review comments (on lines of code): `gh pr view <PR_NUMBER>` then `gh api repos/:owner/:repo/pulls/<PR_NUMBER>/comments`
 - From the PR branch: `gh pr view --web` to open in browser, or `gh pr view <PR_NUMBER>` for summary and comment count
@@ -170,6 +172,13 @@ When addressing reviewer feedback (e.g. CodeRabbit, human reviewers):
 - **Option A:** Reply to each comment where you made a change, briefly explaining what you did, then resolve the thread.
 - **Option B:** Post a single new comment on the PR summarising how you addressed feedback (by tier or by topic) and resolve threads as "Fixed" or "Won't fix" with a short note where helpful.
 - For "No Action Needed" items, reply once explaining why no change was made and resolve.
+
+### Cursor Team Kit (plugin)
+
+- **Review and ship**: Use **review-and-ship** for a structured review, then commit, push, and open/update PR.
+- **New branch and PR**: Use **new-branch-and-pr** to create a branch, complete work, and open a PR.
+- **CI**: Use **fix-ci** or **loop-on-ci** when CI is failing; use **ci-watcher** agent to watch GitHub Actions for the current branch.
+- **Merge conflicts**: Use **fix-merge-conflicts** to resolve conflicts and validate build/tests.
 
 ## Workflow Summary
 
