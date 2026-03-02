@@ -8,14 +8,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import React, { memo, useMemo } from "react";
 
-type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
+type MoveAnnotationType =
+  | "brilliant"
+  | "great"
+  | "best"
+  | "excellent"
+  | "good"
+  | "book"
+  | "inaccuracy"
+  | "mistake"
+  | "miss"
+  | "blunder";
 
 export interface MoveAnnotation {
   moveNumber: number;
   type: MoveAnnotationType;
   bestMoveSan?: string;
+  evalBefore?: number;
+  evalAfter?: number;
 }
 
 interface MoveHistoryItem {
@@ -43,22 +56,118 @@ const moveItemStyle = {
 
 function annotationBadge(type: MoveAnnotationType): string {
   switch (type) {
-    case "blunder": {
-      return "??";
+    case "brilliant": {
+      return "!!";
+    }
+    case "great": {
+      return "!";
+    }
+    case "best": {
+      return "";
+    }
+    case "excellent": {
+      return "";
+    }
+    case "good": {
+      return "";
+    }
+    case "book": {
+      return "";
+    }
+    case "inaccuracy": {
+      return "?!";
     }
     case "mistake": {
       return "?";
     }
-    case "good": {
-      return "!";
+    case "miss": {
+      return "?";
     }
-    case "best": {
-      return "!!";
+    case "blunder": {
+      return "??";
     }
     default: {
-      const _: never = type;
-      void _;
-      return "";
+      const exhaustiveCheck: never = type;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+interface AnnotationIconConfig {
+  bgColor: string;
+  textColor: string;
+  symbol: string;
+}
+
+function getAnnotationIconConfig(
+  type: MoveAnnotationType
+): AnnotationIconConfig | null {
+  switch (type) {
+    case "brilliant": {
+      return {
+        bgColor: "bg-cyan-400",
+        textColor: "text-cyan-950",
+        symbol: "!!",
+      };
+    }
+    case "great": {
+      return {
+        bgColor: "bg-blue-400",
+        textColor: "text-blue-950",
+        symbol: "!",
+      };
+    }
+    case "best": {
+      return {
+        bgColor: "bg-emerald-500",
+        textColor: "text-emerald-950",
+        symbol: "★",
+      };
+    }
+    case "excellent": {
+      return {
+        bgColor: "bg-green-400",
+        textColor: "text-green-950",
+        symbol: "✓",
+      };
+    }
+    case "good": {
+      return null;
+    }
+    case "book": {
+      return {
+        bgColor: "bg-amber-300",
+        textColor: "text-amber-950",
+        symbol: "📖",
+      };
+    }
+    case "inaccuracy": {
+      return {
+        bgColor: "bg-yellow-400",
+        textColor: "text-yellow-950",
+        symbol: "?!",
+      };
+    }
+    case "mistake": {
+      return {
+        bgColor: "bg-orange-400",
+        textColor: "text-orange-950",
+        symbol: "?",
+      };
+    }
+    case "miss": {
+      return {
+        bgColor: "bg-orange-500",
+        textColor: "text-orange-950",
+        symbol: "?",
+      };
+    }
+    case "blunder": {
+      return { bgColor: "bg-red-500", textColor: "text-red-950", symbol: "??" };
+    }
+    default: {
+      const exhaustiveCheck: never = type;
+      return exhaustiveCheck;
     }
   }
 }
@@ -66,13 +175,79 @@ function annotationBadge(type: MoveAnnotationType): string {
 function getAnnotationBadgeClassName(
   type: MoveAnnotationType | undefined
 ): string {
-  if (type === "blunder") {
-    return "font-medium text-destructive";
+  if (!type) {
+    return "";
   }
-  if (type === "mistake") {
-    return "text-amber-600 dark:text-amber-400";
+  switch (type) {
+    case "brilliant": {
+      return "text-cyan-500 dark:text-cyan-400 font-bold";
+    }
+    case "great": {
+      return "text-blue-500 dark:text-blue-400 font-medium";
+    }
+    case "best": {
+      return "text-emerald-500 dark:text-emerald-400";
+    }
+    case "excellent": {
+      return "text-green-500 dark:text-green-400";
+    }
+    case "good": {
+      return "text-muted-foreground";
+    }
+    case "book": {
+      return "text-amber-500 dark:text-amber-400";
+    }
+    case "inaccuracy": {
+      return "text-yellow-600 dark:text-yellow-400";
+    }
+    case "mistake": {
+      return "text-orange-500 dark:text-orange-400 font-medium";
+    }
+    case "miss": {
+      return "text-orange-600 dark:text-orange-400 font-medium";
+    }
+    case "blunder": {
+      return "text-red-500 dark:text-red-400 font-bold";
+    }
+    default: {
+      const exhaustiveCheck: never = type;
+      return exhaustiveCheck;
+    }
   }
-  return "text-primary";
+}
+
+function getMoveTooltip(
+  annotation: MoveAnnotation | undefined
+): string | undefined {
+  if (!annotation) {
+    return undefined;
+  }
+  const isBadMove =
+    annotation.type === "blunder" ||
+    annotation.type === "mistake" ||
+    annotation.type === "inaccuracy";
+  if (isBadMove && annotation.bestMoveSan) {
+    return `Best move: ${annotation.bestMoveSan}`;
+  }
+  return annotation.type;
+}
+
+function AnnotationIcon({ type }: { type: MoveAnnotationType }) {
+  const config = getAnnotationIconConfig(type);
+  if (!config) {
+    return null;
+  }
+  return (
+    <span
+      className={cn(
+        "inline-flex size-5 items-center justify-center rounded-full text-[10px] leading-none font-bold",
+        config.bgColor,
+        config.textColor
+      )}
+    >
+      {config.symbol}
+    </span>
+  );
 }
 
 function MoveHistoryCardComponent({
@@ -192,20 +367,8 @@ function MoveHistoryCardComponent({
                   const blackBadge = blackAnnotation
                     ? annotationBadge(blackAnnotation.type)
                     : null;
-                  const whiteTooltip =
-                    whiteAnnotation &&
-                    (whiteAnnotation.type === "blunder" ||
-                      whiteAnnotation.type === "mistake") &&
-                    whiteAnnotation.bestMoveSan
-                      ? `Best move: ${whiteAnnotation.bestMoveSan}`
-                      : undefined;
-                  const blackTooltip =
-                    blackAnnotation &&
-                    (blackAnnotation.type === "blunder" ||
-                      blackAnnotation.type === "mistake") &&
-                    blackAnnotation.bestMoveSan
-                      ? `Best move: ${blackAnnotation.bestMoveSan}`
-                      : undefined;
+                  const whiteTooltip = getMoveTooltip(whiteAnnotation);
+                  const blackTooltip = getMoveTooltip(blackAnnotation);
                   return (
                     <React.Fragment key={`row-${rowIndex}`}>
                       <div className="flex items-center py-1.5 font-medium text-muted-foreground">
@@ -214,14 +377,17 @@ function MoveHistoryCardComponent({
                       <button
                         type="button"
                         title={whiteTooltip}
-                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left hover:bg-muted ${
-                          whiteHighlighted
-                            ? "bg-primary/10 ring-1 ring-primary/30"
-                            : ""
-                        }`}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-left hover:bg-muted",
+                          whiteHighlighted &&
+                            "bg-primary/10 ring-1 ring-primary/30"
+                        )}
                         style={moveItemStyle}
                         onClick={() => setReplayIndex(whiteReplayIdx)}
                       >
+                        {whiteAnnotation && (
+                          <AnnotationIcon type={whiteAnnotation.type} />
+                        )}
                         <span className="font-medium">
                           {whiteMove?.moveSan}
                         </span>
@@ -240,11 +406,12 @@ function MoveHistoryCardComponent({
                         type="button"
                         title={blackTooltip}
                         disabled={!blackMove}
-                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-left text-muted-foreground hover:bg-muted hover:text-foreground ${
-                          blackHighlighted
-                            ? "bg-primary/10 ring-1 ring-primary/30"
-                            : ""
-                        }${!blackMove ? " cursor-default" : ""}`}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-1.5 rounded px-2 py-1.5 text-left text-muted-foreground hover:bg-muted hover:text-foreground",
+                          blackHighlighted &&
+                            "bg-primary/10 ring-1 ring-primary/30",
+                          !blackMove && "cursor-default"
+                        )}
                         style={moveItemStyle}
                         onClick={
                           blackMove
@@ -254,6 +421,9 @@ function MoveHistoryCardComponent({
                       >
                         {blackMove ? (
                           <>
+                            {blackAnnotation && (
+                              <AnnotationIcon type={blackAnnotation.type} />
+                            )}
                             <span>{blackMove.moveSan}</span>
                             {blackBadge ? (
                               <span
