@@ -43,9 +43,13 @@ const moveAnnotationValidator = v.object({
     v.literal("blunder"),
     v.literal("mistake"),
     v.literal("good"),
-    v.literal("best")
+    v.literal("best"),
+    v.literal("great"),
+    v.literal("brilliant")
   ),
   bestMoveSan: v.optional(v.string()),
+  evaluation: v.optional(v.number()),
+  cpLoss: v.optional(v.number()),
 });
 
 const getByGameId = query({
@@ -85,8 +89,10 @@ async function saveReviewInternal(
     suggestions: string[];
     moveAnnotations: {
       moveNumber: number;
-      type: "blunder" | "mistake" | "good" | "best";
+      type: "blunder" | "mistake" | "good" | "best" | "great" | "brilliant";
       bestMoveSan?: string;
+      evaluation?: number;
+      cpLoss?: number;
     }[];
   }
 ): Promise<Id<"game_reviews">> {
@@ -147,6 +153,28 @@ const save = mutation({
       0,
       MAX_MOVE_ANNOTATIONS
     );
+    for (const annotation of moveAnnotations) {
+      if (
+        !Number.isInteger(annotation.moveNumber) ||
+        annotation.moveNumber < 1
+      ) {
+        throw new Error(
+          "Move annotation moveNumber must be a positive integer"
+        );
+      }
+      if (
+        annotation.evaluation !== undefined &&
+        !Number.isFinite(annotation.evaluation)
+      ) {
+        throw new Error("Move annotation evaluation must be a finite number");
+      }
+      if (
+        annotation.cpLoss !== undefined &&
+        (!Number.isFinite(annotation.cpLoss) || annotation.cpLoss < 0)
+      ) {
+        throw new Error("Move annotation cpLoss must be a non-negative number");
+      }
+    }
 
     return await saveReviewInternal(ctx, args.gameId, {
       summary: summaryTrimmed,

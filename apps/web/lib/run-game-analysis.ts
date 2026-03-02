@@ -19,16 +19,28 @@ function normalizeUci(uci: string): string {
   return uci.toLowerCase().trim();
 }
 
-type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
+type MoveAnnotationType =
+  | "blunder"
+  | "mistake"
+  | "good"
+  | "best"
+  | "great"
+  | "brilliant";
 
 interface MoveAnnotation {
   moveNumber: number;
   type: MoveAnnotationType;
   bestMoveSan?: string;
+  /** Evaluation after this move in centipawns (White perspective). */
+  evaluation?: number;
+  /** Approximate centipawn loss for this move (0 when move matched engine best). */
+  cpLoss?: number;
 }
 
 const BLUNDER_CP = 300;
 const MISTAKE_CP = 100;
+const GREAT_CP = 120;
+const BRILLIANT_CP = 250;
 
 interface GameAnalysisResult {
   summary: string;
@@ -62,7 +74,7 @@ type GetBestMove = (
  * Runs sequentially to avoid overloading the Stockfish worker.
  */
 async function runGameAnalysisImpl(
-  _game: GameForAnalysis,
+  game: GameForAnalysis,
   moves: AnalysisMove[],
   getEvaluation: GetEvaluation,
   getBestMove: GetBestMove,
@@ -70,6 +82,7 @@ async function runGameAnalysisImpl(
 ): Promise<GameAnalysisResult> {
   const sorted = sortMovesByNumber(moves);
   const total = sorted.length;
+  const playerColor = game.color === "random" ? "white" : game.color;
   const moveAnnotations: MoveAnnotation[] = [];
   const keyMoments: string[] = [];
   const analysisDepth: DifficultyLevel = "medium";
@@ -81,10 +94,11 @@ async function runGameAnalysisImpl(
   for (let index = 0; index < sorted.length; index++) {
     const move = sorted[index];
     if (move !== undefined) {
-      onProgress?.(index, total);
+      onProgress?.(index + 1, total);
 
       const { fenBefore, fenAfter } = move;
       const turn = fenBefore.split(" ")[1] === "b" ? "black" : "white";
+      const isPlayerMove = turn === playerColor;
 
       /* Sequential calls so Stockfish's isCalculating guard isn't tripped. */
       /* eslint-disable no-await-in-loop -- intentional: sequential per-move analysis */
@@ -96,16 +110,33 @@ async function runGameAnalysisImpl(
       const cpBefore = evalToCp(evalBefore);
       const cpAfter = evalToCp(evalAfter);
       const drop = turn === "white" ? cpBefore - cpAfter : cpAfter - cpBefore;
+      const improvement =
+        turn === "white" ? cpAfter - cpBefore : cpBefore - cpAfter;
 
       const playedIsBest =
         normalizeUci(move.moveUci) === normalizeUci(bestMoveResult.uci);
 
       let annotationType: MoveAnnotationType = "good";
       let bestMoveSan: string | undefined = undefined;
+      const cpLoss = playedIsBest ? 0 : Math.max(0, Math.round(drop));
 
       if (playedIsBest) {
-        annotationType = "best";
-        bestCount += 1;
+        if (improvement >= BRILLIANT_CP) {
+          annotationType = "brilliant";
+          keyMoments.push(
+            `Move ${move.moveNumber}: ${move.moveSan} was brilliant and improved the position by ${(improvement / 100).toFixed(1)} pawns.`
+          );
+        } else if (improvement >= GREAT_CP) {
+          annotationType = "great";
+          keyMoments.push(
+            `Move ${move.moveNumber}: ${move.moveSan} was a great move and gained ${(improvement / 100).toFixed(1)} pawns.`
+          );
+        } else {
+          annotationType = "best";
+        }
+        if (isPlayerMove) {
+          bestCount += 1;
+        }
       } else {
         bestMoveSan =
           getSanForMove(
@@ -117,13 +148,17 @@ async function runGameAnalysisImpl(
 
         if (drop >= BLUNDER_CP) {
           annotationType = "blunder";
-          blunderCount += 1;
+          if (isPlayerMove) {
+            blunderCount += 1;
+          }
           keyMoments.push(
             `Move ${move.moveNumber}: ${move.moveSan} was a blunder${bestMoveSan ? `; best was ${bestMoveSan}` : ""}.`
           );
         } else if (drop >= MISTAKE_CP) {
           annotationType = "mistake";
-          mistakeCount += 1;
+          if (isPlayerMove) {
+            mistakeCount += 1;
+          }
           keyMoments.push(
             `Move ${move.moveNumber}: ${move.moveSan} was a mistake${bestMoveSan ? `; best was ${bestMoveSan}` : ""}.`
           );
@@ -133,6 +168,8 @@ async function runGameAnalysisImpl(
       moveAnnotations.push({
         moveNumber: move.moveNumber,
         type: annotationType,
+        evaluation: cpAfter,
+        cpLoss,
         ...(bestMoveSan &&
         (annotationType === "blunder" || annotationType === "mistake")
           ? { bestMoveSan }

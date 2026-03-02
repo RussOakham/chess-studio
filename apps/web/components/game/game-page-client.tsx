@@ -542,18 +542,36 @@ function GamePageContent({
                   review.moveAnnotations.length > 0 && (
                     <div className="flex flex-wrap gap-3">
                       {(() => {
+                        const brilliant = review.moveAnnotations.filter(
+                          (annotation) => annotation.type === "brilliant"
+                        ).length;
                         const great = review.moveAnnotations.filter(
-                          (a) => a.type === "good"
+                          (annotation) => annotation.type === "great"
+                        ).length;
+                        const good = review.moveAnnotations.filter(
+                          (annotation) => annotation.type === "good"
                         ).length;
                         const best = review.moveAnnotations.filter(
-                          (a) => a.type === "best"
+                          (annotation) => annotation.type === "best"
                         ).length;
                         return (
                           <>
+                            {brilliant > 0 && (
+                              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <span className="text-sky-500">!!</span>
+                                {brilliant} Brilliant
+                              </span>
+                            )}
                             {great > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">!</span>
                                 {great} Great
+                              </span>
+                            )}
+                            {good > 0 && (
+                              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <span className="text-lime-500">✓</span>
+                                {good} Good
                               </span>
                             )}
                             {best > 0 && (

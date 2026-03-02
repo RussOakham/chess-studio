@@ -10,12 +10,20 @@ import {
 } from "@/components/ui/card";
 import React, { memo, useMemo } from "react";
 
-type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
+type MoveAnnotationType =
+  | "blunder"
+  | "mistake"
+  | "good"
+  | "best"
+  | "great"
+  | "brilliant";
 
 export interface MoveAnnotation {
   moveNumber: number;
   type: MoveAnnotationType;
   bestMoveSan?: string;
+  evaluation?: number;
+  cpLoss?: number;
 }
 
 interface MoveHistoryItem {
@@ -43,17 +51,23 @@ const moveItemStyle = {
 
 function annotationBadge(type: MoveAnnotationType): string {
   switch (type) {
+    case "brilliant": {
+      return "!!";
+    }
+    case "great": {
+      return "!";
+    }
     case "blunder": {
       return "??";
     }
     case "mistake": {
-      return "?";
+      return "?!";
     }
     case "good": {
-      return "!";
+      return "✓";
     }
     case "best": {
-      return "!!";
+      return "★";
     }
     default: {
       const _: never = type;
@@ -66,13 +80,40 @@ function annotationBadge(type: MoveAnnotationType): string {
 function getAnnotationBadgeClassName(
   type: MoveAnnotationType | undefined
 ): string {
+  if (type === "brilliant") {
+    return "font-semibold text-sky-500 dark:text-sky-400";
+  }
+  if (type === "great") {
+    return "font-semibold text-emerald-600 dark:text-emerald-400";
+  }
   if (type === "blunder") {
     return "font-medium text-destructive";
   }
   if (type === "mistake") {
     return "text-amber-600 dark:text-amber-400";
   }
+  if (type === "best") {
+    return "text-emerald-500 dark:text-emerald-400";
+  }
   return "text-primary";
+}
+
+function getAnnotationDotClassName(
+  type: MoveAnnotationType | undefined
+): string {
+  if (type === "brilliant") {
+    return "bg-sky-500";
+  }
+  if (type === "great" || type === "best") {
+    return "bg-emerald-500";
+  }
+  if (type === "mistake") {
+    return "bg-amber-500";
+  }
+  if (type === "blunder") {
+    return "bg-red-500";
+  }
+  return "bg-primary/70";
 }
 
 function MoveHistoryCardComponent({
@@ -104,7 +145,7 @@ function MoveHistoryCardComponent({
             : `${sortedMovesLength} move${sortedMovesLength === 1 ? "" : "s"}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col space-y-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
         {sortedMovesLength > 0 ? (
           <div className="grid shrink-0 grid-cols-4 gap-2">
             <Button
@@ -152,7 +193,7 @@ function MoveHistoryCardComponent({
             Move history will appear here as you play
           </p>
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             <div className="grid grid-cols-[minmax(2rem,auto)_1fr_1fr] gap-x-2 gap-y-0.5 text-sm">
               <div className="py-2 font-medium text-muted-foreground" />
               <div className="py-2 font-medium text-muted-foreground">
@@ -197,14 +238,28 @@ function MoveHistoryCardComponent({
                     (whiteAnnotation.type === "blunder" ||
                       whiteAnnotation.type === "mistake") &&
                     whiteAnnotation.bestMoveSan
-                      ? `Best move: ${whiteAnnotation.bestMoveSan}`
+                      ? `Best move: ${whiteAnnotation.bestMoveSan}${
+                          typeof whiteAnnotation.cpLoss === "number" &&
+                          whiteAnnotation.cpLoss > 0
+                            ? ` · ${(whiteAnnotation.cpLoss / 100).toFixed(
+                                1
+                              )} pawns lost`
+                            : ""
+                        }`
                       : undefined;
                   const blackTooltip =
                     blackAnnotation &&
                     (blackAnnotation.type === "blunder" ||
                       blackAnnotation.type === "mistake") &&
                     blackAnnotation.bestMoveSan
-                      ? `Best move: ${blackAnnotation.bestMoveSan}`
+                      ? `Best move: ${blackAnnotation.bestMoveSan}${
+                          typeof blackAnnotation.cpLoss === "number" &&
+                          blackAnnotation.cpLoss > 0
+                            ? ` · ${(blackAnnotation.cpLoss / 100).toFixed(
+                                1
+                              )} pawns lost`
+                            : ""
+                        }`
                       : undefined;
                   return (
                     <React.Fragment key={`row-${rowIndex}`}>
@@ -222,6 +277,14 @@ function MoveHistoryCardComponent({
                         style={moveItemStyle}
                         onClick={() => setReplayIndex(whiteReplayIdx)}
                       >
+                        {whiteAnnotation ? (
+                          <span
+                            aria-hidden
+                            className={`size-2 shrink-0 rounded-full ${getAnnotationDotClassName(
+                              whiteAnnotation.type
+                            )}`}
+                          />
+                        ) : null}
                         <span className="font-medium">
                           {whiteMove?.moveSan}
                         </span>
@@ -254,6 +317,14 @@ function MoveHistoryCardComponent({
                       >
                         {blackMove ? (
                           <>
+                            {blackAnnotation ? (
+                              <span
+                                aria-hidden
+                                className={`size-2 shrink-0 rounded-full ${getAnnotationDotClassName(
+                                  blackAnnotation.type
+                                )}`}
+                              />
+                            ) : null}
                             <span>{blackMove.moveSan}</span>
                             {blackBadge ? (
                               <span

@@ -64,9 +64,13 @@ export default defineSchema({
             v.literal("blunder"),
             v.literal("mistake"),
             v.literal("good"),
-            v.literal("best")
+            v.literal("best"),
+            v.literal("great"),
+            v.literal("brilliant")
           ),
           bestMoveSan: v.optional(v.string()),
+          evaluation: v.optional(v.number()),
+          cpLoss: v.optional(v.number()),
         })
       )
     ),
