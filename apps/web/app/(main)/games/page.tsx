@@ -13,7 +13,7 @@ export default async function GamesPage() {
   }
 
   return (
-    <div className="min-h-full bg-background">
+    <div className="max-h-screen min-h-full bg-background">
       <main className="container mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>

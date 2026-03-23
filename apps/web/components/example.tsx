@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 function ExampleWrapper({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div className="w-full bg-background">
+    <div className="max-h-screen w-full max-w-screen bg-background">
       <div
         data-slot="example-wrapper"
         className={cn(

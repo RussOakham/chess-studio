@@ -148,10 +148,10 @@ function ReviewMidReview({
   }, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-background">
-      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+    <div className="flex max-h-screen min-h-0 flex-1 flex-col bg-background">
+      <main className="flex max-h-screen min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
         {/* Center: board column (grows to fill height; board scales to fit) */}
-        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+        <div className="flex max-h-screen min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
           <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
             Engine
           </div>
@@ -177,7 +177,7 @@ function ReviewMidReview({
         </div>
 
         {/* Right: review details + move history (move history grows to fill) */}
-        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+        <div className="flex max-h-screen min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
           <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-lg font-semibold">Game Review</h2>
             <Button

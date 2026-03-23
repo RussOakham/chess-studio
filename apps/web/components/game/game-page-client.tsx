@@ -305,9 +305,9 @@ function GamePageContent({
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+      <main className="flex max-h-screen min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
         {/* Center: board column (grows to fill height; board scales to fit) */}
-        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+        <div className="flex max-h-screen min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
           <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
             <div
               className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
@@ -460,7 +460,7 @@ function GamePageContent({
         </div>
 
         {/* Right panel: scrollable content + controls at bottom */}
-        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+        <div className="flex max-h-screen min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
           {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
@@ -636,60 +636,62 @@ function GamePageContent({
           </details>
 
           {/* Game Controls: full-width, prominent, side by side */}
-          <div className="mt-auto shrink-0 border-t border-border pt-4">
-            <div className="grid w-full grid-cols-2 gap-2">
-              {game.status === "in_progress" && isStockfishReady && (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  disabled={
-                    isEngineTurn ||
-                    !isViewingLive ||
-                    isCalculating ||
-                    isHintLoading ||
-                    !game?.difficulty
-                  }
-                  onClick={() => void requestHint()}
-                >
-                  {isHintLoading ? "Thinking…" : "Hint"}
-                </Button>
-              )}
-              {game.status === "in_progress" && (
-                <Button
-                  variant="destructive"
-                  size="lg"
-                  className="w-full"
-                  disabled={isResigning}
-                  onClick={async () => {
-                    if (
-                      !globalThis.confirm(
-                        "Are you sure you want to resign? This will end the game."
-                      )
-                    ) {
-                      return;
+          {game.status === "in_progress" && (
+            <div className="mt-auto shrink-0 border-t border-border pt-4">
+              <div className="grid w-full grid-cols-2 gap-2">
+                {game.status === "in_progress" && isStockfishReady && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    disabled={
+                      isEngineTurn ||
+                      !isViewingLive ||
+                      isCalculating ||
+                      isHintLoading ||
+                      !game?.difficulty
                     }
-                    setIsResigning(true);
-                    try {
-                      await resignMutation({
-                        gameId: toGameId(gameId),
-                      });
-                    } catch (error) {
-                      console.error("Resign error:", error);
-                      setIsResigning(false);
-                    }
-                  }}
-                >
-                  {isResigning ? "Resigning…" : "Resign"}
-                </Button>
+                    onClick={() => void requestHint()}
+                  >
+                    {isHintLoading ? "Thinking…" : "Hint"}
+                  </Button>
+                )}
+                {game.status === "in_progress" && (
+                  <Button
+                    variant="destructive"
+                    size="lg"
+                    className="w-full"
+                    disabled={isResigning}
+                    onClick={async () => {
+                      if (
+                        !globalThis.confirm(
+                          "Are you sure you want to resign? This will end the game."
+                        )
+                      ) {
+                        return;
+                      }
+                      setIsResigning(true);
+                      try {
+                        await resignMutation({
+                          gameId: toGameId(gameId),
+                        });
+                      } catch (error) {
+                        console.error("Resign error:", error);
+                        setIsResigning(false);
+                      }
+                    }}
+                  >
+                    {isResigning ? "Resigning…" : "Resign"}
+                  </Button>
+                )}
+              </div>
+              {game.status === "in_progress" && hint && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+                </p>
               )}
             </div>
-            {game.status === "in_progress" && hint && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {hintSan ? `Hint: ${hintSan}` : "Hint available"}
-              </p>
-            )}
-          </div>
+          )}
         </div>
       </main>
     </div>
