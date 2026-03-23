@@ -32,7 +32,10 @@ const MISTAKE_CP = 100;
 
 interface GameAnalysisResult {
   summary: string;
-  /** Centipawn-equivalent eval after each half-move (aligned with `moves` order). */
+  /**
+   * Centipawn-equivalent eval after each half-move (position after the move), in the same
+   * order as `moveAnnotations` — i.e. `sortMovesByNumber(moves)` order, not the raw `moves` array.
+   */
   evaluations: number[];
   keyMoments: string[];
   suggestions: string[];
