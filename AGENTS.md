@@ -1,5 +1,13 @@
 # Agents.md
 
+<!-- BEGIN:nextjs-agent-rules -->
+
+## Next.js: read bundled docs before coding
+
+Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/` (workspace root after `pnpm install`). Version-matched docs are the source of truth for this repo’s installed Next.js.
+
+<!-- END:nextjs-agent-rules -->
+
 ## Learned User Preferences
 
 - After implementing or significantly changing Convex backend or React/Next.js UI, run Convex reviewer and consider Vercel React best-practices so these checks are a natural part of the workflow.

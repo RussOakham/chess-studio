@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+# Monorepo uses root pnpm-lock.yaml only; avoid a second lockfile under apps/web
+apps/web/pnpm-lock.yaml
 __pycache__/
 *.pyc
 *.pyo
