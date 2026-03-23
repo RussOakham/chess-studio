@@ -25,14 +25,22 @@ function stripHeaders(pgn: string): string {
     .join("\n");
 }
 
+/** Remove parenthetical variations; innermost pairs first so nesting is handled. */
+function stripParentheticalVariations(text: string): string {
+  let result = text;
+  while (/\([^()]*\)/.test(result)) {
+    result = result.replace(/\([^()]*\)/g, " ");
+  }
+  return result;
+}
+
 function extractSanPrefix(pgn: string, maxMoves: number): string {
   const body = stripHeaders(pgn);
-  const tokens = body
-    .replace(/\{[^}]*\}/g, " ")
-    .replace(/\([^)]*\)/g, " ")
+  const tokens = stripParentheticalVariations(body.replace(/\{[^}]*\}/g, " "))
     .split(/\s+/)
     .filter(
-      (token) => token.length > 0 && !/^\d+\.?$/.test(token) && token !== "*"
+      (token) =>
+        token.length > 0 && !/^\d+\.{0,3}$/.test(token) && token !== "*"
     )
     .slice(0, maxMoves);
   return tokens.join(" ");
