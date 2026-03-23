@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { forwardRef } from "react";
 import type { ReactNode } from "react";
 
-export type GameLayoutVariant = "default" | "dense";
+type GameLayoutVariant = "default" | "dense";
 
 /**
  * Two-column game/review layout: board column + sidebar. Matches review page flex
@@ -144,3 +144,5 @@ export {
   GameLayoutRoot,
   GameSidebarColumn,
 };
+
+export type { GameLayoutVariant };

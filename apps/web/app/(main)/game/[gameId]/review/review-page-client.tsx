@@ -12,10 +12,6 @@ import {
   GameSidebarColumn,
 } from "@/components/game/game-layout";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
-import type {
-  MoveAnnotation,
-  MoveAnnotationType,
-} from "@/components/game/move-history-card";
 import { PlayerStrip } from "@/components/game/player-strip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +26,11 @@ import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { evaluationForReplayIndex } from "@/lib/review-evaluation";
 import { getOpeningLabelFromPgn } from "@repo/chess";
-import type { PositionEvaluation } from "@repo/chess";
+import type {
+  MoveAnnotation,
+  MoveAnnotationType,
+  PositionEvaluation,
+} from "@repo/chess";
 import { useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -45,11 +45,13 @@ function moveQualityCounts(
   moveAnnotations: { moveNumber: number; type: string }[] | undefined
 ) {
   if (!moveAnnotations?.length) {
-    return { great: 0, best: 0, mistake: 0, blunder: 0 };
+    return { good: 0, best: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
   }
   return {
-    great: moveAnnotations.filter((ann) => ann.type === "good").length,
+    good: moveAnnotations.filter((ann) => ann.type === "good").length,
     best: moveAnnotations.filter((ann) => ann.type === "best").length,
+    inaccuracy: moveAnnotations.filter((ann) => ann.type === "inaccuracy")
+      .length,
     mistake: moveAnnotations.filter((ann) => ann.type === "mistake").length,
     blunder: moveAnnotations.filter((ann) => ann.type === "blunder").length,
   };
@@ -62,9 +64,70 @@ function accuracyPercent(
     return null;
   }
   const goodOrBest = moveAnnotations.filter(
-    (a) => a.type === "good" || a.type === "best"
+    (ann) => ann.type === "good" || ann.type === "best"
   ).length;
   return Math.round((goodOrBest / moveAnnotations.length) * 1000) / 10;
+}
+
+function midReviewAnnotationGlyph(type: MoveAnnotationType): string {
+  switch (type) {
+    case "best": {
+      return "!!";
+    }
+    case "good": {
+      return "!";
+    }
+    case "inaccuracy": {
+      return "?!";
+    }
+    case "mistake": {
+      return "?";
+    }
+    case "blunder": {
+      return "??";
+    }
+    default: {
+      const exhaustive: never = type;
+      return exhaustive;
+    }
+  }
+}
+
+function midReviewAnnotationCaption(annotation: {
+  type: MoveAnnotationType;
+  bestMoveSan?: string;
+}): string {
+  switch (annotation.type) {
+    case "best": {
+      return annotation.bestMoveSan
+        ? `Best move — engine prefers ${annotation.bestMoveSan}.`
+        : "Best move.";
+    }
+    case "good": {
+      return annotation.bestMoveSan
+        ? `Good move — engine prefers ${annotation.bestMoveSan}.`
+        : "Good move.";
+    }
+    case "inaccuracy": {
+      return annotation.bestMoveSan
+        ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
+        : "Inaccuracy — small eval slip.";
+    }
+    case "blunder": {
+      return annotation.bestMoveSan
+        ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
+        : "Blunder.";
+    }
+    case "mistake": {
+      return annotation.bestMoveSan
+        ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
+        : "Mistake.";
+    }
+    default: {
+      const exhaustive: never = annotation.type;
+      return exhaustive;
+    }
+  }
 }
 
 interface ReviewMidReviewProps {
@@ -140,7 +203,7 @@ function ReviewMidReview({
   const currentAnnotation =
     currentMove != null && review.moveAnnotations
       ? review.moveAnnotations.find(
-          (a) => a.moveNumber === currentMove.moveNumber
+          (ann) => ann.moveNumber === currentMove.moveNumber
         )
       : undefined;
 
@@ -248,25 +311,16 @@ function ReviewMidReview({
                     <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-sm font-medium">
                         Move {currentMove.moveNumber}: {currentMove.moveSan}
-                        {currentAnnotation && (
+                        {currentAnnotation ? (
                           <span className="ml-1 text-primary">
-                            {currentAnnotation.type === "best"
-                              ? "!!"
-                              : currentAnnotation.type === "good"
-                                ? "!"
-                                : currentAnnotation.type === "mistake"
-                                  ? "?"
-                                  : "??"}
+                            {midReviewAnnotationGlyph(currentAnnotation.type)}
                           </span>
-                        )}
+                        ) : null}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {currentAnnotation?.type === "best" ||
-                        currentAnnotation?.type === "good"
-                          ? "Good move."
-                          : currentAnnotation?.bestMoveSan
-                            ? `Best: ${currentAnnotation.bestMoveSan}`
-                            : "Review this move."}
+                        {currentAnnotation
+                          ? midReviewAnnotationCaption(currentAnnotation)
+                          : "Review this move."}
                       </p>
                     </div>
                   </div>
@@ -504,7 +558,8 @@ export function ReviewPageClient({
                 </p>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
                   <li>Best: {counts.best}</li>
-                  <li>Great: {counts.great}</li>
+                  <li>Good: {counts.good}</li>
+                  <li>Inaccuracy: {counts.inaccuracy}</li>
                   <li>Mistake: {counts.mistake}</li>
                   <li>Blunder: {counts.blunder}</li>
                 </ul>

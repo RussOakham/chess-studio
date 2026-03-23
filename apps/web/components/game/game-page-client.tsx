@@ -462,24 +462,35 @@ function GamePageContent({
                   review.moveAnnotations.length > 0 && (
                     <div className="flex flex-wrap gap-3">
                       {(() => {
-                        const great = review.moveAnnotations.filter(
-                          (a) => a.type === "good"
+                        const good = review.moveAnnotations.filter(
+                          (ann) => ann.type === "good"
                         ).length;
                         const best = review.moveAnnotations.filter(
-                          (a) => a.type === "best"
+                          (ann) => ann.type === "best"
+                        ).length;
+                        const inaccuracy = review.moveAnnotations.filter(
+                          (ann) => ann.type === "inaccuracy"
                         ).length;
                         return (
                           <>
-                            {great > 0 && (
+                            {good > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">!</span>
-                                {great} Great
+                                {good} Good
                               </span>
                             )}
                             {best > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">★</span>
                                 {best} Best
+                              </span>
+                            )}
+                            {inaccuracy > 0 && (
+                              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <span className="text-orange-600 dark:text-orange-400">
+                                  ?!
+                                </span>
+                                {inaccuracy} Inaccuracy
                               </span>
                             )}
                           </>
