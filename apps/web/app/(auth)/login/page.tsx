@@ -1,7 +1,10 @@
 import { LoginForm } from "@/components/auth/login-form";
+import { isGithubOAuthEnvConfigured } from "@/lib/github-oauth-config";
 import { Suspense } from "react";
 
 export default function LoginPage() {
+  const githubOAuthEnabled = isGithubOAuthEnvConfigured();
+
   return (
     <Suspense
       fallback={
@@ -10,7 +13,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginForm githubOAuthEnabled={githubOAuthEnabled} />
     </Suspense>
   );
 }

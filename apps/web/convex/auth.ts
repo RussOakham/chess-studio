@@ -19,6 +19,16 @@ if (!process.env.BETTER_AUTH_SECRET) {
   throw new Error("BETTER_AUTH_SECRET must be set in environment variables");
 }
 
+// GitHub OAuth must also be set on the Convex deployment (not only Next.js .env.local):
+// `npx convex env set GITHUB_CLIENT_ID ...` and `GITHUB_CLIENT_SECRET`, or Dashboard → Settings → Env vars.
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+const githubOAuthConfigured =
+  typeof githubClientId === "string" &&
+  githubClientId.length > 0 &&
+  typeof githubClientSecret === "string" &&
+  githubClientSecret.length > 0;
+
 /** Session and JWT duration: 7 days so users don't get "Not authenticated" after a few minutes. */
 const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
 
@@ -38,6 +48,16 @@ const createAuth = (ctx: GenericCtx<DataModel>) => {
       enabled: true,
       requireEmailVerification: false,
     },
+    ...(githubOAuthConfigured
+      ? {
+          socialProviders: {
+            github: {
+              clientId: githubClientId,
+              clientSecret: githubClientSecret,
+            },
+          },
+        }
+      : {}),
     plugins: [
       convex({
         authConfig,

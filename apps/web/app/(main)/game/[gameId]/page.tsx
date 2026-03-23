@@ -3,7 +3,7 @@ import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
-import { toGameId } from "@/lib/convex-id";
+import { isPlausibleGameId, toGameId } from "@/lib/convex-id";
 import { notFound, redirect } from "next/navigation";
 
 interface GamePageProps {
@@ -12,6 +12,9 @@ interface GamePageProps {
 
 export default async function GamePage({ params }: GamePageProps) {
   const { gameId } = await params;
+  if (!isPlausibleGameId(gameId)) {
+    notFound();
+  }
 
   const session = await getSession();
   if (!session) {

@@ -2,6 +2,14 @@
 
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import {
+  GameBoardArea,
+  GameBoardColumn,
+  GameBoardSquare,
+  GameLayoutMain,
+  GameLayoutRoot,
+  GameSidebarColumn,
+} from "@/components/game/game-layout";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
 import {
   AlertDialog,
@@ -24,6 +32,7 @@ import {
   getKingInCheckSquareStyles,
 } from "@/lib/game-status";
 import { getTurnStatusLabel } from "@/lib/game-turn-status";
+import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useEngineMoveEffect } from "@/lib/hooks/use-engine-move-effect";
 import { useEngineTurn } from "@/lib/hooks/use-engine-turn";
 import { useEvaluationSync } from "@/lib/hooks/use-evaluation-sync";
@@ -36,14 +45,7 @@ import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
   gameId: string;
@@ -242,26 +244,7 @@ function GamePageContent({
     hint && getSanForMove(viewingFen, hint.from, hint.to, hint.promotion);
 
   const boardContainerRef = useRef<HTMLDivElement>(null);
-  const [boardSize, setBoardSize] = useState(560);
-  useLayoutEffect(() => {
-    const el = boardContainerRef.current;
-    if (!el) {
-      return;
-    }
-    function updateSize() {
-      if (!el) {
-        return;
-      }
-      const w = el.clientWidth;
-      const h = el.clientHeight;
-      const side = Math.min(w, h);
-      setBoardSize(Math.max(200, side - 32));
-    }
-    updateSize();
-    const ro = new ResizeObserver(updateSize);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const boardSize = useBoardContainerSize(boardContainerRef);
 
   if (isLoading || !game) {
     return (
@@ -280,7 +263,7 @@ function GamePageContent({
   const opponentColorLabel = playerColor === "white" ? "Black" : "White";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-background">
+    <GameLayoutRoot>
       <AlertDialog
         open={isGameOver && !gameOverDismissed}
         onOpenChange={(open) => {
@@ -305,9 +288,9 @@ function GamePageContent({
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+      <GameLayoutMain>
         {/* Center: board column (grows to fill height; board scales to fit) */}
-        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+        <GameBoardColumn>
           <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
             <div
               className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
@@ -376,12 +359,9 @@ function GamePageContent({
               })()}
             </div>
           </div>
-          <div className="relative flex min-h-0 flex-1 items-center justify-center">
-            <div
-              ref={boardContainerRef}
-              className="flex aspect-square h-full max-w-full items-center justify-center"
-            >
-              <div className="relative flex items-stretch gap-4">
+          <GameBoardArea>
+            <GameBoardSquare ref={boardContainerRef}>
+              <div className="relative flex min-w-0 items-stretch gap-4">
                 <GameChessboard
                   position={viewingFen}
                   orientation={boardOrientation}
@@ -406,13 +386,13 @@ function GamePageContent({
                   />
                 )}
               </div>
-            </div>
+            </GameBoardSquare>
             {!isViewingLive && (
               <p className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
                 Viewing past position — use controls to return to live
               </p>
             )}
-          </div>
+          </GameBoardArea>
           <div className="flex w-full shrink-0 flex-row gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
             <div
               className="flex min-w-10 shrink-0 items-center justify-center self-stretch rounded-md bg-muted text-muted-foreground"
@@ -457,10 +437,10 @@ function GamePageContent({
               })()}
             </div>
           </div>
-        </div>
+        </GameBoardColumn>
 
         {/* Right panel: scrollable content + controls at bottom */}
-        <div className="flex min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+        <GameSidebarColumn>
           {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
@@ -636,26 +616,26 @@ function GamePageContent({
           </details>
 
           {/* Game Controls: full-width, prominent, side by side */}
-          <div className="mt-auto shrink-0 border-t border-border pt-4">
-            <div className="grid w-full grid-cols-2 gap-2">
-              {game.status === "in_progress" && isStockfishReady && (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  disabled={
-                    isEngineTurn ||
-                    !isViewingLive ||
-                    isCalculating ||
-                    isHintLoading ||
-                    !game?.difficulty
-                  }
-                  onClick={() => void requestHint()}
-                >
-                  {isHintLoading ? "Thinking…" : "Hint"}
-                </Button>
-              )}
-              {game.status === "in_progress" && (
+          {game.status === "in_progress" && (
+            <div className="mt-auto shrink-0 border-t border-border pt-4">
+              <div className="grid w-full grid-cols-2 gap-2">
+                {isStockfishReady && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    disabled={
+                      isEngineTurn ||
+                      !isViewingLive ||
+                      isCalculating ||
+                      isHintLoading ||
+                      !game?.difficulty
+                    }
+                    onClick={() => void requestHint()}
+                  >
+                    {isHintLoading ? "Thinking…" : "Hint"}
+                  </Button>
+                )}
                 <Button
                   variant="destructive"
                   size="lg"
@@ -682,17 +662,17 @@ function GamePageContent({
                 >
                   {isResigning ? "Resigning…" : "Resign"}
                 </Button>
+              </div>
+              {hint && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+                </p>
               )}
             </div>
-            {game.status === "in_progress" && hint && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {hintSan ? `Hint: ${hintSan}` : "Hint available"}
-              </p>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
+          )}
+        </GameSidebarColumn>
+      </GameLayoutMain>
+    </GameLayoutRoot>
   );
 }
 

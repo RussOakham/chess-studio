@@ -1,7 +1,7 @@
 import { api } from "@/convex/_generated/api";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
-import { toGameId } from "@/lib/convex-id";
+import { isPlausibleGameId, toGameId } from "@/lib/convex-id";
 import { notFound, redirect } from "next/navigation";
 
 import { ReviewPageClient } from "./review-page-client";
@@ -12,6 +12,9 @@ interface ReviewPageProps {
 
 export default async function ReviewPage({ params }: ReviewPageProps) {
   const { gameId } = await params;
+  if (!isPlausibleGameId(gameId)) {
+    notFound();
+  }
 
   const session = await getSession();
   if (!session) {

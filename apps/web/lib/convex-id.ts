@@ -11,3 +11,11 @@ export function toGameId(value: string): Id<"games"> {
   // eslint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Runtime string from URL/props; Convex validates at API boundary
   return value as Id<"games">;
 }
+
+/**
+ * Conservative URL-param guard to avoid calling Convex with obvious non-IDs (e.g. `styles.css.map`).
+ * Convex document IDs are URL-safe strings; allow typical alphanumeric plus `_` and `-` (see Convex docs).
+ */
+export function isPlausibleGameId(value: string): boolean {
+  return value.length > 0 && /^[a-zA-Z0-9_-]+$/.test(value);
+}

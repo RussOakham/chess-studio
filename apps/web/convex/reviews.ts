@@ -11,6 +11,7 @@ import { mutation, query } from "./_generated/server";
 const MAX_KEY_MOMENTS = 20;
 const MAX_SUGGESTIONS = 10;
 const MAX_MOVE_ANNOTATIONS = 500;
+const MAX_EVALUATIONS = 500;
 const MAX_SUMMARY_LENGTH = 10_000;
 
 async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
@@ -56,6 +57,7 @@ const getByGameId = query({
       _creationTime: v.number(),
       gameId: v.id("games"),
       summary: v.string(),
+      evaluations: v.optional(v.array(v.number())),
       keyMoments: v.optional(v.array(v.string())),
       suggestions: v.optional(v.array(v.string())),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
@@ -81,6 +83,7 @@ async function saveReviewInternal(
   gameId: Id<"games">,
   payload: {
     summary: string;
+    evaluations: number[];
     keyMoments: string[];
     suggestions: string[];
     moveAnnotations: {
@@ -99,6 +102,7 @@ async function saveReviewInternal(
   if (existing !== null) {
     await ctx.db.patch(existing._id, {
       summary: payload.summary,
+      evaluations: payload.evaluations,
       keyMoments: payload.keyMoments,
       suggestions: payload.suggestions,
       moveAnnotations: payload.moveAnnotations,
@@ -109,6 +113,7 @@ async function saveReviewInternal(
   return await ctx.db.insert("game_reviews", {
     gameId,
     summary: payload.summary,
+    evaluations: payload.evaluations,
     keyMoments: payload.keyMoments,
     suggestions: payload.suggestions,
     moveAnnotations: payload.moveAnnotations,
@@ -120,6 +125,7 @@ const save = mutation({
   args: {
     gameId: v.id("games"),
     summary: v.string(),
+    evaluations: v.optional(v.array(v.number())),
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
@@ -141,6 +147,7 @@ const save = mutation({
       );
     }
 
+    const evaluations = (args.evaluations ?? []).slice(0, MAX_EVALUATIONS);
     const keyMoments = (args.keyMoments ?? []).slice(0, MAX_KEY_MOMENTS);
     const suggestions = (args.suggestions ?? []).slice(0, MAX_SUGGESTIONS);
     const moveAnnotations = (args.moveAnnotations ?? []).slice(
@@ -150,6 +157,7 @@ const save = mutation({
 
     return await saveReviewInternal(ctx, args.gameId, {
       summary: summaryTrimmed,
+      evaluations,
       keyMoments,
       suggestions,
       moveAnnotations,
