@@ -71,6 +71,7 @@ export function useGameAnalysis({
       await saveReview({
         gameId: toGameId(gameId),
         summary: result.summary,
+        evaluations: result.evaluations,
         keyMoments: result.keyMoments,
         suggestions: result.suggestions,
         moveAnnotations: result.moveAnnotations,

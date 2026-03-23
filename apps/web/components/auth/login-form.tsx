@@ -18,7 +18,7 @@ export function LoginForm({
   githubOAuthEnabled,
 }: {
   githubOAuthEnabled?: boolean;
-} = {}) {
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";

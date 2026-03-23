@@ -32,6 +32,8 @@ const MISTAKE_CP = 100;
 
 interface GameAnalysisResult {
   summary: string;
+  /** Centipawn-equivalent eval after each half-move (aligned with `moves` order). */
+  evaluations: number[];
   keyMoments: string[];
   suggestions: string[];
   moveAnnotations: MoveAnnotation[];
@@ -70,6 +72,7 @@ async function runGameAnalysisImpl(
 ): Promise<GameAnalysisResult> {
   const sorted = sortMovesByNumber(moves);
   const total = sorted.length;
+  const evaluations: number[] = [];
   const moveAnnotations: MoveAnnotation[] = [];
   const keyMoments: string[] = [];
   const analysisDepth: DifficultyLevel = "medium";
@@ -138,6 +141,7 @@ async function runGameAnalysisImpl(
           ? { bestMoveSan }
           : {}),
       });
+      evaluations.push(cpAfter);
     }
   }
 
@@ -148,6 +152,7 @@ async function runGameAnalysisImpl(
 
   return {
     summary,
+    evaluations,
     keyMoments,
     suggestions,
     moveAnnotations,

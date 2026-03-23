@@ -619,7 +619,7 @@ function GamePageContent({
           {game.status === "in_progress" && (
             <div className="mt-auto shrink-0 border-t border-border pt-4">
               <div className="grid w-full grid-cols-2 gap-2">
-                {game.status === "in_progress" && isStockfishReady && (
+                {isStockfishReady && (
                   <Button
                     variant="secondary"
                     size="lg"
@@ -636,36 +636,34 @@ function GamePageContent({
                     {isHintLoading ? "Thinking…" : "Hint"}
                   </Button>
                 )}
-                {game.status === "in_progress" && (
-                  <Button
-                    variant="destructive"
-                    size="lg"
-                    className="w-full"
-                    disabled={isResigning}
-                    onClick={async () => {
-                      if (
-                        !globalThis.confirm(
-                          "Are you sure you want to resign? This will end the game."
-                        )
-                      ) {
-                        return;
-                      }
-                      setIsResigning(true);
-                      try {
-                        await resignMutation({
-                          gameId: toGameId(gameId),
-                        });
-                      } catch (error) {
-                        console.error("Resign error:", error);
-                        setIsResigning(false);
-                      }
-                    }}
-                  >
-                    {isResigning ? "Resigning…" : "Resign"}
-                  </Button>
-                )}
+                <Button
+                  variant="destructive"
+                  size="lg"
+                  className="w-full"
+                  disabled={isResigning}
+                  onClick={async () => {
+                    if (
+                      !globalThis.confirm(
+                        "Are you sure you want to resign? This will end the game."
+                      )
+                    ) {
+                      return;
+                    }
+                    setIsResigning(true);
+                    try {
+                      await resignMutation({
+                        gameId: toGameId(gameId),
+                      });
+                    } catch (error) {
+                      console.error("Resign error:", error);
+                      setIsResigning(false);
+                    }
+                  }}
+                >
+                  {isResigning ? "Resigning…" : "Resign"}
+                </Button>
               </div>
-              {game.status === "in_progress" && hint && (
+              {hint && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {hintSan ? `Hint: ${hintSan}` : "Hint available"}
                 </p>

@@ -11,7 +11,6 @@ import { registerSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { fromError } from "zod-validation-error";
 
@@ -114,9 +113,7 @@ export function RegisterPageClient({
             {isSubmitting ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
-        <Suspense fallback={null}>
-          <GitHubAuthSection callbackURL="/" enabled={githubOAuthEnabled} />
-        </Suspense>
+        <GitHubAuthSection callbackURL="/" enabled={githubOAuthEnabled} />
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link href="/login" className="text-primary hover:underline">

@@ -5,6 +5,21 @@ import { signIn } from "@/lib/auth-client";
 import { Github } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import type { ReactElement } from "react";
+
+/** Only allow same-origin relative paths (avoids open redirects). */
+function sanitizeRedirectPath(value: string | null | undefined): string {
+  if (
+    value !== undefined &&
+    value !== null &&
+    value.length > 0 &&
+    value.startsWith("/") &&
+    !value.startsWith("//")
+  ) {
+    return value;
+  }
+  return "/";
+}
 
 interface GitHubAuthSectionProps {
   callbackURL?: string;
@@ -28,7 +43,7 @@ function resolveGithubSectionVisible(enabled: boolean | undefined): boolean {
 export function GitHubAuthSection({
   callbackURL,
   enabled: enabledProp,
-}: GitHubAuthSectionProps) {
+}: GitHubAuthSectionProps): ReactElement | null {
   const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
@@ -37,18 +52,11 @@ export function GitHubAuthSection({
     return null;
   }
 
-  const resolvedCallback =
-    callbackURL ??
-    (() => {
-      const redirectParam = searchParams.get("redirect");
-      return redirectParam &&
-        redirectParam.startsWith("/") &&
-        !redirectParam.startsWith("//")
-        ? redirectParam
-        : "/";
-    })();
+  const resolvedCallback = sanitizeRedirectPath(
+    callbackURL ?? searchParams.get("redirect")
+  );
 
-  const handleGitHubSignIn = async () => {
+  const handleGitHubSignIn = async (): Promise<void> => {
     setOauthError(null);
     setPending(true);
     try {
@@ -65,7 +73,9 @@ export function GitHubAuthSection({
       const url = result.data?.url;
       if (typeof url === "string" && url.length > 0) {
         globalThis.location.assign(url);
+        return;
       }
+      setOauthError("Failed to start GitHub sign-in. Please try again.");
     } catch (error: unknown) {
       setOauthError(
         error instanceof Error ? error.message : "Something went wrong"
