@@ -2,7 +2,7 @@ import { ConvexClientProvider } from "@/app/convex-client-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getToken } from "@/lib/auth-server";
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
+import { Instrument_Serif, JetBrains_Mono, Roboto } from "next/font/google";
 
 // oxlint-disable-next-line import/no-unassigned-import
 import "./globals.css";
@@ -12,6 +12,20 @@ const roboto = Roboto({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-roboto",
+});
+
+// oxlint-disable-next-line new-cap
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-instrument-serif",
+});
+
+// oxlint-disable-next-line new-cap
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +45,11 @@ export default async function RootLayout({
     // Fall back to client-side auth flow
   }
   return (
-    <html lang="en" className={roboto.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${roboto.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="font-sans antialiased">
         <ThemeProvider>
           <ConvexClientProvider initialToken={token}>

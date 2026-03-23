@@ -8,6 +8,8 @@ interface ReplayMove {
   fenBefore: string;
   fenAfter: string;
   moveSan: string;
+  /** Convex document id when present (used by move list keys). */
+  _id?: string;
 }
 
 /** Sorts moves by move number (Convex order may vary). */
@@ -36,6 +38,7 @@ function getViewingFen(
 
 /** Display row for a move (number, SAN, white/black). */
 interface MoveHistoryRow extends ReplayMove {
+  id: string;
   displayNumber?: number;
   isWhiteMove: boolean;
 }
@@ -49,6 +52,10 @@ function formatMoveHistory<Move extends ReplayMove>(
     const isWhiteMove = move.moveNumber % 2 === 1;
     return {
       ...move,
+      id:
+        move._id !== undefined
+          ? String(move._id)
+          : `${move.moveNumber}-${move.moveSan}`,
       displayNumber: isWhiteMove ? movePairNumber : undefined,
       isWhiteMove,
     };

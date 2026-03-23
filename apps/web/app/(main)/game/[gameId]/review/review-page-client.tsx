@@ -1,5 +1,7 @@
 "use client";
 
+import { EvaluationBar } from "@/components/chess/evaluation-bar";
+import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import {
   GameBoardArea,
@@ -14,20 +16,29 @@ import type {
   MoveAnnotation,
   MoveAnnotationType,
 } from "@/components/game/move-history-card";
+import { PlayerStrip } from "@/components/game/player-strip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
+import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
+import { useEvaluationForFen } from "@/lib/hooks/use-evaluation-for-fen";
 import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
+import { evaluationForReplayIndex } from "@/lib/review-evaluation";
+import { getOpeningLabelFromPgn } from "@repo/chess";
+import type { PositionEvaluation } from "@repo/chess";
 import { useQuery } from "convex/react";
+import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 interface ReviewPageClientProps {
   gameId: string;
+  userDisplayName: string;
 }
 
 function moveQualityCounts(
@@ -58,16 +69,19 @@ function accuracyPercent(
 
 interface ReviewMidReviewProps {
   gameId: string;
-  game: { fen: string; _id: string };
-  moves: {
-    moveNumber: number;
-    fenBefore: string;
-    fenAfter: string;
-    moveSan: string;
-    id: string;
-  }[];
+  userDisplayName: string;
+  isStockfishReady: boolean;
+  getEvaluation: (fen: string) => Promise<PositionEvaluation>;
+  game: {
+    fen: string;
+    _id: string;
+    difficulty: "easy" | "medium" | "hard";
+    color: "white" | "black" | "random";
+  };
+  moves: Doc<"moves">[];
   review: {
     summary: string;
+    evaluations?: number[];
     keyMoments?: string[];
     moveAnnotations?: {
       moveNumber: number;
@@ -79,6 +93,9 @@ interface ReviewMidReviewProps {
 
 function ReviewMidReview({
   gameId,
+  userDisplayName,
+  isStockfishReady,
+  getEvaluation,
   game,
   moves,
   review,
@@ -130,36 +147,88 @@ function ReviewMidReview({
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardSize = useBoardContainerSize(boardContainerRef);
 
+  const playerColor = game.color === "random" ? "white" : game.color;
+  const playerColorLabel = playerColor === "white" ? "White" : "Black";
+  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+  const boardOrientation: "white" | "black" =
+    playerColor === "black" ? "black" : "white";
+  const opponentLabel = `Engine (${game.difficulty})`;
+
+  const capturedPieces = useMemo(
+    () => getCapturedPieces(sortedMoves.slice(0, replayIndex)),
+    [sortedMoves, replayIndex]
+  );
+
+  const storedBarEval = useMemo(
+    () => evaluationForReplayIndex(replayIndex, review.evaluations),
+    [replayIndex, review.evaluations]
+  );
+
+  const liveBarEval = useEvaluationForFen(
+    viewingFen,
+    storedBarEval === null && isStockfishReady,
+    isStockfishReady,
+    getEvaluation
+  );
+
+  const barEvaluation = storedBarEval ?? liveBarEval;
+  const showEvalBar =
+    isStockfishReady || storedBarEval !== null || liveBarEval !== null;
+
   return (
-    <GameLayoutRoot>
-      <GameLayoutMain>
+    <GameLayoutRoot gameSurface>
+      <GameLayoutMain variant="dense">
         {/* Center: board column (grows to fill height; board scales to fit) */}
         <GameBoardColumn>
-          <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-            Engine
-          </div>
+          <PlayerStrip
+            icon={Bot}
+            name={opponentLabel}
+            colorLabel={opponentColorLabel}
+            capturedSymbols={capturedToSymbols(
+              playerColor === "white"
+                ? capturedPieces.black
+                : capturedPieces.white
+            )}
+          />
           <GameBoardArea>
             <GameBoardSquare ref={boardContainerRef}>
-              <GameChessboard
-                position={viewingFen}
-                orientation="white"
-                draggable={false}
-                status="completed"
-                gameId={game._id}
-                customSquareStyles={undefined}
-                boardWidth={boardSize}
-              />
+              <div className="relative flex min-w-0 items-stretch gap-3 md:gap-4">
+                <GameChessboard
+                  position={viewingFen}
+                  orientation={boardOrientation}
+                  draggable={false}
+                  status="completed"
+                  gameId={game._id}
+                  customSquareStyles={undefined}
+                  boardWidth={boardSize}
+                />
+                {showEvalBar ? (
+                  <EvaluationBar
+                    evaluation={barEvaluation}
+                    orientation={boardOrientation}
+                  />
+                ) : null}
+              </div>
             </GameBoardSquare>
           </GameBoardArea>
-          <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-            You
-          </div>
+          <PlayerStrip
+            icon={User}
+            name={userDisplayName}
+            colorLabel={playerColorLabel}
+            capturedSymbols={capturedToSymbols(
+              playerColor === "white"
+                ? capturedPieces.white
+                : capturedPieces.black
+            )}
+          />
         </GameBoardColumn>
 
         {/* Right: review details + move history (move history grows to fill) */}
-        <GameSidebarColumn>
+        <GameSidebarColumn variant="dense">
           <div className="flex shrink-0 items-center justify-between">
-            <h2 className="text-lg font-semibold">Game Review</h2>
+            <h2 className="font-display text-lg font-semibold tracking-tight">
+              Game Review
+            </h2>
             <Button
               variant="outline"
               size="sm"
@@ -240,6 +309,7 @@ function ReviewMidReview({
                 | MoveAnnotation[]
                 | undefined
             }
+            evaluationSeries={review.evaluations ?? undefined}
           />
         </GameSidebarColumn>
       </GameLayoutMain>
@@ -247,7 +317,10 @@ function ReviewMidReview({
   );
 }
 
-export function ReviewPageClient({ gameId }: ReviewPageClientProps) {
+export function ReviewPageClient({
+  gameId,
+  userDisplayName,
+}: ReviewPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("move") !== null ? "mid-review" : "overview";
@@ -340,6 +413,9 @@ export function ReviewPageClient({ gameId }: ReviewPageClientProps) {
     return (
       <ReviewMidReview
         gameId={gameId}
+        userDisplayName={userDisplayName}
+        isStockfishReady={isStockfishReady}
+        getEvaluation={getEvaluation}
         game={game}
         moves={moves ?? []}
         review={review}
@@ -347,11 +423,20 @@ export function ReviewPageClient({ gameId }: ReviewPageClientProps) {
     );
   }
 
+  const openingLabel = getOpeningLabelFromPgn(game.pgn ?? undefined);
+
   return (
-    <div className="min-h-full bg-background p-6">
+    <div className="min-h-full bg-background p-4 md:p-6" data-game-surface="">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Game Review</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            Game Review
+          </h1>
+          {openingLabel ? (
+            <p className="text-sm text-muted-foreground">
+              Opening: {openingLabel}
+            </p>
+          ) : null}
         </div>
 
         {/* Coach block */}
@@ -371,6 +456,17 @@ export function ReviewPageClient({ gameId }: ReviewPageClientProps) {
             </div>
           </CardContent>
         </Card>
+
+        {review.evaluations && review.evaluations.length >= 2 ? (
+          <Card className="animate-in fade-in-0 fill-mode-both slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
+            <CardHeader>
+              <CardTitle className="text-base">Advantage over time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EvaluationSparkline centipawns={review.evaluations} />
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* Accuracy graph placeholder (simple bar from moveAnnotations) */}
         {review.moveAnnotations && review.moveAnnotations.length > 0 && (

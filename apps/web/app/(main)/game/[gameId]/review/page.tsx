@@ -35,5 +35,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     throw error;
   }
 
-  return <ReviewPageClient gameId={gameId} />;
+  const userDisplayName = session.user.name ?? session.user.email ?? "You";
+
+  return <ReviewPageClient gameId={gameId} userDisplayName={userDisplayName} />;
 }

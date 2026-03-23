@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
+import { ReplayControls } from "@/components/game/replay-controls";
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import React, { memo, useMemo } from "react";
 
 type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
@@ -34,6 +36,8 @@ interface MoveHistoryCardProps {
   moveAnnotations?: MoveAnnotation[] | null;
   /** Optional class for the card container (e.g. flex-1 min-h-0 to fill space) */
   className?: string;
+  /** Stored centipawn eval after each half-move (for sparkline). */
+  evaluationSeries?: number[] | null;
 }
 
 const moveItemStyle = {
@@ -82,6 +86,7 @@ function MoveHistoryCardComponent({
   moveHistory,
   moveAnnotations,
   className,
+  evaluationSeries,
 }: MoveHistoryCardProps) {
   const annotationByMoveNumber = useMemo(() => {
     if (!moveAnnotations?.length) {
@@ -94,65 +99,34 @@ function MoveHistoryCardComponent({
     return annotationMap;
   }, [moveAnnotations]);
 
+  const showSparkline = Boolean(
+    evaluationSeries?.length && evaluationSeries.length >= 2
+  );
+
   return (
-    <Card className={className}>
-      <CardHeader className="shrink-0">
-        <CardTitle>Move History</CardTitle>
+    <Card
+      className={cn(
+        "animate-in fade-in-0 fill-mode-both slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:[animation-delay:40ms] motion-reduce:animate-none",
+        className
+      )}
+    >
+      <CardHeader className="shrink-0 py-3">
+        <CardTitle className="text-base">Move History</CardTitle>
         <CardDescription>
           {sortedMovesLength === 0
             ? "No moves yet"
             : `${sortedMovesLength} move${sortedMovesLength === 1 ? "" : "s"}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col space-y-3">
-        {sortedMovesLength > 0 ? (
-          <div className="grid shrink-0 grid-cols-4 gap-2">
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full"
-              disabled={replayIndex === 0}
-              onClick={() => setReplayIndex(0)}
-            >
-              Start
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full"
-              disabled={replayIndex === 0}
-              onClick={() => setReplayIndex((prev) => Math.max(0, prev - 1))}
-            >
-              Prev
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full"
-              disabled={replayIndex === sortedMovesLength}
-              onClick={() =>
-                setReplayIndex((prev) => Math.min(sortedMovesLength, prev + 1))
-              }
-            >
-              Next
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="w-full"
-              disabled={replayIndex === sortedMovesLength}
-              onClick={() => setReplayIndex(sortedMovesLength)}
-            >
-              End
-            </Button>
-          </div>
-        ) : null}
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-0 px-0 pb-0">
         {sortedMovesLength === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Move history will appear here as you play
-          </p>
+          <div className="px-6 pb-4">
+            <p className="text-sm text-muted-foreground">
+              Move history will appear here as you play
+            </p>
+          </div>
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6">
             <div className="grid grid-cols-[minmax(2rem,auto)_1fr_1fr] gap-x-2 gap-y-0.5 text-sm">
               <div className="py-2 font-medium text-muted-foreground" />
               <div className="py-2 font-medium text-muted-foreground">
@@ -208,7 +182,7 @@ function MoveHistoryCardComponent({
                       : undefined;
                   return (
                     <React.Fragment key={`row-${rowIndex}`}>
-                      <div className="flex items-center py-1.5 font-medium text-muted-foreground">
+                      <div className="flex items-center py-1.5 font-mono text-xs font-medium text-muted-foreground tabular-nums">
                         {rowIndex + 1}.
                       </div>
                       <button
@@ -276,6 +250,20 @@ function MoveHistoryCardComponent({
             </div>
           </div>
         )}
+        {showSparkline && evaluationSeries ? (
+          <div className="shrink-0 border-t border-border px-4 pt-2">
+            <p className="mb-1 text-xs text-muted-foreground">Evaluation</p>
+            <EvaluationSparkline centipawns={evaluationSeries} />
+          </div>
+        ) : null}
+        <div className="shrink-0 px-2">
+          <ReplayControls
+            hasMoves={sortedMovesLength > 0}
+            sortedMovesLength={sortedMovesLength}
+            replayIndex={replayIndex}
+            setReplayIndex={setReplayIndex}
+          />
+        </div>
       </CardContent>
     </Card>
   );

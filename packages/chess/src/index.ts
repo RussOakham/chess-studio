@@ -63,6 +63,8 @@ export {
   formatEvaluation,
 };
 
+export { getOpeningLabelFromPgn } from "./opening-from-pgn";
+
 // Engine utilities
 export {
   type DifficultyLevel,
