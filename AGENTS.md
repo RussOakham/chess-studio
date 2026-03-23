@@ -4,7 +4,7 @@
 
 ## Next.js: read bundled docs before coding
 
-Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/` (workspace root after `pnpm install`). Version-matched docs are the source of truth for this repo’s installed Next.js.
+Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/` (workspace root after `pnpm install`). Version-matched docs are the source of truth for this repo’s installed Next.js. For cross-checking or extra context, see the official site: [nextjs.org/docs](https://nextjs.org/docs) (online copy may not match your exact version).
 
 <!-- END:nextjs-agent-rules -->
 
