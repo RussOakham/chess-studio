@@ -1,6 +1,14 @@
 "use client";
 
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import {
+  GameBoardArea,
+  GameBoardColumn,
+  GameBoardSquare,
+  GameLayoutMain,
+  GameLayoutRoot,
+  GameSidebarColumn,
+} from "@/components/game/game-layout";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
 import type {
   MoveAnnotation,
@@ -9,20 +17,14 @@ import type {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
 import { useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 interface ReviewPageClientProps {
   gameId: string;
@@ -126,40 +128,18 @@ function ReviewMidReview({
       : undefined;
 
   const boardContainerRef = useRef<HTMLDivElement>(null);
-  const [boardSize, setBoardSize] = useState(560);
-  useLayoutEffect(() => {
-    const el = boardContainerRef.current;
-    if (!el) {
-      return;
-    }
-    function updateSize() {
-      if (!el) {
-        return;
-      }
-      const w = el.clientWidth;
-      const h = el.clientHeight;
-      const side = Math.min(w, h);
-      setBoardSize(Math.max(200, side - 32));
-    }
-    updateSize();
-    const ro = new ResizeObserver(updateSize);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const boardSize = useBoardContainerSize(boardContainerRef);
 
   return (
-    <div className="flex max-h-screen min-h-0 flex-1 flex-col bg-background">
-      <main className="flex max-h-screen min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:gap-6 lg:p-6">
+    <GameLayoutRoot>
+      <GameLayoutMain>
         {/* Center: board column (grows to fill height; board scales to fit) */}
-        <div className="flex max-h-screen min-h-0 flex-1 flex-col gap-2 lg:min-h-full">
+        <GameBoardColumn>
           <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
             Engine
           </div>
-          <div className="relative flex min-h-0 flex-1 items-center justify-center">
-            <div
-              ref={boardContainerRef}
-              className="flex aspect-square h-full max-w-full items-center justify-center"
-            >
+          <GameBoardArea>
+            <GameBoardSquare ref={boardContainerRef}>
               <GameChessboard
                 position={viewingFen}
                 orientation="white"
@@ -169,15 +149,15 @@ function ReviewMidReview({
                 customSquareStyles={undefined}
                 boardWidth={boardSize}
               />
-            </div>
-          </div>
+            </GameBoardSquare>
+          </GameBoardArea>
           <div className="flex w-full shrink-0 items-center justify-center rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
             You
           </div>
-        </div>
+        </GameBoardColumn>
 
         {/* Right: review details + move history (move history grows to fill) */}
-        <div className="flex max-h-screen min-h-0 w-full flex-1 flex-col gap-4 lg:w-auto lg:max-w-md">
+        <GameSidebarColumn>
           <div className="flex shrink-0 items-center justify-between">
             <h2 className="text-lg font-semibold">Game Review</h2>
             <Button
@@ -261,9 +241,9 @@ function ReviewMidReview({
                 | undefined
             }
           />
-        </div>
-      </main>
-    </div>
+        </GameSidebarColumn>
+      </GameLayoutMain>
+    </GameLayoutRoot>
   );
 }
 

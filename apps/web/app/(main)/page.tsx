@@ -14,8 +14,8 @@ export default async function Home() {
   }
 
   return (
-    <div className="max-h-screen min-h-full bg-background">
-      <main className="container mx-auto max-h-screen max-w-6xl px-4 py-8">
+    <div className="min-h-full bg-background">
+      <main className="container mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold">Chess Studio</h1>

@@ -49,7 +49,7 @@ function NavLinks() {
 
 export function AppShell({ session, children }: AppShellProps) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen min-h-0 bg-background">
       <aside className="flex w-56 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
           <Link href="/" className="font-semibold text-sidebar-foreground">
