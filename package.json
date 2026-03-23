@@ -12,6 +12,7 @@
     "lint:md:fix": "markdownlint '**/*.md' --ignore .markdownlintignore --fix",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt .",
+    "prep": "pnpm lint && pnpm type-check && pnpm test && pnpm format:fix",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "clean": "turbo run clean",

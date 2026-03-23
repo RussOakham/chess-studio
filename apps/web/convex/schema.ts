@@ -54,6 +54,8 @@ export default defineSchema({
   game_reviews: defineTable({
     gameId: v.id("games"),
     summary: v.string(),
+    /** Centipawn (or similar) eval per position after each half-move, for replay UI. */
+    evaluations: v.optional(v.array(v.number())),
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(

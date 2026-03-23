@@ -56,6 +56,7 @@ const getByGameId = query({
       _creationTime: v.number(),
       gameId: v.id("games"),
       summary: v.string(),
+      evaluations: v.optional(v.array(v.number())),
       keyMoments: v.optional(v.array(v.string())),
       suggestions: v.optional(v.array(v.string())),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),

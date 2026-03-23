@@ -5,54 +5,49 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { signIn } from "@/lib/auth-client";
-import type { LoginFormData } from "@/lib/validations/auth";
-import { loginSchema } from "@/lib/validations/auth";
+import { signUp } from "@/lib/auth-client";
+import type { RegisterFormData } from "@/lib/validations/auth";
+import { registerSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { fromError } from "zod-validation-error";
 
-export function LoginForm({
+export function RegisterPageClient({
   githubOAuthEnabled,
 }: {
-  githubOAuthEnabled?: boolean;
-} = {}) {
+  githubOAuthEnabled: boolean;
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/";
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError: setFormError,
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { rememberMe: true },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      const result = await signIn.email({
+      const result = await signUp.email({
         email: data.email,
         password: data.password,
-        rememberMe: data.rememberMe ?? true,
+        name: data.name,
       });
 
       if (result.error) {
         const validationError = fromError(result.error);
         setFormError("root", {
-          message: validationError.message || "Failed to sign in",
+          message: validationError.message || "Failed to sign up",
         });
         return;
       }
 
-      const target =
-        redirectTo.startsWith("/") && !redirectTo.startsWith("//")
-          ? redirectTo
-          : "/";
-      router.push(target);
+      router.push("/");
+      router.refresh();
     } catch (error: unknown) {
       if (error instanceof Error) {
         const validationError = fromError(error);
@@ -70,13 +65,25 @@ export function LoginForm({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md p-6">
-        <h1 className="mb-6 text-2xl font-bold">Sign In</h1>
+        <h1 className="mb-6 text-2xl font-bold">Create Account</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errors.root && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {errors.root.message}
             </div>
           )}
+          <Field>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
+            <Input
+              id="name"
+              type="text"
+              {...register("name")}
+              disabled={isSubmitting}
+              placeholder="Your name"
+              aria-invalid={errors.name ? "true" : "false"}
+            />
+            {errors.name && <FieldError>{errors.name.message}</FieldError>}
+          </Field>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -103,31 +110,17 @@ export function LoginForm({
               <FieldError>{errors.password.message}</FieldError>
             )}
           </Field>
-          <div className="flex flex-row items-center justify-start gap-1.5">
-            <input
-              id="rememberMe"
-              type="checkbox"
-              {...register("rememberMe")}
-              disabled={isSubmitting}
-              className="size-4 shrink-0 rounded border-input"
-              aria-invalid={errors.rememberMe ? "true" : "false"}
-            />
-            <FieldLabel
-              htmlFor="rememberMe"
-              className="shrink-0 cursor-pointer font-normal"
-            >
-              Remember me
-            </FieldLabel>
-          </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
+            {isSubmitting ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
-        <GitHubAuthSection enabled={githubOAuthEnabled} />
+        <Suspense fallback={null}>
+          <GitHubAuthSection callbackURL="/" enabled={githubOAuthEnabled} />
+        </Suspense>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-primary hover:underline">
+            Sign in
           </Link>
         </p>
       </Card>
