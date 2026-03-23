@@ -43,6 +43,7 @@ const moveAnnotationValidator = v.object({
   type: v.union(
     v.literal("blunder"),
     v.literal("mistake"),
+    v.literal("inaccuracy"),
     v.literal("good"),
     v.literal("best")
   ),
@@ -88,7 +89,7 @@ async function saveReviewInternal(
     suggestions: string[];
     moveAnnotations: {
       moveNumber: number;
-      type: "blunder" | "mistake" | "good" | "best";
+      type: "blunder" | "mistake" | "inaccuracy" | "good" | "best";
       bestMoveSan?: string;
     }[];
   }

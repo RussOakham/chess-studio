@@ -65,6 +65,8 @@ export {
 
 export { getOpeningLabelFromPgn } from "./opening-from-pgn";
 
+export type { MoveAnnotation, MoveAnnotationType } from "./move-annotation";
+
 // Engine utilities
 export {
   type DifficultyLevel,

@@ -2,10 +2,23 @@
 
 import { getSanForMove } from "@/lib/chess-notation";
 import { sortMovesByNumber } from "@/lib/game-replay";
-import type { DifficultyLevel, PositionEvaluation } from "@repo/chess";
+import type {
+  DifficultyLevel,
+  MoveAnnotation,
+  MoveAnnotationType,
+  PositionEvaluation,
+} from "@repo/chess";
 
 /** Centipawn equivalent for mate (for drop calculation). */
 const MATE_CP = 10000;
+
+/** Eval loss thresholds (centipawns) for suboptimal moves (tunable). */
+const BLUNDER_CP = 300;
+const MISTAKE_CP = 100;
+/** Inaccuracy band: [INACCURACY_CP, MISTAKE_CP). */
+const INACCURACY_CP = 40;
+/** Below this, treat eval swing as noise → still "good". */
+const GOOD_FLOOR_CP = 25;
 
 function evalToCp(ev: PositionEvaluation): number {
   if (ev.type === "cp") {
@@ -18,17 +31,6 @@ function evalToCp(ev: PositionEvaluation): number {
 function normalizeUci(uci: string): string {
   return uci.toLowerCase().trim();
 }
-
-type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
-
-interface MoveAnnotation {
-  moveNumber: number;
-  type: MoveAnnotationType;
-  bestMoveSan?: string;
-}
-
-const BLUNDER_CP = 300;
-const MISTAKE_CP = 100;
 
 interface GameAnalysisResult {
   summary: string;
@@ -61,6 +63,22 @@ type GetBestMove = (
   difficulty: DifficultyLevel
 ) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
 
+function classifySuboptimalMove(drop: number): MoveAnnotationType | null {
+  if (drop < GOOD_FLOOR_CP) {
+    return null;
+  }
+  if (drop >= BLUNDER_CP) {
+    return "blunder";
+  }
+  if (drop >= MISTAKE_CP) {
+    return "mistake";
+  }
+  if (drop >= INACCURACY_CP) {
+    return "inaccuracy";
+  }
+  return "good";
+}
+
 /**
  * Run Stockfish analysis over a completed game's moves.
  * Uses fixed "medium" depth for analysis. Calls onProgress(completed, total) each move.
@@ -82,6 +100,7 @@ async function runGameAnalysisImpl(
 
   let blunderCount = 0;
   let mistakeCount = 0;
+  let inaccuracyCount = 0;
   let bestCount = 0;
 
   for (let index = 0; index < sorted.length; index++) {
@@ -121,28 +140,40 @@ async function runGameAnalysisImpl(
             bestMoveResult.promotion
           ) ?? undefined;
 
-        if (drop >= BLUNDER_CP) {
+        const suboptimal = classifySuboptimalMove(drop);
+        if (suboptimal === "blunder") {
           annotationType = "blunder";
           blunderCount += 1;
           keyMoments.push(
             `Move ${move.moveNumber}: ${move.moveSan} was a blunder${bestMoveSan ? `; best was ${bestMoveSan}` : ""}.`
           );
-        } else if (drop >= MISTAKE_CP) {
+        } else if (suboptimal === "mistake") {
           annotationType = "mistake";
           mistakeCount += 1;
           keyMoments.push(
             `Move ${move.moveNumber}: ${move.moveSan} was a mistake${bestMoveSan ? `; best was ${bestMoveSan}` : ""}.`
           );
+        } else if (suboptimal === "inaccuracy") {
+          annotationType = "inaccuracy";
+          inaccuracyCount += 1;
+          keyMoments.push(
+            `Move ${move.moveNumber}: ${move.moveSan} was inaccurate${bestMoveSan ? `; best was ${bestMoveSan}` : ""}.`
+          );
+        } else {
+          annotationType = "good";
         }
       }
+
+      const includeBestSan =
+        bestMoveSan &&
+        (annotationType === "blunder" ||
+          annotationType === "mistake" ||
+          annotationType === "inaccuracy");
 
       moveAnnotations.push({
         moveNumber: move.moveNumber,
         type: annotationType,
-        ...(bestMoveSan &&
-        (annotationType === "blunder" || annotationType === "mistake")
-          ? { bestMoveSan }
-          : {}),
+        ...(includeBestSan ? { bestMoveSan } : {}),
       });
       evaluations.push(cpAfter);
     }
@@ -150,8 +181,18 @@ async function runGameAnalysisImpl(
 
   onProgress?.(total, total);
 
-  const summary = buildSummary(total, blunderCount, mistakeCount, bestCount);
-  const suggestions = buildSuggestions(blunderCount, mistakeCount);
+  const summary = buildSummary(
+    total,
+    blunderCount,
+    mistakeCount,
+    inaccuracyCount,
+    bestCount
+  );
+  const suggestions = buildSuggestions(
+    blunderCount,
+    mistakeCount,
+    inaccuracyCount
+  );
 
   return {
     summary,
@@ -166,11 +207,12 @@ function buildSummary(
   moveCount: number,
   blunders: number,
   mistakes: number,
+  inaccuracies: number,
   best: number
 ): string {
   const parts: string[] = [];
   parts.push(`Game had ${moveCount} move${moveCount === 1 ? "" : "s"}.`);
-  if (blunders > 0 || mistakes > 0) {
+  if (blunders > 0 || mistakes > 0 || inaccuracies > 0) {
     const items: string[] = [];
     if (blunders > 0) {
       items.push(`${blunders} blunder${blunders === 1 ? "" : "s"}`);
@@ -178,7 +220,12 @@ function buildSummary(
     if (mistakes > 0) {
       items.push(`${mistakes} mistake${mistakes === 1 ? "" : "s"}`);
     }
-    parts.push(`You had ${items.join(" and ")}.`);
+    if (inaccuracies > 0) {
+      items.push(
+        `${inaccuracies} inaccurac${inaccuracies === 1 ? "y" : "ies"}`
+      );
+    }
+    parts.push(`You had ${items.join(", ")}.`);
   }
   if (best > 0) {
     parts.push(`${best} of your moves matched the engine's best.`);
@@ -186,7 +233,11 @@ function buildSummary(
   return parts.join(" ");
 }
 
-function buildSuggestions(blunders: number, mistakes: number): string[] {
+function buildSuggestions(
+  blunders: number,
+  mistakes: number,
+  inaccuracies: number
+): string[] {
   const list: string[] = [];
   if (blunders > 0) {
     list.push("Take more time on critical moves to avoid blunders.");
@@ -194,6 +245,11 @@ function buildSuggestions(blunders: number, mistakes: number): string[] {
   if (mistakes > 0) {
     list.push(
       "Review key positions: consider the engine's best move and why it's stronger."
+    );
+  }
+  if (inaccuracies > 0) {
+    list.push(
+      "Watch for small inaccuracies—they add up; compare your move with the engine line in quiet positions."
     );
   }
   if (blunders + mistakes > 3) {

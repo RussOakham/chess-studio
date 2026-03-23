@@ -10,15 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { MoveAnnotation, MoveAnnotationType } from "@repo/chess";
 import React, { memo, useMemo } from "react";
-
-type MoveAnnotationType = "blunder" | "mistake" | "good" | "best";
-
-export interface MoveAnnotation {
-  moveNumber: number;
-  type: MoveAnnotationType;
-  bestMoveSan?: string;
-}
 
 interface MoveHistoryItem {
   id: string;
@@ -53,6 +46,9 @@ function annotationBadge(type: MoveAnnotationType): string {
     case "mistake": {
       return "?";
     }
+    case "inaccuracy": {
+      return "?!";
+    }
     case "good": {
       return "!";
     }
@@ -60,9 +56,8 @@ function annotationBadge(type: MoveAnnotationType): string {
       return "!!";
     }
     default: {
-      const _: never = type;
-      void _;
-      return "";
+      const exhaustive: never = type;
+      return exhaustive;
     }
   }
 }
@@ -70,13 +65,28 @@ function annotationBadge(type: MoveAnnotationType): string {
 function getAnnotationBadgeClassName(
   type: MoveAnnotationType | undefined
 ): string {
-  if (type === "blunder") {
-    return "font-medium text-destructive";
+  if (type === undefined) {
+    return "text-primary";
   }
-  if (type === "mistake") {
-    return "text-amber-600 dark:text-amber-400";
+  switch (type) {
+    case "blunder": {
+      return "font-medium text-destructive";
+    }
+    case "mistake": {
+      return "text-amber-600 dark:text-amber-400";
+    }
+    case "inaccuracy": {
+      return "text-orange-600 dark:text-orange-400";
+    }
+    case "good":
+    case "best": {
+      return "text-primary";
+    }
+    default: {
+      const exhaustive: never = type;
+      return exhaustive;
+    }
   }
-  return "text-primary";
 }
 
 function MoveHistoryCardComponent({
@@ -169,14 +179,16 @@ function MoveHistoryCardComponent({
                   const whiteTooltip =
                     whiteAnnotation &&
                     (whiteAnnotation.type === "blunder" ||
-                      whiteAnnotation.type === "mistake") &&
+                      whiteAnnotation.type === "mistake" ||
+                      whiteAnnotation.type === "inaccuracy") &&
                     whiteAnnotation.bestMoveSan
                       ? `Best move: ${whiteAnnotation.bestMoveSan}`
                       : undefined;
                   const blackTooltip =
                     blackAnnotation &&
                     (blackAnnotation.type === "blunder" ||
-                      blackAnnotation.type === "mistake") &&
+                      blackAnnotation.type === "mistake" ||
+                      blackAnnotation.type === "inaccuracy") &&
                     blackAnnotation.bestMoveSan
                       ? `Best move: ${blackAnnotation.bestMoveSan}`
                       : undefined;
@@ -272,4 +284,4 @@ function MoveHistoryCardComponent({
 const MoveHistoryCard = memo(MoveHistoryCardComponent);
 
 export { MoveHistoryCard };
-export type { MoveAnnotationType, MoveHistoryItem };
+export type { MoveAnnotation, MoveAnnotationType, MoveHistoryItem };

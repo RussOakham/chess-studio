@@ -65,6 +65,7 @@ export default defineSchema({
           type: v.union(
             v.literal("blunder"),
             v.literal("mistake"),
+            v.literal("inaccuracy"),
             v.literal("good"),
             v.literal("best")
           ),
