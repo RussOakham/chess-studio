@@ -2,6 +2,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
+import { LICHESS_EXPLORER_MAX_FENS_PER_BATCH } from "@/lib/lichess/lichess-explorer-batch";
 import { parseExplorerMastersResponse } from "@/lib/lichess/parse-explorer-response";
 import type { ExplorerMastersResponse } from "@/lib/lichess/types";
 import type {
@@ -58,18 +59,28 @@ export function useGameAnalysis({
       if (fens.length === 0) {
         return map;
       }
-      const entries = await batchExplorerMasters({ fens });
-      for (const entry of entries) {
-        if (entry.payloadJson === null) {
-          map.set(entry.cacheKey, null);
-        } else {
-          try {
-            const parsed = parseExplorerMastersResponse(
-              JSON.parse(entry.payloadJson) as unknown
-            );
-            map.set(entry.cacheKey, parsed);
-          } catch {
+      for (
+        let offset = 0;
+        offset < fens.length;
+        offset += LICHESS_EXPLORER_MAX_FENS_PER_BATCH
+      ) {
+        const chunk = fens.slice(
+          offset,
+          offset + LICHESS_EXPLORER_MAX_FENS_PER_BATCH
+        );
+        const entries = await batchExplorerMasters({ fens: chunk });
+        for (const entry of entries) {
+          if (entry.payloadJson === null) {
             map.set(entry.cacheKey, null);
+          } else {
+            try {
+              const parsed = parseExplorerMastersResponse(
+                JSON.parse(entry.payloadJson) as unknown
+              );
+              map.set(entry.cacheKey, parsed);
+            } catch {
+              map.set(entry.cacheKey, null);
+            }
           }
         }
       }

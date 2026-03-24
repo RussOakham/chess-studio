@@ -85,7 +85,8 @@ export default defineSchema({
   /** Server-side cache for Lichess Opening Explorer JSON (TTL enforced in action). */
   lichess_explorer_cache: defineTable({
     cacheKey: v.string(),
-    payloadJson: v.string(),
+    /** Explorer JSON body, or `null` when upstream returned no position (e.g. 404). */
+    payloadJson: v.union(v.string(), v.null()),
     fetchedAt: v.number(),
   }).index("by_cacheKey", ["cacheKey"]),
 });

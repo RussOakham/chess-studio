@@ -8,7 +8,7 @@ const getEntry = internalQuery({
   returns: v.union(
     v.null(),
     v.object({
-      payloadJson: v.string(),
+      payloadJson: v.union(v.string(), v.null()),
       fetchedAt: v.number(),
     })
   ),
@@ -27,7 +27,7 @@ const getEntry = internalQuery({
 const upsertEntry = internalMutation({
   args: {
     cacheKey: v.string(),
-    payloadJson: v.string(),
+    payloadJson: v.union(v.string(), v.null()),
     fetchedAt: v.number(),
   },
   returns: v.id("lichess_explorer_cache"),
