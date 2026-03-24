@@ -48,6 +48,7 @@ const moveAnnotationValidator = v.object({
     v.literal("best")
   ),
   bestMoveSan: v.optional(v.string()),
+  bestMoveUci: v.optional(v.string()),
 });
 
 const getByGameId = query({
@@ -91,6 +92,7 @@ async function saveReviewInternal(
       moveNumber: number;
       type: "blunder" | "mistake" | "inaccuracy" | "good" | "best";
       bestMoveSan?: string;
+      bestMoveUci?: string;
     }[];
   }
 ): Promise<Id<"game_reviews">> {

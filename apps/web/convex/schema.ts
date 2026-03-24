@@ -70,6 +70,7 @@ export default defineSchema({
             v.literal("best")
           ),
           bestMoveSan: v.optional(v.string()),
+          bestMoveUci: v.optional(v.string()),
         })
       )
     ),

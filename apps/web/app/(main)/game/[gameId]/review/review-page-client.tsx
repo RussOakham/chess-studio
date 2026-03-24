@@ -1,5 +1,6 @@
 "use client";
 
+import type { BoardArrow } from "@/components/chess/chessboard";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
@@ -24,6 +25,7 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
+import { buildReviewBoardArrows } from "@/lib/review-board-overlays";
 import { evaluationForReplayIndex } from "@/lib/review-evaluation";
 import { getOpeningLabelFromPgn } from "@repo/chess";
 import type {
@@ -35,6 +37,8 @@ import { useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+
+const EMPTY_REVIEW_BOARD_ARROWS: BoardArrow[] = [];
 
 interface ReviewPageClientProps {
   gameId: string;
@@ -158,11 +162,7 @@ interface ReviewMidReviewProps {
     summary: string;
     evaluations?: number[];
     keyMoments?: string[];
-    moveAnnotations?: {
-      moveNumber: number;
-      type: MoveAnnotationType;
-      bestMoveSan?: string;
-    }[];
+    moveAnnotations?: MoveAnnotation[];
   };
 }
 
@@ -211,13 +211,87 @@ function ReviewMidReview({
 
   const currentMoveIndex = replayIndex > 0 ? replayIndex - 1 : null;
   const currentMove =
-    currentMoveIndex !== null ? sortedMoves[currentMoveIndex] : null;
+    currentMoveIndex !== null ? (sortedMoves[currentMoveIndex] ?? null) : null;
   const currentAnnotation =
     currentMove != null && review.moveAnnotations
       ? review.moveAnnotations.find(
           (ann) => ann.moveNumber === currentMove.moveNumber
         )
       : undefined;
+
+  const canShowEngineLine = useMemo(() => {
+    if (currentMove === null || currentAnnotation === undefined) {
+      return false;
+    }
+    return (
+      (currentAnnotation.bestMoveSan !== undefined &&
+        currentAnnotation.bestMoveSan.length > 0) ||
+      (currentAnnotation.bestMoveUci !== undefined &&
+        currentAnnotation.bestMoveUci.length > 0)
+    );
+  }, [currentMove, currentAnnotation]);
+
+  const overlayBuild = useMemo(() => {
+    if (
+      !canShowEngineLine ||
+      currentMove === null ||
+      currentAnnotation === undefined
+    ) {
+      return {
+        arrows: [] as BoardArrow[],
+        squareStyles: undefined,
+        error: null as string | null,
+      };
+    }
+    const move = currentMove;
+    const annotation = currentAnnotation;
+    return buildReviewBoardArrows({
+      fenBefore: move.fenBefore,
+      playedMoveUci: move.moveUci,
+      annotation,
+    });
+  }, [canShowEngineLine, currentMove, currentAnnotation]);
+
+  const boardFen = useMemo(() => {
+    if (!canShowEngineLine || currentMove === null) {
+      return viewingFen;
+    }
+    if (overlayBuild.error !== null) {
+      return viewingFen;
+    }
+    return currentMove.fenBefore;
+  }, [canShowEngineLine, currentMove, viewingFen, overlayBuild.error]);
+
+  const boardArrows = useMemo((): BoardArrow[] => {
+    if (overlayBuild.error !== null) {
+      return EMPTY_REVIEW_BOARD_ARROWS;
+    }
+    return overlayBuild.arrows;
+  }, [overlayBuild.error, overlayBuild.arrows]);
+
+  const boardSquareStyles = useMemo(() => {
+    if (overlayBuild.error !== null) {
+      return undefined;
+    }
+    return overlayBuild.squareStyles;
+  }, [overlayBuild.error, overlayBuild.squareStyles]);
+
+  const boardRegionAriaLabel = useMemo(() => {
+    if (
+      canShowEngineLine &&
+      overlayBuild.error === null &&
+      currentMove !== null
+    ) {
+      return `Position before move ${String(currentMove.moveNumber)}. Green arrow shows engine best move; colored arrow shows your move.`;
+    }
+    return `Game position at replay step ${String(replayIndex)} of ${String(moves.length)}.`;
+  }, [
+    canShowEngineLine,
+    overlayBuild.error,
+    currentMove,
+    replayIndex,
+    moves.length,
+  ]);
 
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardSize = useBoardContainerSize(boardContainerRef);
@@ -267,14 +341,19 @@ function ReviewMidReview({
           />
           <GameBoardArea>
             <GameBoardSquare ref={boardContainerRef}>
-              <div className="relative flex min-w-0 items-stretch gap-3 md:gap-4">
+              <div
+                className="relative flex min-w-0 items-stretch gap-3 md:gap-4"
+                role="group"
+                aria-label={boardRegionAriaLabel}
+              >
                 <GameChessboard
-                  position={viewingFen}
+                  position={boardFen}
                   orientation={boardOrientation}
                   draggable={false}
                   status="completed"
                   gameId={game._id}
-                  customSquareStyles={undefined}
+                  customSquareStyles={boardSquareStyles}
+                  customArrows={boardArrows}
                   boardWidth={boardSize}
                 />
                 {showEvalBar ? (
@@ -336,6 +415,11 @@ function ReviewMidReview({
                       </p>
                     </div>
                   </div>
+                  {canShowEngineLine && overlayBuild.error !== null ? (
+                    <p className="mt-2 text-xs text-destructive">
+                      {overlayBuild.error}
+                    </p>
+                  ) : null}
                   <Button
                     className="mt-4 w-full"
                     size="lg"
@@ -370,11 +454,7 @@ function ReviewMidReview({
             replayIndex={replayIndex}
             setReplayIndex={setReplayIndexAndUrl}
             moveHistory={moveHistory}
-            moveAnnotations={
-              (review.moveAnnotations ?? undefined) as
-                | MoveAnnotation[]
-                | undefined
-            }
+            moveAnnotations={review.moveAnnotations ?? undefined}
             evaluationSeries={review.evaluations ?? undefined}
           />
         </GameSidebarColumn>
