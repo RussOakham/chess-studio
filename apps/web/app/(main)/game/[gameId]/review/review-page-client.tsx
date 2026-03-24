@@ -69,6 +69,18 @@ function accuracyPercent(
   return Math.round((goodOrBest / moveAnnotations.length) * 1000) / 10;
 }
 
+/** Stored reviews may omit `evaluations` (older saves); re-analyze when missing or length ≠ ply count. */
+function reviewNeedsEvaluationsRefresh(
+  review: { evaluations?: number[] } | null | undefined,
+  moveCount: number
+): boolean {
+  if (review === null || review === undefined || moveCount < 1) {
+    return false;
+  }
+  const ev = review.evaluations;
+  return !Array.isArray(ev) || ev.length !== moveCount;
+}
+
 function midReviewAnnotationGlyph(type: MoveAnnotationType): string {
   switch (type) {
     case "best": {
@@ -397,15 +409,27 @@ export function ReviewPageClient({
     getBestMove,
   });
 
+  /** Caps auto backfill retries so repeated failures cannot spin forever. */
+  const analysisBackfillAttemptsRef = useRef(0);
+
   useEffect(() => {
+    const moveCount = moves?.length ?? 0;
+    const needsInitialOrBackfillAnalysis =
+      review === null || reviewNeedsEvaluationsRefresh(review, moveCount);
+    if (!needsInitialOrBackfillAnalysis) {
+      analysisBackfillAttemptsRef.current = 0;
+      return;
+    }
     if (
-      review === null &&
       !isAnalyzing &&
       game?.status === "completed" &&
-      moves &&
-      moves.length > 0 &&
+      moveCount > 0 &&
       isStockfishReady
     ) {
+      if (analysisBackfillAttemptsRef.current >= 5) {
+        return;
+      }
+      analysisBackfillAttemptsRef.current += 1;
       void runAnalysis();
     }
   }, [review, isAnalyzing, game?.status, moves, isStockfishReady, runAnalysis]);
@@ -422,6 +446,13 @@ export function ReviewPageClient({
   const handleStartReview = useCallback(() => {
     router.push(`/game/${gameId}/review?move=1`);
   }, [router, gameId]);
+
+  const handleEvaluationSeek = useCallback(
+    (index: number) => {
+      router.push(`/game/${gameId}/review?move=${String(index)}`);
+    },
+    [gameId, router]
+  );
 
   if (!game) {
     return (
@@ -450,15 +481,17 @@ export function ReviewPageClient({
   }
 
   if (review === null) {
+    let pendingReviewMessage: string;
+    if (isAnalyzing) {
+      pendingReviewMessage = `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
+    } else if (isStockfishReady) {
+      pendingReviewMessage = "Starting analysis…";
+    } else {
+      pendingReviewMessage = "Loading engine…";
+    }
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">
-          {isAnalyzing
-            ? `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`
-            : isStockfishReady
-              ? "Starting analysis…"
-              : "Loading engine…"}
-        </p>
+        <p className="text-muted-foreground">{pendingReviewMessage}</p>
       </div>
     );
   }
@@ -517,7 +550,16 @@ export function ReviewPageClient({
               <CardTitle className="text-base">Advantage over time</CardTitle>
             </CardHeader>
             <CardContent>
-              <EvaluationSparkline centipawns={review.evaluations} />
+              <EvaluationSparkline
+                centipawns={review.evaluations}
+                moveAnnotations={
+                  (review.moveAnnotations ?? undefined) as
+                    | MoveAnnotation[]
+                    | undefined
+                }
+                moveCount={(moves ?? []).length}
+                onSeekReplayIndex={handleEvaluationSeek}
+              />
             </CardContent>
           </Card>
         ) : null}
