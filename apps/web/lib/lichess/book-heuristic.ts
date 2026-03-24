@@ -49,4 +49,28 @@ function isBookContinuation(
   return rank !== -1 && rank < BOOK_TOP_K;
 }
 
-export { isBookContinuation, normalizeUci, totalGamesAtPosition };
+/**
+ * ECO + human name for the line after this book move, when Lichess provides it.
+ * Prefers the matching row's `opening` (line after the move); falls back to position `opening`.
+ */
+function getBookOpeningLine(
+  response: ExplorerMastersResponse,
+  playedUci: string
+): { eco: string; name: string } | undefined {
+  const target = normalizeUci(playedUci);
+  const row = response.moves.find((m) => normalizeUci(m.uci) === target);
+  if (row?.opening) {
+    return { eco: row.opening.eco, name: row.opening.name };
+  }
+  if (response.opening) {
+    return { eco: response.opening.eco, name: response.opening.name };
+  }
+  return undefined;
+}
+
+export {
+  getBookOpeningLine,
+  isBookContinuation,
+  normalizeUci,
+  totalGamesAtPosition,
+};

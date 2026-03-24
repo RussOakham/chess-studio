@@ -22,6 +22,10 @@ import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
+import {
+  formatBookMoveCaption,
+  lichessOpeningSuffix,
+} from "@/lib/format-book-move-caption";
 import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useEvaluationForFen } from "@/lib/hooks/use-evaluation-for-fen";
 import { useGame } from "@/lib/hooks/use-game";
@@ -102,35 +106,54 @@ function reviewNeedsEvaluationsRefresh(
 function midReviewAnnotationCaption(annotation: {
   type: MoveAnnotationType;
   bestMoveSan?: string;
+  bookOpeningEco?: string;
+  bookOpeningName?: string;
 }): string {
+  const lichess = lichessOpeningSuffix(
+    annotation.bookOpeningEco,
+    annotation.bookOpeningName
+  );
   switch (annotation.type) {
     case "best": {
-      return annotation.bestMoveSan
-        ? `Best move — engine prefers ${annotation.bestMoveSan}.`
-        : "Best move.";
+      return (
+        (annotation.bestMoveSan
+          ? `Best move — engine prefers ${annotation.bestMoveSan}.`
+          : "Best move.") + lichess
+      );
     }
     case "good": {
-      return annotation.bestMoveSan
-        ? `Good move — engine prefers ${annotation.bestMoveSan}.`
-        : "Good move.";
+      return (
+        (annotation.bestMoveSan
+          ? `Good move — engine prefers ${annotation.bestMoveSan}.`
+          : "Good move.") + lichess
+      );
     }
     case "inaccuracy": {
-      return annotation.bestMoveSan
-        ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
-        : "Inaccuracy — small eval slip.";
+      return (
+        (annotation.bestMoveSan
+          ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
+          : "Inaccuracy — small eval slip.") + lichess
+      );
     }
     case "blunder": {
-      return annotation.bestMoveSan
-        ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
-        : "Blunder.";
+      return (
+        (annotation.bestMoveSan
+          ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
+          : "Blunder.") + lichess
+      );
     }
     case "mistake": {
-      return annotation.bestMoveSan
-        ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
-        : "Mistake.";
+      return (
+        (annotation.bestMoveSan
+          ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
+          : "Mistake.") + lichess
+      );
     }
     case "book": {
-      return "Book move — common in master games.";
+      return formatBookMoveCaption(
+        annotation.bookOpeningEco,
+        annotation.bookOpeningName
+      );
     }
     default: {
       const exhaustive: never = annotation.type;
@@ -737,15 +760,27 @@ export function ReviewPageClient({
           </CardContent>
         </Card>
 
-        {/* Start Review CTA */}
-        <Button
-          size="lg"
-          className="w-full max-w-sm"
-          onClick={handleStartReview}
-          disabled={isAnalyzing}
-        >
-          Start Review
-        </Button>
+        <div className="flex w-full max-w-lg flex-row flex-wrap gap-3">
+          <Button
+            size="lg"
+            className="min-h-11 min-w-[10rem] flex-1"
+            onClick={handleStartReview}
+            disabled={isAnalyzing}
+          >
+            Start Review
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="min-h-11 min-w-[10rem] flex-1"
+            disabled={isAnalyzing}
+            onClick={() => {
+              void runAnalysis();
+            }}
+          >
+            Re-run analysis
+          </Button>
+        </div>
       </div>
     </div>
   );

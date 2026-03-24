@@ -50,6 +50,8 @@ const moveAnnotationValidator = v.object({
   ),
   bestMoveSan: v.optional(v.string()),
   bestMoveUci: v.optional(v.string()),
+  bookOpeningEco: v.optional(v.string()),
+  bookOpeningName: v.optional(v.string()),
 });
 
 const getByGameId = query({
@@ -95,6 +97,8 @@ async function saveReviewInternal(
       type: "blunder" | "mistake" | "inaccuracy" | "good" | "best" | "book";
       bestMoveSan?: string;
       bestMoveUci?: string;
+      bookOpeningEco?: string;
+      bookOpeningName?: string;
     }[];
     openingNameLichess?: string;
   }

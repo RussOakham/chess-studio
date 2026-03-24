@@ -74,6 +74,8 @@ export default defineSchema({
           ),
           bestMoveSan: v.optional(v.string()),
           bestMoveUci: v.optional(v.string()),
+          bookOpeningEco: v.optional(v.string()),
+          bookOpeningName: v.optional(v.string()),
         })
       )
     ),

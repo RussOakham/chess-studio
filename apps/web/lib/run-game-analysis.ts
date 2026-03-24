@@ -3,6 +3,7 @@
 import { getSanForMove } from "@/lib/chess-notation";
 import { sortMovesByNumber } from "@/lib/game-replay";
 import {
+  getBookOpeningLine,
   isBookContinuation,
   OPENING_MAX_PLY,
 } from "@/lib/lichess/book-heuristic";
@@ -205,14 +206,22 @@ async function runGameAnalysisImpl(
           annotationType === "inaccuracy");
 
       let finalType: MoveAnnotationType = annotationType;
-      if (
-        index < OPENING_MAX_PLY &&
-        annotationType === "good" &&
-        getExplorerBatch !== undefined
-      ) {
+      let bookOpeningEco: string | undefined = undefined;
+      let bookOpeningName: string | undefined = undefined;
+      if (index < OPENING_MAX_PLY && getExplorerBatch !== undefined) {
         const ex = explorerMap.get(explorerMastersCacheKey(fenBefore)) ?? null;
-        if (ex !== null && isBookContinuation(ex, move.moveUci)) {
-          finalType = "book";
+        if (ex !== null) {
+          const line = getBookOpeningLine(ex, move.moveUci);
+          if (line !== undefined) {
+            bookOpeningEco = line.eco.trim() || undefined;
+            bookOpeningName = line.name.trim() || undefined;
+          }
+          if (
+            annotationType === "good" &&
+            isBookContinuation(ex, move.moveUci)
+          ) {
+            finalType = "book";
+          }
         }
       }
 
@@ -223,6 +232,12 @@ async function runGameAnalysisImpl(
           ? {
               bestMoveSan,
               bestMoveUci: normalizeUci(bestMoveResult.uci),
+            }
+          : {}),
+        ...(bookOpeningEco || bookOpeningName
+          ? {
+              ...(bookOpeningEco ? { bookOpeningEco } : {}),
+              ...(bookOpeningName ? { bookOpeningName } : {}),
             }
           : {}),
       });

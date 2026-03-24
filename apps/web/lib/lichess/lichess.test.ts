@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { isBookContinuation } from "./book-heuristic";
+import { getBookOpeningLine, isBookContinuation } from "./book-heuristic";
 import { fenForExplorerCacheKey } from "./fen-for-explorer-cache";
 import { parseExplorerMastersResponse } from "./parse-explorer-response";
 
@@ -46,5 +46,23 @@ describe("isBookContinuation", () => {
     const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as unknown;
     const parsed = parseExplorerMastersResponse(raw);
     expect(isBookContinuation(parsed, "h7h6")).toBeFalsy();
+  });
+});
+
+describe("getBookOpeningLine", () => {
+  it("prefers row opening when set", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as unknown;
+    const parsed = parseExplorerMastersResponse(raw);
+    const line = getBookOpeningLine(parsed, "g8f6");
+    expect(line?.eco).toBe("D06");
+    expect(line?.name).toContain("Queen's Gambit");
+  });
+
+  it("falls back to position opening when row opening is null", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as unknown;
+    const parsed = parseExplorerMastersResponse(raw);
+    const line = getBookOpeningLine(parsed, "c6d5");
+    expect(line?.eco).toBe("D10");
+    expect(line?.name).toContain("Slav");
   });
 });

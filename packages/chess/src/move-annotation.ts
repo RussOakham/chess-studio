@@ -17,6 +17,13 @@ interface MoveAnnotation {
   bestMoveSan?: string;
   /** Engine best move in UCI (e.g. `e2e4`, `e7e8q`) for reliable board overlays. */
   bestMoveUci?: string;
+  /**
+   * Lichess Opening Explorer line after this move (ECO + name) when in the
+   * opening window and the API returns data — stored for every move type, not
+   * only `book`.
+   */
+  bookOpeningEco?: string;
+  bookOpeningName?: string;
 }
 
 export type { MoveAnnotation, MoveAnnotationType };
