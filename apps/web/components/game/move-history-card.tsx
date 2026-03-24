@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
 import { cn } from "@/lib/utils";
 import type { MoveAnnotation, MoveAnnotationType } from "@repo/chess";
 import React, { memo, useMemo } from "react";
@@ -37,30 +38,6 @@ const moveItemStyle = {
   contentVisibility: "auto" as const,
   containIntrinsicSize: "0 2.5rem",
 };
-
-function annotationBadge(type: MoveAnnotationType): string {
-  switch (type) {
-    case "blunder": {
-      return "??";
-    }
-    case "mistake": {
-      return "?";
-    }
-    case "inaccuracy": {
-      return "?!";
-    }
-    case "good": {
-      return "!";
-    }
-    case "best": {
-      return "!!";
-    }
-    default: {
-      const exhaustive: never = type;
-      return exhaustive;
-    }
-  }
-}
 
 function getAnnotationBadgeClassName(
   type: MoveAnnotationType | undefined
@@ -171,10 +148,10 @@ function MoveHistoryCardComponent({
                       ? annotationByMoveNumber.get(blackMove.moveNumber)
                       : undefined;
                   const whiteBadge = whiteAnnotation
-                    ? annotationBadge(whiteAnnotation.type)
+                    ? moveAnnotationGlyph(whiteAnnotation.type)
                     : null;
                   const blackBadge = blackAnnotation
-                    ? annotationBadge(blackAnnotation.type)
+                    ? moveAnnotationGlyph(blackAnnotation.type)
                     : null;
                   const whiteTooltip =
                     whiteAnnotation &&
