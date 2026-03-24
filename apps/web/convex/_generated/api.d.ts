@@ -17,6 +17,8 @@ import type {
 import type * as auth from "../auth.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
+import type * as lichessExplorer from "../lichessExplorer.js";
+import type * as lichessExplorerCache from "../lichessExplorerCache.js";
 import type * as reviews from "../reviews.js";
 import type * as validators from "../validators.js";
 
@@ -24,6 +26,8 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   games: typeof games;
   http: typeof http;
+  lichessExplorer: typeof lichessExplorer;
+  lichessExplorerCache: typeof lichessExplorerCache;
   reviews: typeof reviews;
   validators: typeof validators;
 }>;

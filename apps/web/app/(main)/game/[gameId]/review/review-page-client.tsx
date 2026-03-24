@@ -4,6 +4,7 @@ import type { BoardArrow } from "@/components/chess/chessboard";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import { MoveAnnotationGlyph } from "@/components/chess/move-annotation-glyph";
 import { ReviewMoveQualityBadge } from "@/components/chess/review-move-quality-badge";
 import {
   GameBoardArea,
@@ -21,13 +22,16 @@ import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
+import {
+  formatBookMoveCaption,
+  openingNameSuffix,
+} from "@/lib/format-book-move-caption";
 import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useEvaluationForFen } from "@/lib/hooks/use-evaluation-for-fen";
 import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
-import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
 import {
   buildReviewBoardArrows,
   uciToFromTo,
@@ -55,11 +59,19 @@ function moveQualityCounts(
   moveAnnotations: { moveNumber: number; type: string }[] | undefined
 ) {
   if (!moveAnnotations?.length) {
-    return { good: 0, best: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
+    return {
+      good: 0,
+      best: 0,
+      book: 0,
+      inaccuracy: 0,
+      mistake: 0,
+      blunder: 0,
+    };
   }
   return {
     good: moveAnnotations.filter((ann) => ann.type === "good").length,
     best: moveAnnotations.filter((ann) => ann.type === "best").length,
+    book: moveAnnotations.filter((ann) => ann.type === "book").length,
     inaccuracy: moveAnnotations.filter((ann) => ann.type === "inaccuracy")
       .length,
     mistake: moveAnnotations.filter((ann) => ann.type === "mistake").length,
@@ -74,7 +86,7 @@ function accuracyPercent(
     return null;
   }
   const goodOrBest = moveAnnotations.filter(
-    (ann) => ann.type === "good" || ann.type === "best"
+    (ann) => ann.type === "good" || ann.type === "best" || ann.type === "book"
   ).length;
   return Math.round((goodOrBest / moveAnnotations.length) * 1000) / 10;
 }
@@ -94,32 +106,54 @@ function reviewNeedsEvaluationsRefresh(
 function midReviewAnnotationCaption(annotation: {
   type: MoveAnnotationType;
   bestMoveSan?: string;
+  bookOpeningEco?: string;
+  bookOpeningName?: string;
 }): string {
+  const openingLine = openingNameSuffix(
+    annotation.bookOpeningEco,
+    annotation.bookOpeningName
+  );
   switch (annotation.type) {
     case "best": {
-      return annotation.bestMoveSan
-        ? `Best move — engine prefers ${annotation.bestMoveSan}.`
-        : "Best move.";
+      return (
+        (annotation.bestMoveSan
+          ? `Best move — engine prefers ${annotation.bestMoveSan}.`
+          : "Best move.") + openingLine
+      );
     }
     case "good": {
-      return annotation.bestMoveSan
-        ? `Good move — engine prefers ${annotation.bestMoveSan}.`
-        : "Good move.";
+      return (
+        (annotation.bestMoveSan
+          ? `Good move — engine prefers ${annotation.bestMoveSan}.`
+          : "Good move.") + openingLine
+      );
     }
     case "inaccuracy": {
-      return annotation.bestMoveSan
-        ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
-        : "Inaccuracy — small eval slip.";
+      return (
+        (annotation.bestMoveSan
+          ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
+          : "Inaccuracy — small eval slip.") + openingLine
+      );
     }
     case "blunder": {
-      return annotation.bestMoveSan
-        ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
-        : "Blunder.";
+      return (
+        (annotation.bestMoveSan
+          ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
+          : "Blunder.") + openingLine
+      );
     }
     case "mistake": {
-      return annotation.bestMoveSan
-        ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
-        : "Mistake.";
+      return (
+        (annotation.bestMoveSan
+          ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
+          : "Mistake.") + openingLine
+      );
+    }
+    case "book": {
+      return formatBookMoveCaption(
+        annotation.bookOpeningEco,
+        annotation.bookOpeningName
+      );
     }
     default: {
       const exhaustive: never = annotation.type;
@@ -428,7 +462,9 @@ function ReviewMidReview({
                         Move {currentMove.moveNumber}: {currentMove.moveSan}
                         {currentAnnotation ? (
                           <span className="ml-1 text-primary">
-                            {moveAnnotationGlyph(currentAnnotation.type)}
+                            <MoveAnnotationGlyph
+                              type={currentAnnotation.type}
+                            />
                           </span>
                         ) : null}
                       </p>
@@ -614,7 +650,9 @@ export function ReviewPageClient({
     );
   }
 
-  const openingLabel = getOpeningLabelFromPgn(game.pgn ?? undefined);
+  const openingLabel =
+    review.openingNameLichess?.trim() ||
+    getOpeningLabelFromPgn(game.pgn ?? undefined);
 
   return (
     <div className="min-h-full bg-background p-4 md:p-6" data-game-surface="">
@@ -705,6 +743,7 @@ export function ReviewPageClient({
                 <ul className="mt-2 space-y-1 text-muted-foreground">
                   <li>Best: {counts.best}</li>
                   <li>Good: {counts.good}</li>
+                  <li>Book: {counts.book}</li>
                   <li>Inaccuracy: {counts.inaccuracy}</li>
                   <li>Mistake: {counts.mistake}</li>
                   <li>Blunder: {counts.blunder}</li>
@@ -721,15 +760,27 @@ export function ReviewPageClient({
           </CardContent>
         </Card>
 
-        {/* Start Review CTA */}
-        <Button
-          size="lg"
-          className="w-full max-w-sm"
-          onClick={handleStartReview}
-          disabled={isAnalyzing}
-        >
-          Start Review
-        </Button>
+        <div className="grid w-full min-w-0 grid-cols-2 gap-3">
+          <Button
+            size="lg"
+            className="min-h-11 w-full min-w-0 shrink text-center whitespace-normal"
+            onClick={handleStartReview}
+            disabled={isAnalyzing}
+          >
+            Start Review
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="min-h-11 w-full min-w-0 shrink text-center whitespace-normal"
+            disabled={isAnalyzing}
+            onClick={() => {
+              void runAnalysis();
+            }}
+          >
+            Re-run analysis
+          </Button>
+        </div>
       </div>
     </div>
   );

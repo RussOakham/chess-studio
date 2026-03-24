@@ -16,7 +16,8 @@ function getAnnotationMarkerClassName(type: MoveAnnotationType): string {
       return "text-orange-600 dark:text-orange-400";
     }
     case "good":
-    case "best": {
+    case "best":
+    case "book": {
       return "text-primary";
     }
     default: {
@@ -26,7 +27,7 @@ function getAnnotationMarkerClassName(type: MoveAnnotationType): string {
   }
 }
 
-/** Per plan: omit dots for plain "good" moves; show best + inaccuracy + mistake + blunder. */
+/** Per plan: omit dots for plain "good" moves; show best + book + inaccuracy + mistake + blunder. */
 function shouldShowTimelineMarker(type: MoveAnnotationType): boolean {
   return type !== "good";
 }

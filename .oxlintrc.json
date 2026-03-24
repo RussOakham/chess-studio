@@ -82,7 +82,8 @@
     {
       "files": ["**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
       "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "vitest/prefer-describe-function-title": "off"
       }
     },
     {

@@ -3,6 +3,10 @@ import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { isConvexAuthError } from "@/lib/auth-error";
 import { authServer, getSession } from "@/lib/auth-server";
+import {
+  extractConvexErrorMessage,
+  shouldNotFoundForGameLookup,
+} from "@/lib/convex-fetch-error";
 import { isPlausibleGameId, toGameId } from "@/lib/convex-id";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,7 +15,10 @@ interface GamePageProps {
 }
 
 export default async function GamePage({ params }: GamePageProps) {
-  const { gameId } = await params;
+  const resolvedParams = await params;
+  const rawGameId = resolvedParams.gameId;
+  const gameId =
+    typeof rawGameId === "string" ? rawGameId.trim() : String(rawGameId);
   if (!isPlausibleGameId(gameId)) {
     notFound();
   }
@@ -30,8 +37,7 @@ export default async function GamePage({ params }: GamePageProps) {
     if (isConvexAuthError(error)) {
       redirect("/login");
     }
-    // Game not found: Convex throws Error with "Game not found" message
-    if (error instanceof Error && /not found|404/i.test(error.message)) {
+    if (shouldNotFoundForGameLookup(extractConvexErrorMessage(error))) {
       notFound();
     }
     throw error;

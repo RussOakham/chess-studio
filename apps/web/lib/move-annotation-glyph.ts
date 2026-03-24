@@ -1,7 +1,9 @@
 import type { MoveAnnotationType } from "@repo/chess";
 
-/** Same glyphs as move list / timeline (single source of truth). */
-function moveAnnotationGlyph(type: MoveAnnotationType): string {
+/** Text glyphs for engine classes (book moves use `MoveAnnotationGlyph` + Lucide icon). */
+function moveAnnotationTextGlyph(
+  type: Exclude<MoveAnnotationType, "book">
+): string {
   switch (type) {
     case "blunder": {
       return "??";
@@ -25,4 +27,4 @@ function moveAnnotationGlyph(type: MoveAnnotationType): string {
   }
 }
 
-export { moveAnnotationGlyph };
+export { moveAnnotationTextGlyph };

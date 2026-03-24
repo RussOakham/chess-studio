@@ -15,7 +15,8 @@ function playedMoveArrowColor(type: MoveAnnotationType): string {
       return "rgb(234, 88, 12)";
     }
     case "good":
-    case "best": {
+    case "best":
+    case "book": {
       return "rgb(148, 163, 184)";
     }
     default: {

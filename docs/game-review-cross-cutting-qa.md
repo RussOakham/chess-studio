@@ -14,13 +14,13 @@ This doc is **not** a standalone feature—it is a **rollout and QA** checklist 
 
 ### Current status (rolling)
 
-| Workstream                                                                     | Status                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Move classifications (`game-review-move-classifications.temp.md`)              | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                     |
-| Evaluation timeline                                                            | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores. |
-| Board overlays                                                                 | **Done (MVP)** — mid-review: engine line arrows always when data exists; `fenBefore` + arrows via `review-board-overlays.ts`; optional `bestMoveUci` on new analyses.                                               |
-| On-board move quality badges (`game-review-board-move-quality-badges.temp.md`) | **Done** — mid-review: circular glyph on **to** square (`ReviewMoveQualityBadge` + `chess-square-layout`); parity with timeline via `shouldShowTimelineMarker`.                                                     |
-| Lichess Opening Explorer                                                       | Not started                                                                                                                                                                                                         |
+| Workstream                                                                     | Status                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Move classifications (`game-review-move-classifications.temp.md`)              | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                                              |
+| Evaluation timeline                                                            | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores.                          |
+| Board overlays                                                                 | **Done (MVP)** — mid-review: engine line arrows always when data exists; `fenBefore` + arrows via `review-board-overlays.ts`; optional `bestMoveUci` on new analyses.                                                                        |
+| On-board move quality badges (`game-review-board-move-quality-badges.temp.md`) | **Done** — mid-review: circular glyph on **to** square (`ReviewMoveQualityBadge` + `chess-square-layout`); parity with timeline via `shouldShowTimelineMarker`.                                                                              |
+| Lichess Opening Explorer                                                       | **Done** — `book` on `MoveAnnotationType`; `lichessExplorer.batchExplorerMasters` + `lichess_explorer_cache`; batched prefetch in `run-game-analysis`; `openingNameLichess` on reviews; set `LICHESS_API_TOKEN` in Convex for upstream auth. |
 
 ---
 
@@ -58,9 +58,7 @@ This doc is **not** a standalone feature—it is a **rollout and QA** checklist 
 1. ~~**Move classifications**~~ — **Done** (schema/types + inaccuracy; timeline/Lichess can build on the same `MoveAnnotation` model).
 2. ~~**Evaluation timeline**~~ — **Done** (markers use palette aligned with move list; playhead + seek).
 3. ~~**Board overlays**~~ — **Done (MVP)** — mid-review arrows (always when best line exists); `bestMoveUci` on new analyses.
-4. **Lichess integration** — adds `book` and opening names; may extend schema again—if Lichess lands last, plan nullable fields or additive enum values to avoid double migrations.
-
-If Lichess must ship first, ensure `MoveAnnotationType` includes `book` before UI assumes it.
+4. ~~**Lichess integration**~~ — **Done** (`book` + `openingNameLichess`; explorer cache table; optional `LICHESS_API_TOKEN`).
 
 ---
 
@@ -79,8 +77,8 @@ If Lichess must ship first, ensure `MoveAnnotationType` includes `book` before U
 
 ### Performance
 
-- [ ] Full-game analysis time acceptable (Stockfish sequential + optional Lichess calls batched/cached).
-- [ ] No N+1 Lichess requests: cache hits verified in dev logs.
+- [x] Full-game analysis time acceptable (Stockfish sequential + optional Lichess calls batched/cached). _(One batched `batchExplorerMasters` call before the move loop; 120ms spacing between upstream fetches inside the action.)_
+- [x] No N+1 Lichess requests: cache hits verified in dev logs. _(Per-FEN cache key + 7-day time to live (TTL) in `lichess_explorer_cache`.)_
 
 ### Quality gates
 
@@ -93,8 +91,8 @@ If Lichess must ship first, ensure `MoveAnnotationType` includes `book` before U
 - [ ] Mid-review: suboptimal move with best line — board shows `fenBefore`, two arrows, no console errors.
 - [ ] Short game (< 10 moves): graph renders; playhead moves.
 - [ ] Long game (100+ moves): SVG performance OK.
-- [ ] Opening: book badge appears when Lichess integration enabled and rules satisfied.
-- [ ] Middlegame only: no false “book” labels if restricted to first N plies.
+- [ ] Opening: book badge appears when Lichess integration enabled and rules satisfied. _(Requires `LICHESS_API_TOKEN` in Convex for authenticated explorer access.)_
+- [ ] Middlegame only: no false “book” labels if restricted to first N plies. _(Heuristic: first 20 plies; `OPENING_MAX_PLY` in `book-heuristic.ts`.)_
 
 ---
 
