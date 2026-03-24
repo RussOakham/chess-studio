@@ -14,10 +14,11 @@ interface SquareIndices {
  */
 function parseSquare(square: string): SquareIndices | null {
   const trimmed = square.trim().toLowerCase();
-  if (trimmed.length < 2) {
+  if (!/^[a-h][1-8]$/.test(trimmed)) {
     return null;
   }
-  const [fileChar, rankChar] = trimmed;
+  const fileChar = trimmed[0];
+  const rankChar = trimmed[1];
   if (fileChar === undefined || rankChar === undefined) {
     return null;
   }

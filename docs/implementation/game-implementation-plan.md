@@ -674,7 +674,7 @@ Phase 3 is complete when:
 
 ### Board move-quality badges (Chess.com style) — **implemented**
 
-**Spec (historical):** [`docs/temp/game-review-board-move-quality-badges.temp.md`](../temp/game-review-board-move-quality-badges.temp.md)
+**Implementation:** `ReviewMidReview` in `apps/web/app/(main)/game/[gameId]/review/review-page-client.tsx` · `ReviewMoveQualityBadge` in `apps/web/components/chess/review-move-quality-badge.tsx` · **`boardOverlay`** on `ChessboardWrapper` in `apps/web/components/chess/chessboard.tsx` (forwarded from `apps/web/components/chess/game-chessboard.tsx`) · square layout in `apps/web/lib/chess-square-layout.ts` · shared glyphs in `apps/web/lib/move-annotation-glyph.ts`
 
 **Summary:** Mid-review (`ReviewMidReview`) shows **on-square badges** on the destination square of the current move (`ReviewMoveQualityBadge`, `boardOverlay` on `ChessboardWrapper`, `chess-square-layout` + `moveAnnotationGlyph`). Move list and coach copy still show the same glyphs; overlays remain arrow-based.
 

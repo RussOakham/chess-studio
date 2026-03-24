@@ -94,7 +94,7 @@ function ReviewMoveQualityBadge({
   return (
     <div
       className={cn(
-        "absolute flex items-center justify-center rounded-full px-1 leading-none font-semibold tabular-nums",
+        "pointer-events-none absolute flex items-center justify-center rounded-full px-1 leading-none font-semibold tabular-nums",
         // Layered shadow + subtle rim + top highlight for depth on the board
         "shadow-[0_2px_4px_rgba(0,0,0,0.28),0_6px_14px_-2px_rgba(0,0,0,0.32)]",
         "ring-1 ring-black/15 dark:ring-black/40",
