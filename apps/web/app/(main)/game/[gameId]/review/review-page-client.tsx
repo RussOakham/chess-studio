@@ -69,6 +69,18 @@ function accuracyPercent(
   return Math.round((goodOrBest / moveAnnotations.length) * 1000) / 10;
 }
 
+/** Stored reviews may omit `evaluations` (older saves); re-analyze when missing or length ≠ ply count. */
+function reviewNeedsEvaluationsRefresh(
+  review: { evaluations?: number[] } | null | undefined,
+  moveCount: number
+): boolean {
+  if (review === null || review === undefined || moveCount < 1) {
+    return false;
+  }
+  const ev = review.evaluations;
+  return !Array.isArray(ev) || ev.length !== moveCount;
+}
+
 function midReviewAnnotationGlyph(type: MoveAnnotationType): string {
   switch (type) {
     case "best": {
@@ -389,7 +401,12 @@ export function ReviewPageClient({
     getBestMove,
     getEvaluation,
   } = useStockfish();
-  const { runAnalysis, isAnalyzing, progress } = useGameAnalysis({
+  const {
+    runAnalysis,
+    isAnalyzing,
+    progress,
+    error: analysisError,
+  } = useGameAnalysis({
     gameId,
     game: game ?? undefined,
     moves: moves ?? [],
@@ -398,17 +415,28 @@ export function ReviewPageClient({
   });
 
   useEffect(() => {
+    const moveCount = moves?.length ?? 0;
+    const needsInitialOrBackfillAnalysis =
+      review === null || reviewNeedsEvaluationsRefresh(review, moveCount);
     if (
-      review === null &&
+      needsInitialOrBackfillAnalysis &&
       !isAnalyzing &&
+      analysisError === null &&
       game?.status === "completed" &&
-      moves &&
-      moves.length > 0 &&
+      moveCount > 0 &&
       isStockfishReady
     ) {
       void runAnalysis();
     }
-  }, [review, isAnalyzing, game?.status, moves, isStockfishReady, runAnalysis]);
+  }, [
+    review,
+    isAnalyzing,
+    analysisError,
+    game?.status,
+    moves,
+    isStockfishReady,
+    runAnalysis,
+  ]);
 
   const userAccuracy = useMemo(
     () => accuracyPercent(review?.moveAnnotations ?? undefined),
@@ -422,6 +450,13 @@ export function ReviewPageClient({
   const handleStartReview = useCallback(() => {
     router.push(`/game/${gameId}/review?move=1`);
   }, [router, gameId]);
+
+  const handleEvaluationSeek = useCallback(
+    (index: number) => {
+      router.push(`/game/${gameId}/review?move=${String(index)}`);
+    },
+    [gameId, router]
+  );
 
   if (!game) {
     return (
@@ -517,7 +552,16 @@ export function ReviewPageClient({
               <CardTitle className="text-base">Advantage over time</CardTitle>
             </CardHeader>
             <CardContent>
-              <EvaluationSparkline centipawns={review.evaluations} />
+              <EvaluationSparkline
+                centipawns={review.evaluations}
+                moveAnnotations={
+                  (review.moveAnnotations ?? undefined) as
+                    | MoveAnnotation[]
+                    | undefined
+                }
+                moveCount={(moves ?? []).length}
+                onSeekReplayIndex={handleEvaluationSeek}
+              />
             </CardContent>
           </Card>
         ) : null}

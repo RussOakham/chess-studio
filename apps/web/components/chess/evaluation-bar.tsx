@@ -16,17 +16,33 @@ function evaluationToPercent(evaluation: PositionEvaluation): number {
   return ((clamped + CP_CLAMP) / (2 * CP_CLAMP)) * 100;
 }
 
-/**
- * Formats evaluation for display (e.g. "+1.5", "-M2").
- */
-function formatEvalLabel(evaluation: PositionEvaluation): string {
+/** Centipawns from White's perspective → `X.X` pawn score (e.g. +1.5, -0.3, 0.0). */
+function formatPawnsOneDecimal(cpFromWhitePerspective: number): string {
+  const pawns = cpFromWhitePerspective / 100;
+  if (pawns === 0) {
+    return "0.0";
+  }
+  return pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+}
+
+/** Label on the white (bottom) segment: engine eval from White's perspective. */
+function formatWhiteScoreText(evaluation: PositionEvaluation): string {
   if (evaluation.type === "mate") {
     return evaluation.value > 0
       ? `M${evaluation.value}`
       : `-M${Math.abs(evaluation.value)}`;
   }
-  const pawns = evaluation.value / 100;
-  return pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+  return formatPawnsOneDecimal(evaluation.value);
+}
+
+/** Label on the black (top) segment: opposite sign (Black's perspective). */
+function formatBlackScoreText(evaluation: PositionEvaluation): string {
+  if (evaluation.type === "mate") {
+    return evaluation.value < 0
+      ? `M${Math.abs(evaluation.value)}`
+      : `-M${evaluation.value}`;
+  }
+  return formatPawnsOneDecimal(-evaluation.value);
 }
 
 /**
@@ -62,7 +78,6 @@ export function EvaluationBar({
 }: EvaluationBarProps) {
   const percent = evaluation ? evaluationToPercent(evaluation) : 50;
   const displayPercent = orientation === "black" ? 100 - percent : percent;
-  const label = evaluation ? formatEvalLabel(evaluation) : "—";
   const ariaLabel = evaluation
     ? getAriaLabel(evaluation)
     : "Evaluation loading";
@@ -76,21 +91,35 @@ export function EvaluationBar({
     [displayPercent]
   );
 
+  const whiteInside = evaluation ? formatWhiteScoreText(evaluation) : "—";
+  const blackInside = evaluation ? formatBlackScoreText(evaluation) : "—";
+
   return (
     <div className={className} role="img" aria-label={ariaLabel}>
-      <div className="flex h-full min-h-[200px] w-6 flex-col rounded-md border border-border bg-muted">
+      <div className="flex h-full min-h-[200px] w-7 min-w-[1.75rem] flex-col rounded-md border border-border bg-muted">
         <div
-          className="w-full rounded-t-md bg-zinc-800 transition-[height] duration-150 dark:bg-zinc-700"
+          className="relative min-h-0 w-full rounded-t-md bg-zinc-800 transition-[height] duration-150 dark:bg-zinc-700"
           style={blackStyle}
-        />
+        >
+          <span
+            className="pointer-events-none absolute inset-x-0 top-1.5 z-10 text-center text-[10px] leading-none font-medium text-white tabular-nums sm:text-xs"
+            aria-hidden
+          >
+            {blackInside}
+          </span>
+        </div>
         <div
-          className="w-full rounded-b-md bg-white transition-[height] duration-150 dark:bg-white/90"
+          className="relative min-h-0 w-full rounded-b-md bg-white transition-[height] duration-150 dark:bg-white/90"
           style={whiteStyle}
-        />
+        >
+          <span
+            className="pointer-events-none absolute inset-x-0 bottom-1.5 z-10 text-center text-[10px] leading-none font-medium text-black tabular-nums sm:text-xs"
+            aria-hidden
+          >
+            {whiteInside}
+          </span>
+        </div>
       </div>
-      <p className="mt-1 text-center text-xs text-muted-foreground" aria-hidden>
-        {label}
-      </p>
     </div>
   );
 }

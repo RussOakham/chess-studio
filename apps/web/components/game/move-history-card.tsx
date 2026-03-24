@@ -265,7 +265,15 @@ function MoveHistoryCardComponent({
         {showSparkline && evaluationSeries ? (
           <div className="shrink-0 border-t border-border px-4 pt-2">
             <p className="mb-1 text-xs text-muted-foreground">Evaluation</p>
-            <EvaluationSparkline centipawns={evaluationSeries} />
+            <EvaluationSparkline
+              centipawns={evaluationSeries}
+              moveAnnotations={moveAnnotations ?? undefined}
+              moveCount={sortedMovesLength}
+              onSeekReplayIndex={(index) => {
+                setReplayIndex(index);
+              }}
+              replayIndex={replayIndex}
+            />
           </div>
         ) : null}
         <div className="shrink-0 px-2">
