@@ -51,12 +51,13 @@ async function sleepMs(ms: number): Promise<void> {
 
 /**
  * Fetch masters explorer for a position. Uses Bearer token when `LICHESS_API_TOKEN` is set.
- * Retries on 429 with exponential backoff.
+ * Retries on 429 and on thrown `fetch` failures (network/DNS) with the same exponential backoff.
+ * Returns `null` when the server responds with 404 (position not in explorer).
  */
 async function fetchOpeningExplorerMasters(
   fen: string,
   options?: { maxRetries?: number }
-): Promise<ExplorerMastersResponse> {
+): Promise<ExplorerMastersResponse | null> {
   const maxRetries = options?.maxRetries ?? 3;
   const url = buildMastersUrl(fen);
   const token = getLichessToken();
@@ -69,14 +70,33 @@ async function fetchOpeningExplorerMasters(
   }
 
   let delayMs = 800;
+  const backoff = async (): Promise<void> => {
+    const jitter = Math.floor(Math.random() * 200);
+    await sleepMs(delayMs + jitter);
+    delayMs *= 2;
+  };
+
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-    const res = await fetch(url, { method: "GET", headers });
+    let res: Response;
+    try {
+      res = await fetch(url, { method: "GET", headers });
+    } catch (fetchError: unknown) {
+      if (attempt < maxRetries) {
+        await backoff();
+        continue;
+      }
+      throw fetchError;
+    }
+
     if (res.status === 429 && attempt < maxRetries) {
-      const jitter = Math.floor(Math.random() * 200);
-      await sleepMs(delayMs + jitter);
-      delayMs *= 2;
+      await backoff();
       continue;
     }
+
+    if (res.status === 404) {
+      return null;
+    }
+
     if (!res.ok) {
       const text = await res.text();
       throw new Error(

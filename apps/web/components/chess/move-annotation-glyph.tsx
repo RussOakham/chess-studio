@@ -34,7 +34,7 @@ function MoveAnnotationGlyph({
           height={iconPx}
           className="shrink-0 text-white"
           strokeWidth={2.5}
-          aria-hidden
+          aria-label="Book"
         />
       );
     }

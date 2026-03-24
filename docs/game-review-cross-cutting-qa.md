@@ -78,7 +78,7 @@ This doc is **not** a standalone feature—it is a **rollout and QA** checklist 
 ### Performance
 
 - [x] Full-game analysis time acceptable (Stockfish sequential + optional Lichess calls batched/cached). _(One batched `batchExplorerMasters` call before the move loop; 120ms spacing between upstream fetches inside the action.)_
-- [x] No N+1 Lichess requests: cache hits verified in dev logs. _(Per-FEN cache key + 7-day TTL in `lichess_explorer_cache`.)_
+- [x] No N+1 Lichess requests: cache hits verified in dev logs. _(Per-FEN cache key + 7-day time to live (TTL) in `lichess_explorer_cache`.)_
 
 ### Quality gates
 

@@ -8,9 +8,9 @@
 function fenForExplorerCacheKey(fen: string): string {
   const parts = fen.trim().split(/\s+/u);
   if (parts.length < 4) {
-    return fen.trim().toLowerCase();
+    return fen.trim();
   }
-  return `${parts[0]} ${parts[1]} ${parts[2]} ${parts[3]}`.toLowerCase();
+  return `${parts[0]} ${parts[1]} ${parts[2]} ${parts[3]}`;
 }
 
 /** Matches Convex `lichessExplorer` action cache keys (masters DB). */

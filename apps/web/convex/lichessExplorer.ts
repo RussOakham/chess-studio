@@ -57,8 +57,10 @@ const batchExplorerMasters = action({
         continue;
       }
 
-      try {
-        const data = await fetchOpeningExplorerMasters(fen);
+      const data = await fetchOpeningExplorerMasters(fen);
+      if (data === null) {
+        results.push({ cacheKey, payloadJson: null });
+      } else {
         const json = JSON.stringify(data);
         await ctx.runMutation(internal.lichessExplorerCache.upsertEntry, {
           cacheKey,
@@ -66,8 +68,6 @@ const batchExplorerMasters = action({
           fetchedAt: now,
         });
         results.push({ cacheKey, payloadJson: json });
-      } catch {
-        results.push({ cacheKey, payloadJson: null });
       }
 
       await new Promise<void>((resolve) => {
