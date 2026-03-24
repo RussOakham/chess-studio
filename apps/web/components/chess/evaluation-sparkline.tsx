@@ -134,7 +134,8 @@ function playheadX(
   if (replayIndex >= maxReplay) {
     return VIEW_WIDTH;
   }
-  return xFromPointIndex(replayIndex - 1, pointCount);
+  const chartIndex = Math.min(Math.max(replayIndex - 1, 0), pointCount - 1);
+  return xFromPointIndex(chartIndex, pointCount);
 }
 
 function clickToReplayIndex(fraction: number, maxReplay: number): number {
@@ -352,9 +353,28 @@ export function EvaluationSparkline({
         <button
           type="button"
           className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left text-chart-1"
-          aria-label={`${ariaLabel}. Click to seek to a move.`}
-          onClick={(event) => {
+          aria-label={`${ariaLabel}. Click or tap to seek; ArrowLeft and ArrowRight to step; Home and End for start and end.`}
+          onPointerUp={(event) => {
+            if (event.button !== 0) {
+              return;
+            }
             handlePointer(event.clientX);
+          }}
+          onKeyDown={(event) => {
+            const current = replayIndex ?? 0;
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              onSeekReplayIndex(Math.max(0, current - 1));
+            } else if (event.key === "ArrowRight") {
+              event.preventDefault();
+              onSeekReplayIndex(Math.min(maxReplay, current + 1));
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              onSeekReplayIndex(0);
+            } else if (event.key === "End") {
+              event.preventDefault();
+              onSeekReplayIndex(maxReplay);
+            }
           }}
         >
           {chartSvg}

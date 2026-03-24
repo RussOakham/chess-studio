@@ -401,12 +401,7 @@ export function ReviewPageClient({
     getBestMove,
     getEvaluation,
   } = useStockfish();
-  const {
-    runAnalysis,
-    isAnalyzing,
-    progress,
-    error: analysisError,
-  } = useGameAnalysis({
+  const { runAnalysis, isAnalyzing, progress } = useGameAnalysis({
     gameId,
     game: game ?? undefined,
     moves: moves ?? [],
@@ -414,29 +409,30 @@ export function ReviewPageClient({
     getBestMove,
   });
 
+  /** Caps auto backfill retries so repeated failures cannot spin forever. */
+  const analysisBackfillAttemptsRef = useRef(0);
+
   useEffect(() => {
     const moveCount = moves?.length ?? 0;
     const needsInitialOrBackfillAnalysis =
       review === null || reviewNeedsEvaluationsRefresh(review, moveCount);
+    if (!needsInitialOrBackfillAnalysis) {
+      analysisBackfillAttemptsRef.current = 0;
+      return;
+    }
     if (
-      needsInitialOrBackfillAnalysis &&
       !isAnalyzing &&
-      analysisError === null &&
       game?.status === "completed" &&
       moveCount > 0 &&
       isStockfishReady
     ) {
+      if (analysisBackfillAttemptsRef.current >= 5) {
+        return;
+      }
+      analysisBackfillAttemptsRef.current += 1;
       void runAnalysis();
     }
-  }, [
-    review,
-    isAnalyzing,
-    analysisError,
-    game?.status,
-    moves,
-    isStockfishReady,
-    runAnalysis,
-  ]);
+  }, [review, isAnalyzing, game?.status, moves, isStockfishReady, runAnalysis]);
 
   const userAccuracy = useMemo(
     () => accuracyPercent(review?.moveAnnotations ?? undefined),
@@ -485,15 +481,17 @@ export function ReviewPageClient({
   }
 
   if (review === null) {
+    let pendingReviewMessage: string;
+    if (isAnalyzing) {
+      pendingReviewMessage = `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
+    } else if (isStockfishReady) {
+      pendingReviewMessage = "Starting analysis…";
+    } else {
+      pendingReviewMessage = "Loading engine…";
+    }
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">
-          {isAnalyzing
-            ? `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`
-            : isStockfishReady
-              ? "Starting analysis…"
-              : "Loading engine…"}
-        </p>
+        <p className="text-muted-foreground">{pendingReviewMessage}</p>
       </div>
     );
   }

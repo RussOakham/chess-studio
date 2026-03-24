@@ -18,11 +18,11 @@ function evaluationToPercent(evaluation: PositionEvaluation): number {
 
 /** Centipawns from White's perspective → `X.X` pawn score (e.g. +1.5, -0.3, 0.0). */
 function formatPawnsOneDecimal(cpFromWhitePerspective: number): string {
-  const pawns = cpFromWhitePerspective / 100;
-  if (pawns === 0) {
+  const rounded = Number((cpFromWhitePerspective / 100).toFixed(1));
+  if (rounded === 0) {
     return "0.0";
   }
-  return pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+  return rounded > 0 ? `+${rounded.toFixed(1)}` : rounded.toFixed(1);
 }
 
 /** Label on the white (bottom) segment: engine eval from White's perspective. */
@@ -94,6 +94,11 @@ export function EvaluationBar({
   const whiteInside = evaluation ? formatWhiteScoreText(evaluation) : "—";
   const blackInside = evaluation ? formatBlackScoreText(evaluation) : "—";
 
+  /** Dark segment is top; light segment is bottom. When board faces Black, bar fill flips—swap labels so scores stay with the player’s edge. */
+  const topSegmentLabel = orientation === "black" ? whiteInside : blackInside;
+  const bottomSegmentLabel =
+    orientation === "black" ? blackInside : whiteInside;
+
   return (
     <div className={className} role="img" aria-label={ariaLabel}>
       <div className="flex h-full min-h-[200px] w-7 min-w-[1.75rem] flex-col rounded-md border border-border bg-muted">
@@ -105,7 +110,7 @@ export function EvaluationBar({
             className="pointer-events-none absolute inset-x-0 top-1.5 z-10 text-center text-[10px] leading-none font-medium text-white tabular-nums sm:text-xs"
             aria-hidden
           >
-            {blackInside}
+            {topSegmentLabel}
           </span>
         </div>
         <div
@@ -116,7 +121,7 @@ export function EvaluationBar({
             className="pointer-events-none absolute inset-x-0 bottom-1.5 z-10 text-center text-[10px] leading-none font-medium text-black tabular-nums sm:text-xs"
             aria-hidden
           >
-            {whiteInside}
+            {bottomSegmentLabel}
           </span>
         </div>
       </div>

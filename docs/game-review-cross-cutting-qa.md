@@ -4,21 +4,21 @@
 
 **Request:** Coordinate validation, migrations, and release checks across the related game-review workstreams:
 
-- Extended move classifications (`game-review-move-classifications.temp.md`)
-- Evaluation timeline UI (`game-review-evaluation-timeline.temp.md`)
-- Board overlays in review (`game-review-board-overlays.temp.md`)
-- Lichess Opening Explorer (`lichess-opening-explorer-integration.temp.md`)
+- Extended move classifications (`docs/temp/game-review-move-classifications.temp.md`)
+- Evaluation timeline UI (`docs/temp/game-review-evaluation-timeline.temp.md`)
+- Board overlays in review (`docs/temp/game-review-board-overlays.temp.md`)
+- Lichess Opening Explorer (`docs/temp/lichess-opening-explorer-integration.temp.md`)
 
 This doc is **not** a standalone feature—it is a **rollout and QA** checklist so shipping order and regression coverage stay explicit.
 
 ### Current status (rolling)
 
-| Workstream                                                        | Status                                                                                                                                                                                                                                                                    |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Move classifications (`game-review-move-classifications.temp.md`) | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                                                                           |
-| Evaluation timeline                                               | **Done** — `EvaluationSparkline` (area, markers, playhead, click-to-seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched; `EvaluationBar` scores in-bar (white/black text). Landed on `feature/game-review-evaluation-timeline` (open MR). |
-| Board overlays                                                    | Not started                                                                                                                                                                                                                                                               |
-| Lichess Opening Explorer                                          | Not started                                                                                                                                                                                                                                                               |
+| Workstream                                                        | Status                                                                                                                                                                                                              |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Move classifications (`game-review-move-classifications.temp.md`) | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                     |
+| Evaluation timeline                                               | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores. |
+| Board overlays                                                    | Not started                                                                                                                                                                                                         |
+| Lichess Opening Explorer                                          | Not started                                                                                                                                                                                                         |
 
 ---
 
@@ -44,7 +44,7 @@ If Lichess must ship first, ensure `MoveAnnotationType` includes `book` before U
 ### Data & migrations
 
 - [x] Existing `game_reviews` documents remain valid (backward compatible defaults for new fields). _(Move classifications: additive `inaccuracy` literal; old reviews unchanged.)_
-- [x] Re-run analysis path for games **without** `evaluations` (or wrong length vs moves): `reviewNeedsEvaluationsRefresh` + auto `runAnalysis` in `review-page-client.tsx` (guarded by `analysisError === null`).
+- [x] Re-run analysis path for games **without** `evaluations` (or wrong length vs moves): `reviewNeedsEvaluationsRefresh` + auto `runAnalysis` in `review-page-client.tsx` (capped attempts per stale review to avoid infinite retries).
 
 ### UX consistency
 
@@ -59,7 +59,7 @@ If Lichess must ship first, ensure `MoveAnnotationType` includes `book` before U
 ### Quality gates
 
 - [x] `pnpm lint:fix`, `pnpm format:fix`, `pnpm type-check` (run before merge; CI should match).
-- [x] `pnpm lint:md` for temp markdown updates when touched.
+- [x] `pnpm lint:md` when markdown under `docs/` changes.
 - [ ] Convex reviewer + Vercel React best-practices for touched areas (`@.cursor/rules/convex-react-review.mdc`) before merge.
 
 ### Manual scenarios
