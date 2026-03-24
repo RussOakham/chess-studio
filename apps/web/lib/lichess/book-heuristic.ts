@@ -44,7 +44,8 @@ function isBookContinuation(
     return true;
   }
 
-  const sorted = [...scored].sort((a, b) => b.games - a.games);
+  const sorted = [...scored];
+  sorted.sort((a, b) => b.games - a.games);
   const rank = sorted.findIndex((s) => s.uci === target);
   return rank !== -1 && rank < BOOK_TOP_K;
 }
