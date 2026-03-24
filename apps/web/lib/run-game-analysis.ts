@@ -173,7 +173,12 @@ async function runGameAnalysisImpl(
       moveAnnotations.push({
         moveNumber: move.moveNumber,
         type: annotationType,
-        ...(includeBestSan ? { bestMoveSan } : {}),
+        ...(includeBestSan
+          ? {
+              bestMoveSan,
+              bestMoveUci: normalizeUci(bestMoveResult.uci),
+            }
+          : {}),
       });
       evaluations.push(cpAfter);
     }

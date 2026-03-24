@@ -672,6 +672,14 @@ Phase 3 is complete when:
 
 **Current Status:** Core game mechanics, game history, move replay, PGN export, and post-game analysis are complete. Users can create games, play vs engine, get hints, resign, replay moves, copy PGN, and analyze completed games (summary, key moments, suggestions, move badges). Offer draw is descoped for PvE and will be added with PvP.
 
+### Future: board move-quality badges (Chess.com style)
+
+**Spec:** [`docs/temp/game-review-board-move-quality-badges.temp.md`](../temp/game-review-board-move-quality-badges.temp.md)
+
+**Summary:** Today, move quality appears in the **move list** and in **coach copy** during review; **engine line** overlays use arrows on `react-chessboard`. A follow-up is to add **on-square badges** (e.g. a circular **?!** on the destination square of the current move), matching Chess.com’s pattern, via an **overlay layer** and square→pixel layout math—without replacing `react-chessboard`.
+
+**Reference asset:** [`docs/temp/reference-chesscom-move-quality-badge.png`](../temp/reference-chesscom-move-quality-badge.png)
+
 ## Notes
 
 - Build incrementally - get something working end-to-end first
