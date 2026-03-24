@@ -672,13 +672,11 @@ Phase 3 is complete when:
 
 **Current Status:** Core game mechanics, game history, move replay, PGN export, and post-game analysis are complete. Users can create games, play vs engine, get hints, resign, replay moves, copy PGN, and analyze completed games (summary, key moments, suggestions, move badges). Offer draw is descoped for PvE and will be added with PvP.
 
-### Future: board move-quality badges (Chess.com style)
+### Board move-quality badges (Chess.com style) — **implemented**
 
-**Spec:** [`docs/temp/game-review-board-move-quality-badges.temp.md`](../temp/game-review-board-move-quality-badges.temp.md)
+**Implementation:** `ReviewMidReview` in `apps/web/app/(main)/game/[gameId]/review/review-page-client.tsx` · `ReviewMoveQualityBadge` in `apps/web/components/chess/review-move-quality-badge.tsx` · **`boardOverlay`** on `ChessboardWrapper` in `apps/web/components/chess/chessboard.tsx` (forwarded from `apps/web/components/chess/game-chessboard.tsx`) · square layout in `apps/web/lib/chess-square-layout.ts` · shared glyphs in `apps/web/lib/move-annotation-glyph.ts`
 
-**Summary:** Today, move quality appears in the **move list** and in **coach copy** during review; **engine line** overlays use arrows on `react-chessboard`. A follow-up is to add **on-square badges** (e.g. a circular **?!** on the destination square of the current move), matching Chess.com’s pattern, via an **overlay layer** and square→pixel layout math—without replacing `react-chessboard`.
-
-**Reference asset:** [`docs/temp/reference-chesscom-move-quality-badge.png`](../temp/reference-chesscom-move-quality-badge.png)
+**Summary:** Mid-review (`ReviewMidReview`) shows **on-square badges** on the destination square of the current move (`ReviewMoveQualityBadge`, `boardOverlay` on `ChessboardWrapper`, `chess-square-layout` + `moveAnnotationGlyph`). Move list and coach copy still show the same glyphs; overlays remain arrow-based.
 
 ## Notes
 

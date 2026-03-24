@@ -4,6 +4,7 @@ import type { BoardArrow } from "@/components/chess/chessboard";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import { ReviewMoveQualityBadge } from "@/components/chess/review-move-quality-badge";
 import {
   GameBoardArea,
   GameBoardColumn,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useEvaluationForFen } from "@/lib/hooks/use-evaluation-for-fen";
@@ -25,7 +27,11 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
-import { buildReviewBoardArrows } from "@/lib/review-board-overlays";
+import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
+import {
+  buildReviewBoardArrows,
+  uciToFromTo,
+} from "@/lib/review-board-overlays";
 import { evaluationForReplayIndex } from "@/lib/review-evaluation";
 import { getOpeningLabelFromPgn } from "@repo/chess";
 import type {
@@ -83,30 +89,6 @@ function reviewNeedsEvaluationsRefresh(
   }
   const ev = review.evaluations;
   return !Array.isArray(ev) || ev.length !== moveCount;
-}
-
-function midReviewAnnotationGlyph(type: MoveAnnotationType): string {
-  switch (type) {
-    case "best": {
-      return "!!";
-    }
-    case "good": {
-      return "!";
-    }
-    case "inaccuracy": {
-      return "?!";
-    }
-    case "mistake": {
-      return "?";
-    }
-    case "blunder": {
-      return "??";
-    }
-    default: {
-      const exhaustive: never = type;
-      return exhaustive;
-    }
-  }
 }
 
 function midReviewAnnotationCaption(annotation: {
@@ -276,23 +258,6 @@ function ReviewMidReview({
     return overlayBuild.squareStyles;
   }, [overlayBuild.error, overlayBuild.squareStyles]);
 
-  const boardRegionAriaLabel = useMemo(() => {
-    if (
-      canShowEngineLine &&
-      overlayBuild.error === null &&
-      currentMove !== null
-    ) {
-      return `Position before move ${String(currentMove.moveNumber)}. Green arrow shows engine best move; colored arrow shows your move.`;
-    }
-    return `Game position at replay step ${String(replayIndex)} of ${String(moves.length)}.`;
-  }, [
-    canShowEngineLine,
-    overlayBuild.error,
-    currentMove,
-    replayIndex,
-    moves.length,
-  ]);
-
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardSize = useBoardContainerSize(boardContainerRef);
 
@@ -302,6 +267,64 @@ function ReviewMidReview({
   const boardOrientation: "white" | "black" =
     playerColor === "black" ? "black" : "white";
   const opponentLabel = `Engine (${game.difficulty})`;
+
+  const badgeDestinationSquare = useMemo(() => {
+    if (
+      replayIndex < 1 ||
+      currentMove === null ||
+      currentAnnotation === undefined
+    ) {
+      return null;
+    }
+    if (!shouldShowTimelineMarker(currentAnnotation.type)) {
+      return null;
+    }
+    const parsed = uciToFromTo(currentMove.moveUci);
+    return parsed?.to ?? null;
+  }, [replayIndex, currentMove, currentAnnotation]);
+
+  const boardOverlay = useMemo(() => {
+    if (
+      badgeDestinationSquare === null ||
+      currentAnnotation === undefined ||
+      boardSize < 16
+    ) {
+      return null;
+    }
+    return (
+      <ReviewMoveQualityBadge
+        annotationType={currentAnnotation.type}
+        boardWidthPx={boardSize}
+        orientation={boardOrientation}
+        square={badgeDestinationSquare}
+      />
+    );
+  }, [badgeDestinationSquare, currentAnnotation, boardSize, boardOrientation]);
+
+  const boardRegionAriaLabel = useMemo(() => {
+    const qualitySuffix =
+      replayIndex > 0 &&
+      currentAnnotation !== undefined &&
+      badgeDestinationSquare !== null
+        ? ` Move quality: ${currentAnnotation.type}.`
+        : "";
+    if (
+      canShowEngineLine &&
+      overlayBuild.error === null &&
+      currentMove !== null
+    ) {
+      return `Position before move ${String(currentMove.moveNumber)}. Green arrow shows engine best move; colored arrow shows your move.${qualitySuffix}`;
+    }
+    return `Game position at replay step ${String(replayIndex)} of ${String(moves.length)}.${qualitySuffix}`;
+  }, [
+    canShowEngineLine,
+    overlayBuild.error,
+    currentMove,
+    replayIndex,
+    moves.length,
+    currentAnnotation,
+    badgeDestinationSquare,
+  ]);
 
   const capturedPieces = useMemo(
     () => getCapturedPieces(sortedMoves.slice(0, replayIndex)),
@@ -347,6 +370,7 @@ function ReviewMidReview({
                 aria-label={boardRegionAriaLabel}
               >
                 <GameChessboard
+                  boardOverlay={boardOverlay}
                   position={boardFen}
                   orientation={boardOrientation}
                   draggable={false}
@@ -404,7 +428,7 @@ function ReviewMidReview({
                         Move {currentMove.moveNumber}: {currentMove.moveSan}
                         {currentAnnotation ? (
                           <span className="ml-1 text-primary">
-                            {midReviewAnnotationGlyph(currentAnnotation.type)}
+                            {moveAnnotationGlyph(currentAnnotation.type)}
                           </span>
                         ) : null}
                       </p>

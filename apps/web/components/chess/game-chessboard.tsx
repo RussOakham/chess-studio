@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
 import { Chess } from "chess.js";
 import { useMutation } from "convex/react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import type { BoardArrow, CustomSquareStyles } from "./chessboard";
@@ -22,6 +23,8 @@ interface GameChessboardProps {
   customArrows?: BoardArrow[];
   /** Optional board width in px; when set, board fills container up to this size */
   boardWidth?: number;
+  /** Optional overlay above the board (same dimensions as the board) */
+  boardOverlay?: ReactNode;
 }
 
 export function GameChessboard({
@@ -34,6 +37,7 @@ export function GameChessboard({
   customSquareStyles,
   customArrows,
   boardWidth,
+  boardOverlay,
 }: GameChessboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [optimisticFen, setOptimisticFen] = useState<string | null>(null);
@@ -132,6 +136,7 @@ export function GameChessboard({
         customSquareStyles={customSquareStyles}
         customArrows={customArrows}
         boardWidth={boardWidth}
+        boardOverlay={boardOverlay}
       />
     </div>
   );

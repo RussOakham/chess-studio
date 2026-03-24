@@ -1,7 +1,7 @@
 "use client";
 
 import { Chess } from "chess.js";
-import type { ComponentProps, CSSProperties } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
 
@@ -30,6 +30,8 @@ interface ChessboardWrapperProps {
   customSquareStyles?: CustomSquareStyles;
   /** Optional arrows to draw (e.g. hint move) – [from, to, color?][] */
   customArrows?: BoardArrow[];
+  /** Optional overlay (e.g. move-quality badge) drawn above the board, same size as the board */
+  boardOverlay?: ReactNode;
 }
 
 function ChessboardWrapper({
@@ -41,6 +43,7 @@ function ChessboardWrapper({
   boardWidth,
   customSquareStyles,
   customArrows,
+  boardOverlay,
 }: ChessboardWrapperProps) {
   // Initialize chess instance with the current position
   // Update when position changes
@@ -133,25 +136,40 @@ function ChessboardWrapper({
 
   const lightSquareStyle = useMemo(() => ({ backgroundColor: "#eeeed2" }), []);
 
+  const boardBoxStyle = useMemo(
+    () => ({
+      width: defaultBoardWidth,
+      height: defaultBoardWidth,
+    }),
+    [defaultBoardWidth]
+  );
+
   return (
     <div className="flex w-full items-center justify-center p-4">
       <div className={boardWidth != null ? "w-full" : "w-full max-w-[600px]"}>
-        <Chessboard
-          position={validPosition}
-          onPieceDrop={onPieceDrop}
-          boardOrientation={orientation}
-          arePiecesDraggable={draggable}
-          boardWidth={defaultBoardWidth}
-          customBoardStyle={boardStyle}
-          customDarkSquareStyle={darkSquareStyle}
-          customLightSquareStyle={lightSquareStyle}
-          customSquareStyles={customSquareStyles}
-          customArrows={
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- hint from/to are valid Square strings
-            customArrows as ChessboardArrow
-          }
-          showBoardNotation={showCoordinates}
-        />
+        <div className="relative shrink-0" style={boardBoxStyle}>
+          <Chessboard
+            position={validPosition}
+            onPieceDrop={onPieceDrop}
+            boardOrientation={orientation}
+            arePiecesDraggable={draggable}
+            boardWidth={defaultBoardWidth}
+            customBoardStyle={boardStyle}
+            customDarkSquareStyle={darkSquareStyle}
+            customLightSquareStyle={lightSquareStyle}
+            customSquareStyles={customSquareStyles}
+            customArrows={
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- hint from/to are valid Square strings
+              customArrows as ChessboardArrow
+            }
+            showBoardNotation={showCoordinates}
+          />
+          {boardOverlay ? (
+            <div className="pointer-events-none absolute inset-0 z-10">
+              {boardOverlay}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

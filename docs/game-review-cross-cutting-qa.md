@@ -19,7 +19,7 @@ This doc is **not** a standalone feature—it is a **rollout and QA** checklist 
 | Move classifications (`game-review-move-classifications.temp.md`)              | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                     |
 | Evaluation timeline                                                            | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores. |
 | Board overlays                                                                 | **Done (MVP)** — mid-review: engine line arrows always when data exists; `fenBefore` + arrows via `review-board-overlays.ts`; optional `bestMoveUci` on new analyses.                                               |
-| On-board move quality badges (`game-review-board-move-quality-badges.temp.md`) | Not started — corner badge on **to** square (e.g. `?!`), see `docs/temp/reference-chesscom-move-quality-badge.png`                                                                                                  |
+| On-board move quality badges (`game-review-board-move-quality-badges.temp.md`) | **Done** — mid-review: circular glyph on **to** square (`ReviewMoveQualityBadge` + `chess-square-layout`); parity with timeline via `shouldShowTimelineMarker`.                                                     |
 | Lichess Opening Explorer                                                       | Not started                                                                                                                                                                                                         |
 
 ---
@@ -42,7 +42,6 @@ This doc is **not** a standalone feature—it is a **rollout and QA** checklist 
 
 ### Follow-ups
 
-- **On-board move-quality badges** (Chess.com style): [`docs/temp/game-review-board-move-quality-badges.temp.md`](temp/game-review-board-move-quality-badges.temp.md); reference image [`docs/temp/reference-chesscom-move-quality-badge.png`](temp/reference-chesscom-move-quality-badge.png).
 - Overview page board + same overlays (optional).
 - Eval bar alignment when `position` is `fenBefore` vs replay index (currently eval bar still follows replay `viewingFen`).
 
