@@ -43,12 +43,13 @@ The workflow runs the web app build with `doppler run --project chess-studio --c
 
 ### Required secrets in Doppler `dev` config
 
-| Secret                        | Where to get it                                                                                    | Notes                                        |
-| ----------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `NEXT_PUBLIC_CONVEX_URL`      | Convex dashboard → your project → Settings → URL, or after `npx convex dev --once --configure=new` | e.g. `https://your-deployment.convex.cloud`  |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex dashboard (same project) → site URL for Better Auth                                         | e.g. `https://your-deployment.convex.site`   |
-| `BETTER_AUTH_SECRET`          | Generate: `openssl rand -base64 32`                                                                | Use the same value in Convex env and Doppler |
-| `BETTER_AUTH_URL`             | Your app URL (for CI build, a placeholder is fine, e.g. `https://example.com`)                     | Required by Better Auth at build time        |
+| Secret                        | Where to get it                                                                                    | Notes                                                                                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_CONVEX_URL`      | Convex dashboard → your project → Settings → URL, or after `npx convex dev --once --configure=new` | e.g. `https://your-deployment.convex.cloud`                                                                                                                        |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex dashboard (same project) → site URL for Better Auth                                         | e.g. `https://your-deployment.convex.site`                                                                                                                         |
+| `BETTER_AUTH_SECRET`          | Generate: `openssl rand -base64 32`                                                                | Use the same value in Convex env and Doppler                                                                                                                       |
+| `BETTER_AUTH_URL`             | Your app URL (for CI build, a placeholder is fine, e.g. `https://example.com`)                     | Required by Better Auth at build time                                                                                                                              |
+| `LICHESS_API_TOKEN`           | [Lichess](https://lichess.org/account/oauth/token/create) personal access token                    | Name-only here; also set the same key on Convex (`npx convex env set LICHESS_API_TOKEN …`) for server actions. Optional if you do not use Lichess Opening Explorer |
 
 ### How to add them
 
@@ -86,6 +87,8 @@ NEXT_PUBLIC_CONVEX_SITE_URL=https://yourdomain.com
 # Secrets (from Doppler)
 BETTER_AUTH_SECRET=your-secret-key-here
 BETTER_AUTH_URL=https://yourdomain.com
+
+# Optional: Lichess Opening Explorer — define LICHESS_API_TOKEN in Doppler and Convex env (never commit the value)
 ```
 
 ### API Service (Express.js/Go, if used)

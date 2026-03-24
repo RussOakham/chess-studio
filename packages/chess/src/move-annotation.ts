@@ -7,7 +7,9 @@ type MoveAnnotationType =
   | "mistake"
   | "inaccuracy"
   | "good"
-  | "best";
+  | "best"
+  /** Common in master/Lichess databases (opening explorer heuristic). */
+  | "book";
 
 interface MoveAnnotation {
   moveNumber: number;

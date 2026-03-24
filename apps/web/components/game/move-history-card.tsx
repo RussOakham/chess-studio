@@ -1,6 +1,7 @@
 "use client";
 
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
+import { MoveAnnotationGlyph } from "@/components/chess/move-annotation-glyph";
 import { ReplayControls } from "@/components/game/replay-controls";
 import {
   Card,
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
 import { cn } from "@/lib/utils";
 import type { MoveAnnotation, MoveAnnotationType } from "@repo/chess";
 import React, { memo, useMemo } from "react";
@@ -56,7 +56,8 @@ function getAnnotationBadgeClassName(
       return "text-orange-600 dark:text-orange-400";
     }
     case "good":
-    case "best": {
+    case "best":
+    case "book": {
       return "text-primary";
     }
     default: {
@@ -147,12 +148,8 @@ function MoveHistoryCardComponent({
                     blackMove?.moveNumber != null
                       ? annotationByMoveNumber.get(blackMove.moveNumber)
                       : undefined;
-                  const whiteBadge = whiteAnnotation
-                    ? moveAnnotationGlyph(whiteAnnotation.type)
-                    : null;
-                  const blackBadge = blackAnnotation
-                    ? moveAnnotationGlyph(blackAnnotation.type)
-                    : null;
+                  const whiteBadge = Boolean(whiteAnnotation);
+                  const blackBadge = Boolean(blackAnnotation);
                   const whiteTooltip =
                     whiteAnnotation &&
                     (whiteAnnotation.type === "blunder" ||
@@ -188,13 +185,13 @@ function MoveHistoryCardComponent({
                         <span className="font-medium">
                           {whiteMove?.moveSan}
                         </span>
-                        {whiteBadge ? (
+                        {whiteBadge && whiteAnnotation ? (
                           <span
                             className={getAnnotationBadgeClassName(
-                              whiteAnnotation?.type
+                              whiteAnnotation.type
                             )}
                           >
-                            {whiteBadge}
+                            <MoveAnnotationGlyph type={whiteAnnotation.type} />
                           </span>
                         ) : null}
                       </button>
@@ -218,13 +215,15 @@ function MoveHistoryCardComponent({
                         {blackMove ? (
                           <>
                             <span>{blackMove.moveSan}</span>
-                            {blackBadge ? (
+                            {blackBadge && blackAnnotation ? (
                               <span
                                 className={getAnnotationBadgeClassName(
-                                  blackAnnotation?.type
+                                  blackAnnotation.type
                                 )}
                               >
-                                {blackBadge}
+                                <MoveAnnotationGlyph
+                                  type={blackAnnotation.type}
+                                />
                               </span>
                             ) : null}
                           </>

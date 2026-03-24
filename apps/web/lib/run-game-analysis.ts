@@ -2,6 +2,12 @@
 
 import { getSanForMove } from "@/lib/chess-notation";
 import { sortMovesByNumber } from "@/lib/game-replay";
+import {
+  isBookContinuation,
+  OPENING_MAX_PLY,
+} from "@/lib/lichess/book-heuristic";
+import { explorerMastersCacheKey } from "@/lib/lichess/fen-for-explorer-cache";
+import type { ExplorerMastersResponse } from "@/lib/lichess/types";
 import type {
   DifficultyLevel,
   MoveAnnotation,
@@ -42,6 +48,8 @@ interface GameAnalysisResult {
   keyMoments: string[];
   suggestions: string[];
   moveAnnotations: MoveAnnotation[];
+  /** Lichess Opening Explorer name when available (deepest in opening window). */
+  openingNameLichess?: string | null;
 }
 
 interface AnalysisMove {
@@ -62,6 +70,11 @@ type GetBestMove = (
   fen: string,
   difficulty: DifficultyLevel
 ) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
+
+/** Map key: `explorerMastersCacheKey(fen)` → masters explorer JSON or null if unavailable. */
+type GetExplorerBatch = (
+  fens: string[]
+) => Promise<Map<string, ExplorerMastersResponse | null>>;
 
 function classifySuboptimalMove(drop: number): MoveAnnotationType | null {
   if (drop < GOOD_FLOOR_CP) {
@@ -89,7 +102,8 @@ async function runGameAnalysisImpl(
   moves: AnalysisMove[],
   getEvaluation: GetEvaluation,
   getBestMove: GetBestMove,
-  onProgress?: (completed: number, total: number) => void
+  onProgress?: (completed: number, total: number) => void,
+  getExplorerBatch?: GetExplorerBatch
 ): Promise<GameAnalysisResult> {
   const sorted = sortMovesByNumber(moves);
   const total = sorted.length;
@@ -102,6 +116,26 @@ async function runGameAnalysisImpl(
   let mistakeCount = 0;
   let inaccuracyCount = 0;
   let bestCount = 0;
+
+  let explorerMap = new Map<string, ExplorerMastersResponse | null>();
+  let openingNameLichess: string | undefined;
+
+  if (getExplorerBatch !== undefined && sorted.length > 0) {
+    const openingSlice = sorted.slice(0, OPENING_MAX_PLY);
+    const uniqueFens = [...new Set(openingSlice.map((m) => m.fenBefore))];
+    try {
+      explorerMap = await getExplorerBatch(uniqueFens);
+    } catch {
+      explorerMap = new Map();
+    }
+    for (const move of openingSlice) {
+      const key = explorerMastersCacheKey(move.fenBefore);
+      const row = explorerMap.get(key);
+      if (row?.opening?.name) {
+        openingNameLichess = row.opening.name;
+      }
+    }
+  }
 
   for (let index = 0; index < sorted.length; index++) {
     const move = sorted[index];
@@ -170,9 +204,21 @@ async function runGameAnalysisImpl(
           annotationType === "mistake" ||
           annotationType === "inaccuracy");
 
+      let finalType: MoveAnnotationType = annotationType;
+      if (
+        index < OPENING_MAX_PLY &&
+        annotationType === "good" &&
+        getExplorerBatch !== undefined
+      ) {
+        const ex = explorerMap.get(explorerMastersCacheKey(fenBefore)) ?? null;
+        if (ex !== null && isBookContinuation(ex, move.moveUci)) {
+          finalType = "book";
+        }
+      }
+
       moveAnnotations.push({
         moveNumber: move.moveNumber,
-        type: annotationType,
+        type: finalType,
         ...(includeBestSan
           ? {
               bestMoveSan,
@@ -205,6 +251,7 @@ async function runGameAnalysisImpl(
     keyMoments,
     suggestions,
     moveAnnotations,
+    openingNameLichess: openingNameLichess ?? null,
   };
 }
 

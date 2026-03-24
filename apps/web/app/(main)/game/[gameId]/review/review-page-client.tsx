@@ -4,6 +4,7 @@ import type { BoardArrow } from "@/components/chess/chessboard";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
+import { MoveAnnotationGlyph } from "@/components/chess/move-annotation-glyph";
 import { ReviewMoveQualityBadge } from "@/components/chess/review-move-quality-badge";
 import {
   GameBoardArea,
@@ -27,7 +28,6 @@ import { useGame } from "@/lib/hooks/use-game";
 import { useGameAnalysis } from "@/lib/hooks/use-game-analysis";
 import { useReplay } from "@/lib/hooks/use-replay";
 import { useStockfish } from "@/lib/hooks/use-stockfish";
-import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
 import {
   buildReviewBoardArrows,
   uciToFromTo,
@@ -55,11 +55,19 @@ function moveQualityCounts(
   moveAnnotations: { moveNumber: number; type: string }[] | undefined
 ) {
   if (!moveAnnotations?.length) {
-    return { good: 0, best: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
+    return {
+      good: 0,
+      best: 0,
+      book: 0,
+      inaccuracy: 0,
+      mistake: 0,
+      blunder: 0,
+    };
   }
   return {
     good: moveAnnotations.filter((ann) => ann.type === "good").length,
     best: moveAnnotations.filter((ann) => ann.type === "best").length,
+    book: moveAnnotations.filter((ann) => ann.type === "book").length,
     inaccuracy: moveAnnotations.filter((ann) => ann.type === "inaccuracy")
       .length,
     mistake: moveAnnotations.filter((ann) => ann.type === "mistake").length,
@@ -74,7 +82,7 @@ function accuracyPercent(
     return null;
   }
   const goodOrBest = moveAnnotations.filter(
-    (ann) => ann.type === "good" || ann.type === "best"
+    (ann) => ann.type === "good" || ann.type === "best" || ann.type === "book"
   ).length;
   return Math.round((goodOrBest / moveAnnotations.length) * 1000) / 10;
 }
@@ -120,6 +128,9 @@ function midReviewAnnotationCaption(annotation: {
       return annotation.bestMoveSan
         ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
         : "Mistake.";
+    }
+    case "book": {
+      return "Book move — common in master games.";
     }
     default: {
       const exhaustive: never = annotation.type;
@@ -428,7 +439,9 @@ function ReviewMidReview({
                         Move {currentMove.moveNumber}: {currentMove.moveSan}
                         {currentAnnotation ? (
                           <span className="ml-1 text-primary">
-                            {moveAnnotationGlyph(currentAnnotation.type)}
+                            <MoveAnnotationGlyph
+                              type={currentAnnotation.type}
+                            />
                           </span>
                         ) : null}
                       </p>
@@ -614,7 +627,9 @@ export function ReviewPageClient({
     );
   }
 
-  const openingLabel = getOpeningLabelFromPgn(game.pgn ?? undefined);
+  const openingLabel =
+    review.openingNameLichess?.trim() ||
+    getOpeningLabelFromPgn(game.pgn ?? undefined);
 
   return (
     <div className="min-h-full bg-background p-4 md:p-6" data-game-surface="">
@@ -705,6 +720,7 @@ export function ReviewPageClient({
                 <ul className="mt-2 space-y-1 text-muted-foreground">
                   <li>Best: {counts.best}</li>
                   <li>Good: {counts.good}</li>
+                  <li>Book: {counts.book}</li>
                   <li>Inaccuracy: {counts.inaccuracy}</li>
                   <li>Mistake: {counts.mistake}</li>
                   <li>Blunder: {counts.blunder}</li>

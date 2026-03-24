@@ -1,7 +1,7 @@
 "use client";
 
+import { MoveAnnotationGlyph } from "@/components/chess/move-annotation-glyph";
 import { squareToRelativeRect } from "@/lib/chess-square-layout";
-import { moveAnnotationGlyph } from "@/lib/move-annotation-glyph";
 import { cn } from "@/lib/utils";
 import type { MoveAnnotationType } from "@repo/chess";
 import { useMemo } from "react";
@@ -35,6 +35,9 @@ function badgePillClassName(type: MoveAnnotationType): string {
     }
     case "best": {
       return "bg-primary text-primary-foreground";
+    }
+    case "book": {
+      return "bg-emerald-700 text-white dark:bg-emerald-600";
     }
     default: {
       const exhaustive: never = type;
@@ -106,7 +109,7 @@ function ReviewMoveQualityBadge({
       style={layoutStyle}
       aria-hidden
     >
-      {moveAnnotationGlyph(annotationType)}
+      <MoveAnnotationGlyph bookIconSizePx={badgeSizePx} type={annotationType} />
     </div>
   );
 }

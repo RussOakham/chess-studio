@@ -58,6 +58,8 @@ export default defineSchema({
     evaluations: v.optional(v.array(v.number())),
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
+    /** Lichess Opening Explorer name when available (deepest named node in opening window). */
+    openingNameLichess: v.optional(v.string()),
     moveAnnotations: v.optional(
       v.array(
         v.object({
@@ -67,7 +69,8 @@ export default defineSchema({
             v.literal("mistake"),
             v.literal("inaccuracy"),
             v.literal("good"),
-            v.literal("best")
+            v.literal("best"),
+            v.literal("book")
           ),
           bestMoveSan: v.optional(v.string()),
           bestMoveUci: v.optional(v.string()),
@@ -76,4 +79,11 @@ export default defineSchema({
     ),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
+
+  /** Server-side cache for Lichess Opening Explorer JSON (TTL enforced in action). */
+  lichess_explorer_cache: defineTable({
+    cacheKey: v.string(),
+    payloadJson: v.string(),
+    fetchedAt: v.number(),
+  }).index("by_cacheKey", ["cacheKey"]),
 });

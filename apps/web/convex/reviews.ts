@@ -45,7 +45,8 @@ const moveAnnotationValidator = v.object({
     v.literal("mistake"),
     v.literal("inaccuracy"),
     v.literal("good"),
-    v.literal("best")
+    v.literal("best"),
+    v.literal("book")
   ),
   bestMoveSan: v.optional(v.string()),
   bestMoveUci: v.optional(v.string()),
@@ -62,6 +63,7 @@ const getByGameId = query({
       evaluations: v.optional(v.array(v.number())),
       keyMoments: v.optional(v.array(v.string())),
       suggestions: v.optional(v.array(v.string())),
+      openingNameLichess: v.optional(v.string()),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
       createdAt: v.number(),
     }),
@@ -90,10 +92,11 @@ async function saveReviewInternal(
     suggestions: string[];
     moveAnnotations: {
       moveNumber: number;
-      type: "blunder" | "mistake" | "inaccuracy" | "good" | "best";
+      type: "blunder" | "mistake" | "inaccuracy" | "good" | "best" | "book";
       bestMoveSan?: string;
       bestMoveUci?: string;
     }[];
+    openingNameLichess?: string;
   }
 ): Promise<Id<"game_reviews">> {
   const now = Date.now();
@@ -109,6 +112,9 @@ async function saveReviewInternal(
       keyMoments: payload.keyMoments,
       suggestions: payload.suggestions,
       moveAnnotations: payload.moveAnnotations,
+      ...(payload.openingNameLichess !== undefined
+        ? { openingNameLichess: payload.openingNameLichess }
+        : {}),
     });
     return existing._id;
   }
@@ -120,6 +126,9 @@ async function saveReviewInternal(
     keyMoments: payload.keyMoments,
     suggestions: payload.suggestions,
     moveAnnotations: payload.moveAnnotations,
+    ...(payload.openingNameLichess !== undefined
+      ? { openingNameLichess: payload.openingNameLichess }
+      : {}),
     createdAt: now,
   });
 }
@@ -132,6 +141,7 @@ const save = mutation({
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+    openingNameLichess: v.optional(v.string()),
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
@@ -164,6 +174,7 @@ const save = mutation({
       keyMoments,
       suggestions,
       moveAnnotations,
+      openingNameLichess: args.openingNameLichess?.trim() || undefined,
     });
   },
 });

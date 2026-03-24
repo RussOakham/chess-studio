@@ -2,6 +2,8 @@
 
 import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
+import { parseExplorerMastersResponse } from "@/lib/lichess/parse-explorer-response";
+import type { ExplorerMastersResponse } from "@/lib/lichess/types";
 import type {
   AnalysisMove,
   GameAnalysisResult,
@@ -9,7 +11,7 @@ import type {
 } from "@/lib/run-game-analysis";
 import { runGameAnalysis } from "@/lib/run-game-analysis";
 import type { PositionEvaluation } from "@repo/chess";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useCallback, useState } from "react";
 
 type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
@@ -40,12 +42,41 @@ export function useGameAnalysis({
   getBestMove,
 }: UseGameAnalysisOptions) {
   const saveReview = useMutation(api.reviews.save);
+  const batchExplorerMasters = useAction(
+    api.lichessExplorer.batchExplorerMasters
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState<{
     completed: number;
     total: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const getExplorerBatch = useCallback(
+    async (fens: string[]) => {
+      const map = new Map<string, ExplorerMastersResponse | null>();
+      if (fens.length === 0) {
+        return map;
+      }
+      const entries = await batchExplorerMasters({ fens });
+      for (const entry of entries) {
+        if (entry.payloadJson === null) {
+          map.set(entry.cacheKey, null);
+        } else {
+          try {
+            const parsed = parseExplorerMastersResponse(
+              JSON.parse(entry.payloadJson) as unknown
+            );
+            map.set(entry.cacheKey, parsed);
+          } catch {
+            map.set(entry.cacheKey, null);
+          }
+        }
+      }
+      return map;
+    },
+    [batchExplorerMasters]
+  );
 
   const runAnalysis = useCallback(async () => {
     if (game?.status !== "completed" || moves.length === 0) {
@@ -65,7 +96,8 @@ export function useGameAnalysis({
         getBestMove,
         (completed, total) => {
           setProgress({ completed, total });
-        }
+        },
+        getExplorerBatch
       );
 
       await saveReview({
@@ -75,6 +107,7 @@ export function useGameAnalysis({
         keyMoments: result.keyMoments,
         suggestions: result.suggestions,
         moveAnnotations: result.moveAnnotations,
+        openingNameLichess: result.openingNameLichess ?? undefined,
       });
     } catch (gameAnalysisError: unknown) {
       const message =
@@ -86,7 +119,15 @@ export function useGameAnalysis({
       setIsAnalyzing(false);
       setProgress(null);
     }
-  }, [game, gameId, moves, getEvaluation, getBestMove, saveReview]);
+  }, [
+    game,
+    gameId,
+    moves,
+    getEvaluation,
+    getBestMove,
+    getExplorerBatch,
+    saveReview,
+  ]);
 
   return {
     runAnalysis,
