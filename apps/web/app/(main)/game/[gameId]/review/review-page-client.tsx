@@ -24,7 +24,7 @@ import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import {
   formatBookMoveCaption,
-  lichessOpeningSuffix,
+  openingNameSuffix,
 } from "@/lib/format-book-move-caption";
 import { useBoardContainerSize } from "@/lib/hooks/use-board-container-size";
 import { useEvaluationForFen } from "@/lib/hooks/use-evaluation-for-fen";
@@ -109,7 +109,7 @@ function midReviewAnnotationCaption(annotation: {
   bookOpeningEco?: string;
   bookOpeningName?: string;
 }): string {
-  const lichess = lichessOpeningSuffix(
+  const openingLine = openingNameSuffix(
     annotation.bookOpeningEco,
     annotation.bookOpeningName
   );
@@ -118,35 +118,35 @@ function midReviewAnnotationCaption(annotation: {
       return (
         (annotation.bestMoveSan
           ? `Best move — engine prefers ${annotation.bestMoveSan}.`
-          : "Best move.") + lichess
+          : "Best move.") + openingLine
       );
     }
     case "good": {
       return (
         (annotation.bestMoveSan
           ? `Good move — engine prefers ${annotation.bestMoveSan}.`
-          : "Good move.") + lichess
+          : "Good move.") + openingLine
       );
     }
     case "inaccuracy": {
       return (
         (annotation.bestMoveSan
           ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
-          : "Inaccuracy — small eval slip.") + lichess
+          : "Inaccuracy — small eval slip.") + openingLine
       );
     }
     case "blunder": {
       return (
         (annotation.bestMoveSan
           ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
-          : "Blunder.") + lichess
+          : "Blunder.") + openingLine
       );
     }
     case "mistake": {
       return (
         (annotation.bestMoveSan
           ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
-          : "Mistake.") + lichess
+          : "Mistake.") + openingLine
       );
     }
     case "book": {
@@ -760,10 +760,10 @@ export function ReviewPageClient({
           </CardContent>
         </Card>
 
-        <div className="flex w-full max-w-lg flex-row flex-wrap gap-3">
+        <div className="grid w-full min-w-0 grid-cols-2 gap-3">
           <Button
             size="lg"
-            className="min-h-11 min-w-[10rem] flex-1"
+            className="min-h-11 w-full min-w-0 shrink text-center whitespace-normal"
             onClick={handleStartReview}
             disabled={isAnalyzing}
           >
@@ -772,7 +772,7 @@ export function ReviewPageClient({
           <Button
             variant="outline"
             size="lg"
-            className="min-h-11 min-w-[10rem] flex-1"
+            className="min-h-11 w-full min-w-0 shrink text-center whitespace-normal"
             disabled={isAnalyzing}
             onClick={() => {
               void runAnalysis();
