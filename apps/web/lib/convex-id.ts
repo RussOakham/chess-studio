@@ -1,23 +1,10 @@
-import type { Id } from "@/convex/_generated/dataModel";
-
 /**
- * Coerce a string to Convex games table ID. Used for URL params and props;
- * Convex validates format and ownership at runtime.
+ * Game id helpers for URLs and Convex calls. Implementation lives in
+ * {@link ./validation/game-id} (Zod); this module re-exports for stable import paths.
  */
-function toGameId(value: string): Id<"games"> {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error("Invalid game ID");
-  }
-  // eslint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Runtime string from URL/props; Convex validates at API boundary
-  return value as Id<"games">;
-}
-
-/**
- * Conservative URL-param guard to avoid calling Convex with obvious non-IDs (e.g. `styles.css.map`).
- * Convex document IDs are URL-safe strings; allow typical alphanumeric plus `_` and `-` (see Convex docs).
- */
-function isPlausibleGameId(value: string): boolean {
-  return value.length > 0 && /^[a-zA-Z0-9_-]+$/.test(value);
-}
-
-export { isPlausibleGameId, toGameId };
+export {
+  gameIdParamSchema,
+  isPlausibleGameId,
+  parseGameIdParam,
+  parseGameIdParam as toGameId,
+} from "./validation/game-id";

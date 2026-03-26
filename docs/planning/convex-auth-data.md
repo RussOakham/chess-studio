@@ -15,6 +15,7 @@ Canonical reference for how the app uses Convex and authentication.
 
 ## Code map
 
+- `apps/web/lib/validation/game-id.ts` — Zod schema and helpers for game id strings from URLs/props (`gameIdParamSchema`, `parseGameIdParam`); `@/lib/convex-id` re-exports for stable imports.
 - `apps/web/convex/schema.ts` — table definitions.
 - `apps/web/convex/auth.ts` — Better Auth integration with Convex.
 - `apps/web/convex/lib/game_access.ts` — shared helpers: `getAuthedUserId`, `requireOwnedGame` (JWT subject + game ownership).
