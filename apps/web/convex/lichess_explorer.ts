@@ -1,5 +1,7 @@
 "use node";
 
+import { setTimeout as delay } from "node:timers/promises";
+
 import { v } from "convex/values";
 
 import { fenForExplorerCacheKey } from "../lib/lichess/fen-for-explorer-cache";
@@ -53,37 +55,34 @@ const batchExplorerMasters = action({
 
     for (const [cacheKey, fen] of uniqueKeys) {
       const cached = await ctx.runQuery(
-        internal.lichessExplorerCache.getEntry,
+        internal.lichess_explorer_cache.getEntry,
         {
           cacheKey,
         }
       );
       if (cached !== null && now - cached.fetchedAt < CACHE_TTL_MS) {
         results.push({ cacheKey, payloadJson: cached.payloadJson });
-        continue;
-      }
-
-      const data = await fetchOpeningExplorerMasters(fen);
-      if (data === null) {
-        await ctx.runMutation(internal.lichessExplorerCache.upsertEntry, {
-          cacheKey,
-          payloadJson: null,
-          fetchedAt: now,
-        });
-        results.push({ cacheKey, payloadJson: null });
       } else {
-        const json = JSON.stringify(data);
-        await ctx.runMutation(internal.lichessExplorerCache.upsertEntry, {
-          cacheKey,
-          payloadJson: json,
-          fetchedAt: now,
-        });
-        results.push({ cacheKey, payloadJson: json });
-      }
+        const data = await fetchOpeningExplorerMasters(fen);
+        if (data === null) {
+          await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
+            cacheKey,
+            payloadJson: null,
+            fetchedAt: now,
+          });
+          results.push({ cacheKey, payloadJson: null });
+        } else {
+          const json = JSON.stringify(data);
+          await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
+            cacheKey,
+            payloadJson: json,
+            fetchedAt: now,
+          });
+          results.push({ cacheKey, payloadJson: json });
+        }
 
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, BETWEEN_FETCH_MS);
-      });
+        await delay(BETWEEN_FETCH_MS);
+      }
     }
 
     return results;

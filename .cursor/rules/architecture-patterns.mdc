@@ -13,7 +13,7 @@ This project uses **Convex** for game and move data, with an optional service la
 - **Location**: `apps/web/convex/`
 - **Schema**: `convex/schema.ts` (games, moves, game_reviews)
 - **Functions**: `convex/games.ts` – queries (`getById`, `getMoves`, `list`) and mutations (`create`, `makeMove`)
-- **Auth**: Protected functions use `ctx.auth.getUserIdentity()`; identity from Better Auth JWT (see `convex/auth.ts` and `docs/temp/migrate-convex.temp.md`)
+- **Auth**: Protected functions use `ctx.auth.getUserIdentity()`; identity from Better Auth JWT (see `convex/auth.ts` and `docs/planning/convex-auth-data.md`)
 
 **Guidelines:**
 
@@ -44,4 +44,4 @@ This project uses **Convex** for game and move data, with an optional service la
 
 - Convex schema and functions: `@apps/web/convex/schema.ts`, `@apps/web/convex/games.ts`
 - Convex rules: `@.cursor/rules/convex.mdc`
-- Auth and migration: `@docs/temp/migrate-convex.temp.md`
+- Auth and data: `@docs/planning/convex-auth-data.md`

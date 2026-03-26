@@ -55,8 +55,8 @@ function getStatusLabel(status: GameStatus): string {
       return "Abandoned";
     }
     default: {
-      const _: never = status;
-      void _;
+      const _never: never = status;
+      void _never;
       return "Abandoned";
     }
   }
@@ -78,8 +78,8 @@ function getBadgeVariant(
       return "outline";
     }
     default: {
-      const _: never = status;
-      void _;
+      const _never: never = status;
+      void _never;
       return "outline";
     }
   }

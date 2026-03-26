@@ -15,7 +15,7 @@ const getEntry = internalQuery({
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("lichess_explorer_cache")
-      .withIndex("by_cacheKey", (q) => q.eq("cacheKey", args.cacheKey))
+      .withIndex("by_cacheKey", (query) => query.eq("cacheKey", args.cacheKey))
       .unique();
     if (row === null) {
       return null;
@@ -34,7 +34,7 @@ const upsertEntry = internalMutation({
   handler: async (ctx, args): Promise<Id<"lichess_explorer_cache">> => {
     const existing = await ctx.db
       .query("lichess_explorer_cache")
-      .withIndex("by_cacheKey", (q) => q.eq("cacheKey", args.cacheKey))
+      .withIndex("by_cacheKey", (query) => query.eq("cacheKey", args.cacheKey))
       .unique();
     if (existing !== null) {
       await ctx.db.patch(existing._id, {

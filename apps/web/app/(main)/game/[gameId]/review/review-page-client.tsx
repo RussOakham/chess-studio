@@ -48,6 +48,8 @@ import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
+const EMPTY_GAME_MOVES: Doc<"moves">[] = [];
+
 const EMPTY_REVIEW_BOARD_ARROWS: BoardArrow[] = [];
 
 interface ReviewPageClientProps {
@@ -484,7 +486,9 @@ function ReviewMidReview({
                     className="mt-4 w-full"
                     size="lg"
                     onClick={() =>
-                      setReplayIndexAndUrl((p) => Math.min(moves.length, p + 1))
+                      setReplayIndexAndUrl((prev) =>
+                        Math.min(moves.length, prev + 1)
+                      )
                     }
                     disabled={replayIndex >= moves.length}
                   >
@@ -583,6 +587,11 @@ export function ReviewPageClient({
     [review?.moveAnnotations]
   );
 
+  const accuracyBarStyle = useMemo(
+    () => ({ width: `${String(userAccuracy ?? 0)}%` }),
+    [userAccuracy]
+  );
+
   const handleStartReview = useCallback(() => {
     router.push(`/game/${gameId}/review?move=1`);
   }, [router, gameId]);
@@ -621,14 +630,15 @@ export function ReviewPageClient({
   }
 
   if (review === null) {
-    let pendingReviewMessage: string;
-    if (isAnalyzing) {
-      pendingReviewMessage = `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
-    } else if (isStockfishReady) {
-      pendingReviewMessage = "Starting analysis…";
-    } else {
-      pendingReviewMessage = "Loading engine…";
-    }
+    const pendingReviewMessage = (() => {
+      if (isAnalyzing) {
+        return `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
+      }
+      if (isStockfishReady) {
+        return "Starting analysis…";
+      }
+      return "Loading engine…";
+    })();
     return (
       <div className="min-h-full bg-background p-6">
         <p className="text-muted-foreground">{pendingReviewMessage}</p>
@@ -644,7 +654,7 @@ export function ReviewPageClient({
         isStockfishReady={isStockfishReady}
         getEvaluation={getEvaluation}
         game={game}
-        moves={moves ?? []}
+        moves={moves ?? EMPTY_GAME_MOVES}
         review={review}
       />
     );
@@ -716,9 +726,7 @@ export function ReviewPageClient({
               <div className="h-8 w-full overflow-hidden rounded-md bg-muted">
                 <div
                   className="h-full rounded-md bg-primary transition-all"
-                  style={{
-                    width: `${userAccuracy ?? 0}%`,
-                  }}
+                  style={accuracyBarStyle}
                 />
               </div>
               <p className="mt-2 text-sm text-muted-foreground">

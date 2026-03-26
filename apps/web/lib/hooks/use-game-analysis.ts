@@ -44,7 +44,7 @@ export function useGameAnalysis({
 }: UseGameAnalysisOptions) {
   const saveReview = useMutation(api.reviews.save);
   const batchExplorerMasters = useAction(
-    api.lichessExplorer.batchExplorerMasters
+    api.lichess_explorer.batchExplorerMasters
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState<{

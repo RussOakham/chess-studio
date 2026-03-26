@@ -28,14 +28,14 @@ See `docs/planning/mvp-features.md` for detailed feature breakdown.
 
 ## Milestones
 
-- [ ] Project setup and planning
-- [ ] Tech stack selection
-- [ ] Architecture design
-- [ ] Core game implementation
-- [ ] Chess engine integration
-- [ ] AI implementation
-- [ ] UI/UX development
-- [ ] Testing and refinement
+- [x] Project setup and planning
+- [x] Tech stack selection
+- [x] Architecture design (Convex + Next.js; see [`architecture.md`](./architecture.md))
+- [x] Core game implementation (see [`game-implementation-plan.md`](../implementation/game-implementation-plan.md))
+- [x] Chess engine integration (client Stockfish)
+- [ ] AI implementation (optional LLM summaries; engine/rule-based review shipped)
+- [x] UI/UX development (core flows)
+- [ ] Testing and refinement (ongoing)
 
 ## Notes
 

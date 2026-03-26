@@ -114,6 +114,38 @@
       "rules": {
         "typescript/no-unsafe-type-assertion": "off"
       }
+    },
+    {
+      "files": [
+        "**/apps/web/convex/lichess_explorer.ts",
+        "**/apps/web/convex/lichess_explorer_cache.ts"
+      ],
+      "rules": {
+        "unicorn/filename-case": "off",
+        "no-await-in-loop": "off"
+      }
+    },
+    {
+      "files": ["**/apps/web/lib/lichess/fetch-opening-explorer.ts"],
+      "rules": {
+        "no-await-in-loop": "off",
+        "no-continue": "off"
+      }
+    },
+    {
+      "files": [
+        "**/apps/web/lib/hooks/use-game-analysis.ts",
+        "**/apps/web/lib/run-game-analysis.ts"
+      ],
+      "rules": {
+        "no-await-in-loop": "off"
+      }
+    },
+    {
+      "files": ["**/apps/web/components/game/player-strip.tsx"],
+      "rules": {
+        "react/no-array-index-key": "off"
+      }
     }
   ]
 }

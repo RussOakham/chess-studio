@@ -158,7 +158,7 @@ Secrets managed via Doppler:
 
 #### Convex
 
-- `NEXT_PUBLIC_CONVEX_URL` - From Convex dashboard or CLI; games, moves, and auth (Better Auth) all stored in Convex. See `docs/temp/migrate-convex.temp.md`. Neon and Drizzle are not used.
+- `NEXT_PUBLIC_CONVEX_URL` - From Convex dashboard or CLI; games, moves, and auth (Better Auth) all stored in Convex. See [`convex-auth-data.md`](./convex-auth-data.md). Neon and Drizzle are not used.
 
 #### Doppler Integration
 

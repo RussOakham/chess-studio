@@ -4,7 +4,7 @@
 
 This document outlines the end-to-end type safety strategy for the chess game application.
 
-**Current approach (game/move API):** We use **Convex** for type-safe queries and mutations. Types flow from Convex function definitions (`apps/web/convex/games.ts`) to the frontend via `convex/_generated`; no separate API layer or code generation. See `docs/temp/migrate-convex.temp.md` and `@.cursor/rules/convex.mdc`.
+**Current approach (game/move API):** We use **Convex** for type-safe queries and mutations. Types flow from Convex function definitions (`apps/web/convex/games.ts`) to the frontend via `convex/_generated`; no separate API layer or code generation. See [`convex-auth-data.md`](./convex-auth-data.md) and `@.cursor/rules/convex.mdc`.
 
 The sections below also describe **tRPC** as an alternative or historical context; the app no longer uses tRPC for games/moves.
 

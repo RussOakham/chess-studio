@@ -15,13 +15,13 @@ const fixturePath = path.join(
 
 describe("fenForExplorerCacheKey", () => {
   it("drops halfmove and fullmove fields", () => {
-    const a = fenForExplorerCacheKey(
+    const keyWithoutPly = fenForExplorerCacheKey(
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     );
-    const b = fenForExplorerCacheKey(
+    const keyWithDifferentPly = fenForExplorerCacheKey(
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 5 3"
     );
-    expect(a).toBe(b);
+    expect(keyWithoutPly).toBe(keyWithDifferentPly);
   });
 });
 

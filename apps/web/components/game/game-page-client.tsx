@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
@@ -105,6 +106,40 @@ function TurnStatusIndicator({
       <span className="text-sm text-muted-foreground">{label}</span>
     </div>
   );
+}
+
+function GameInfoTurnOrResult({
+  game,
+  makeMove,
+  isEngineTurn,
+  isCalculating,
+  currentTurn,
+}: {
+  game: Doc<"games">;
+  makeMove: { isError: boolean; isPending: boolean };
+  isEngineTurn: boolean;
+  isCalculating: boolean;
+  currentTurn: string | null;
+}) {
+  if (game.status === "in_progress") {
+    return (
+      <TurnStatusIndicator
+        makeMove={makeMove}
+        isEngineTurn={isEngineTurn}
+        isCalculating={isCalculating}
+        currentTurn={currentTurn}
+      />
+    );
+  }
+  if (game.result) {
+    return (
+      <>
+        <span className="font-medium text-foreground">Result:</span>{" "}
+        <span className="capitalize">{game.result.replaceAll("_", " ")}</span>
+      </>
+    );
+  }
+  return "—";
 }
 
 /**
@@ -393,25 +428,13 @@ function GamePageContent({
                   </span>
                 </div>
                 <div className="flex items-center text-muted-foreground">
-                  {game.status === "in_progress" ? (
-                    <TurnStatusIndicator
-                      makeMove={makeMove}
-                      isEngineTurn={isEngineTurn}
-                      isCalculating={isCalculating}
-                      currentTurn={currentTurn}
-                    />
-                  ) : game.result ? (
-                    <>
-                      <span className="font-medium text-foreground">
-                        Result:
-                      </span>{" "}
-                      <span className="capitalize">
-                        {game.result.replaceAll("_", " ")}
-                      </span>
-                    </>
-                  ) : (
-                    "—"
-                  )}
+                  <GameInfoTurnOrResult
+                    game={game}
+                    makeMove={makeMove}
+                    isEngineTurn={isEngineTurn}
+                    isCalculating={isCalculating}
+                    currentTurn={currentTurn}
+                  />
                 </div>
                 <div className="text-muted-foreground">
                   <span className="font-medium text-foreground">Created:</span>{" "}
@@ -510,9 +533,7 @@ function GamePageContent({
                   href={reviewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={
-                    buttonVariants({ size: "lg" }) + " inline-flex w-full"
-                  }
+                  className={`${buttonVariants({ size: "lg" })} inline-flex w-full`}
                   aria-label="Open Game Review in new tab"
                 >
                   Game Review

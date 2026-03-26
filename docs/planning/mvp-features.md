@@ -4,6 +4,8 @@
 
 This document outlines the MVP feature set for a slimmed-down chess.com clone. Features are organized by priority and implementation phase.
 
+**Implementation status:** The live game vs engine flow, Convex-backed persistence, review UI, Lichess explorer enrichment, and most analysis features are implemented; see [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the authoritative phased checklist. This file remains a product backlog; checkboxes below are not automatically synced.
+
 ## Core MVP Features (Phase 1 - Must Have)
 
 ### 1. User Authentication & Profile
