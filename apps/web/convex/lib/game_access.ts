@@ -1,10 +1,12 @@
 import type { Doc, Id } from "../_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 
 /**
  * Better Auth JWT subject for the current caller. Throws if not signed in.
  */
-async function getAuthedUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+async function getAuthedUserId(
+  ctx: QueryCtx | MutationCtx | ActionCtx
+): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (identity === null) {
     throw new Error("Not authenticated");

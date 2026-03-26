@@ -109,7 +109,7 @@ const list = authedQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(gameValidator),
   handler: async ({ userId, db }, args) => {
-    const limit = Math.min(args.limit ?? 50, 100);
+    const limit = Math.max(1, Math.min(args.limit ?? 50, 100));
     return await db
       .query("games")
       .withIndex("by_userId_updatedAt", (idx) => idx.eq("userId", userId))
@@ -230,6 +230,9 @@ const resign = ownedGameMutation({
       throw new Error("Game is not in progress");
     }
     // Resigning player loses; opponent wins. game.color is the user's color.
+    if (game.color !== "white" && game.color !== "black") {
+      throw new Error("Cannot resign: invalid player color on this game");
+    }
     const result: "white_wins" | "black_wins" =
       game.color === "white" ? "black_wins" : "white_wins";
     await db.patch(args.gameId, {
