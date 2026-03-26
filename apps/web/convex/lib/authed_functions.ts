@@ -7,7 +7,7 @@ import {
 import { v } from "convex/values";
 
 import { mutation, query } from "../_generated/server";
-import { getAuthedUserId, requireOwnedGame } from "./game-access";
+import { getAuthedUserId, requireOwnedGame } from "./game_access";
 
 /**
  * Queries/mutations that require a signed-in user. Handlers receive `ctx.userId`

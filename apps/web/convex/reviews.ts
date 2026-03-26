@@ -6,7 +6,7 @@ import { v } from "convex/values";
  */
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { ownedGameMutation, ownedGameQuery } from "./lib/authed-functions";
+import { ownedGameMutation, ownedGameQuery } from "./lib/authed_functions";
 
 const MAX_KEY_MOMENTS = 20;
 const MAX_SUGGESTIONS = 10;

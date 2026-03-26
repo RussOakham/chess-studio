@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 /**
  * Convex queries and mutations for games and moves.
- * Auth via custom wrappers in `./lib/authed-functions` (Better Auth JWT).
+ * Auth via custom wrappers in `./lib/authed_functions` (Better Auth JWT).
  */
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -11,7 +11,7 @@ import {
   authedQuery,
   ownedGameMutation,
   ownedGameQuery,
-} from "./lib/authed-functions";
+} from "./lib/authed_functions";
 import {
   gameValidator,
   makeMoveReturnMoveValidator,
