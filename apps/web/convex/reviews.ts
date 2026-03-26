@@ -2,12 +2,11 @@ import { v } from "convex/values";
 
 /**
  * Convex queries and mutations for game reviews (post-game analysis).
- * Auth: caller must own the game. Only completed games can have reviews saved.
+ * Auth: caller must own the game (ownedGame* wrappers). Only completed games can have reviews saved.
  */
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
-import { requireOwnedGame } from "./lib/game-access";
+import { ownedGameMutation, ownedGameQuery } from "./lib/authed-functions";
 
 const MAX_KEY_MOMENTS = 20;
 const MAX_SUGGESTIONS = 10;
@@ -31,8 +30,8 @@ const moveAnnotationValidator = v.object({
   bookOpeningName: v.optional(v.string()),
 });
 
-const getByGameId = query({
-  args: { gameId: v.id("games") },
+const getByGameId = ownedGameQuery({
+  args: {},
   returns: v.union(
     v.object({
       _id: v.id("game_reviews"),
@@ -48,9 +47,8 @@ const getByGameId = query({
     }),
     v.null()
   ),
-  handler: async (ctx, args) => {
-    await requireOwnedGame(ctx, args.gameId);
-    const review = await ctx.db
+  handler: async ({ db }, args) => {
+    const review = await db
       .query("game_reviews")
       .withIndex("by_gameId", (indexQuery) =>
         indexQuery.eq("gameId", args.gameId)
@@ -114,9 +112,8 @@ async function saveReviewInternal(
   });
 }
 
-const save = mutation({
+const save = ownedGameMutation({
   args: {
-    gameId: v.id("games"),
     summary: v.string(),
     evaluations: v.optional(v.array(v.number())),
     keyMoments: v.optional(v.array(v.string())),
@@ -126,8 +123,7 @@ const save = mutation({
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
-    const game = await requireOwnedGame(ctx, args.gameId);
-    if (game.status !== "completed") {
+    if (ctx.game.status !== "completed") {
       throw new Error("Only completed games can be analyzed");
     }
 
