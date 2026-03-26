@@ -4,29 +4,29 @@
 
 **Request:** Coordinate validation, migrations, and release checks across the related game-review workstreams:
 
-- Extended move classifications (`docs/temp/game-review-move-classifications.temp.md`)
-- Evaluation timeline UI (`docs/temp/game-review-evaluation-timeline.temp.md`)
-- Board overlays in review — **spec lives in this doc** ([Board overlays](#board-overlays); replaces `docs/temp/game-review-board-overlays.temp.md`)
-- Board move-quality **badges on squares** (Chess.com style — `docs/temp/game-review-board-move-quality-badges.temp.md`)
-- Lichess Opening Explorer (`docs/temp/lichess-opening-explorer-integration.temp.md`)
+- Extended move classifications (inaccuracy + shared annotation types)
+- Evaluation timeline UI (`EvaluationSparkline`, backfill, `EvaluationBar`)
+- Board overlays in review — **spec lives in this doc** ([Board overlays](#board-overlays))
+- Board move-quality **badges on squares** (Chess.com–style glyphs on destination square)
+- Lichess Opening Explorer (book moves, cache, `openingNameLichess`)
 
 This doc is **not** a standalone feature—it is a **rollout and QA** checklist so shipping order and regression coverage stay explicit.
 
 ### Current status (rolling)
 
-| Workstream                                                                     | Status                                                                                                                                                                                                                                            |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Move classifications (`game-review-move-classifications.temp.md`)              | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                                                   |
-| Evaluation timeline                                                            | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores.                               |
-| Board overlays                                                                 | **Done (MVP)** — mid-review: engine line arrows always when data exists; `fenBefore` + arrows via `review-board-overlays.ts`; optional `bestMoveUci` on new analyses.                                                                             |
-| On-board move quality badges (`game-review-board-move-quality-badges.temp.md`) | **Done** — mid-review: circular glyph on **to** square (`ReviewMoveQualityBadge` + `chess-square-layout`); parity with timeline via `shouldShowTimelineMarker`.                                                                                   |
-| Lichess Opening Explorer                                                       | **Done** — `book` on `MoveAnnotationType`; `api.lichess_explorer.batchExplorerMasters` + `lichess_explorer_cache`; batched prefetch in `run-game-analysis`; `openingNameLichess` on reviews; set `LICHESS_API_TOKEN` in Convex for upstream auth. |
+| Workstream                   | Status                                                                                                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Move classifications         | Done (inaccuracy + shared types; draft PR #18).                                                                                                                                                                                                   |
+| Evaluation timeline          | **Done** — `EvaluationSparkline` (area, markers, playhead, seek); overview + mid-review; `review.evaluations` backfill when missing/mismatched (auto `runAnalysis`, capped retries); `EvaluationBar` in-bar scores.                               |
+| Board overlays               | **Done (MVP)** — mid-review: engine line arrows always when data exists; `fenBefore` + arrows via `review-board-overlays.ts`; optional `bestMoveUci` on new analyses.                                                                             |
+| On-board move quality badges | **Done** — mid-review: circular glyph on **to** square (`ReviewMoveQualityBadge` + `chess-square-layout`); parity with timeline via `shouldShowTimelineMarker`.                                                                                   |
+| Lichess Opening Explorer     | **Done** — `book` on `MoveAnnotationType`; `api.lichess_explorer.batchExplorerMasters` + `lichess_explorer_cache`; batched prefetch in `run-game-analysis`; `openingNameLichess` on reviews; set `LICHESS_API_TOKEN` in Convex for upstream auth. |
 
 ---
 
 ## Board overlays
 
-**Canonical spec:** This section (not a separate `docs/temp/` file). The former `docs/temp/game-review-board-overlays.temp.md` path is retired.
+**Canonical spec:** This section is the source of truth for board overlays in review.
 
 **Intent:** On the review board, visualize engine-backed hints (best-move + played-move arrows, light square highlights) using **`moveAnnotations`**, Convex **`moves`** (`fenBefore`, `moveUci`), and optional **`bestMoveUci`** from analysis.
 

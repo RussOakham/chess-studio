@@ -1,6 +1,6 @@
 # Convex, auth, and data
 
-Canonical reference for how the app uses Convex and authentication (replaces ad-hoc notes in `docs/temp/migrate-convex.temp.md`).
+Canonical reference for how the app uses Convex and authentication.
 
 ## Stack
 

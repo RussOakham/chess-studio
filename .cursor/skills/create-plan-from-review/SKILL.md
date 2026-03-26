@@ -16,14 +16,14 @@ Turn review output (Convex Reviewer or Vercel React best-practices) into a struc
 
 1. **Use the review output** (list of improvements, findings, or recommendations).
 2. **Choose plan location:**
-   - **Tracked in repo:** `docs/implementation/<name>.md` (e.g. `react-next-improvement-plan.md`).
-   - **Local only (gitignored):** `docs/temp/<name>.temp.md` (e.g. `convex-improvements.temp.md`). Use for work-in-progress or personal checklists.
+   - **Tracked in repo (preferred for anything others should follow):** `docs/implementation/<name>.md` (e.g. `react-next-improvement-plan.md`).
+   - **Personal scratch only:** Developers may keep a private `.temp.md` or notes **outside** git-tracked references (see `docs/temp/README.md`). Do **not** put paths to `.temp.md` files from tracked docs or skills.
 3. **Structure the plan:**
    - Overview and scope.
    - Phases with clear goals; per-phase task list with `- [ ]` checkboxes.
    - Suggested order and dependencies (optionally a short flowchart or list).
    - "Files to touch" or "References" summary table if helpful.
-4. **If the user wants the plan updated as work completes:** State clearly that the temp doc (or a designated section) is the single checklist; after each phase, check off items and add a short Status line.
+4. **If the user wants the plan updated as work completes:** State clearly which **tracked** checklist section is the single source of truth; after each phase, check off items and add a short Status line.
 5. **Optionally:** Add a reference to the plan in the relevant rule or AGENTS.md if it is a recurring workflow.
 
 ## Plan format example
