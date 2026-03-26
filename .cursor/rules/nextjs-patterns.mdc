@@ -65,7 +65,7 @@ export function GamePageClient({ gameId }: { gameId: string }) {
 - **Pages**: `page.tsx` (App Router convention)
 - **Layouts**: `layout.tsx`
 - **Components**: `kebab-case.tsx` (e.g. `game-page-client.tsx`, `move-history-card.tsx`) — repo convention is kebab-case for component filenames.
-- **Utilities and hooks**: `kebab-case.ts` (e.g. `use-game.ts`, `convex-id.ts`)
+- **Utilities and hooks**: `kebab-case.ts` (e.g. `use-game.ts`, `convex-id.ts`); shared Zod for route params lives under `lib/validation/` (e.g. `game-id.ts`).
 - **Types**: `kebab-case.types.ts` or `types.ts`
 
 ## Route Structure
