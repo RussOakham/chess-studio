@@ -1,5 +1,6 @@
 import type { Id } from "@/convex/_generated/dataModel";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
 /**
  * URL / route segment pattern for Convex `games` document ids (alphanumeric, `_`, `-`).
@@ -21,13 +22,30 @@ function isPlausibleGameId(value: string): boolean {
   return gameIdParamSchema.safeParse(value).success;
 }
 
+const SANITIZED_GAME_ID_MAX_LEN = 100;
+
+/**
+ * Trim, escape newlines for safe one-line error text, cap length (no secrets).
+ */
+function sanitizeValueForGameIdError(raw: string): string {
+  const trimmed = raw.trim();
+  const escaped = trimmed.replace(/\r\n|\r|\n/g, String.raw`\\n`);
+  return escaped.length > SANITIZED_GAME_ID_MAX_LEN
+    ? `${escaped.slice(0, SANITIZED_GAME_ID_MAX_LEN)}…`
+    : escaped;
+}
+
 /**
  * Parse and narrow to `Id<"games">` after Zod validation. Throws if invalid.
  */
 function parseGameIdParam(value: string): Id<"games"> {
   const result = gameIdParamSchema.safeParse(value);
   if (!result.success) {
-    throw new Error("Invalid game ID");
+    const sanitizedValue = sanitizeValueForGameIdError(value);
+    const validationMessage = fromZodError(result.error).message;
+    throw new Error(
+      `Invalid game ID: "${sanitizedValue}" - ${validationMessage}`
+    );
   }
   // eslint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Branded after schema matches Convex id charset
   return result.data as Id<"games">;
