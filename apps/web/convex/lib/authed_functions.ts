@@ -1,4 +1,5 @@
 import {
+  customAction,
   customCtx,
   customCtxAndArgs,
   customMutation,
@@ -6,7 +7,7 @@ import {
 } from "convex-helpers/server/customFunctions";
 import { v } from "convex/values";
 
-import { mutation, query } from "../_generated/server";
+import { action, mutation, query } from "../_generated/server";
 import { getAuthedUserId, requireOwnedGame } from "./game_access";
 
 /**
@@ -23,6 +24,18 @@ const authedQuery = customQuery(
 
 const authedMutation = customMutation(
   mutation,
+  customCtx(async (ctx) => {
+    const userId = await getAuthedUserId(ctx);
+    return { userId };
+  })
+);
+
+/**
+ * Actions that require a signed-in user. Handlers receive `ctx.userId`
+ * (Better Auth JWT subject). Use `v` validators for `args` when defining functions.
+ */
+const authedAction = customAction(
+  action,
   customCtx(async (ctx) => {
     const userId = await getAuthedUserId(ctx);
     return { userId };
@@ -55,4 +68,10 @@ const ownedGameMutation = customMutation(
   })
 );
 
-export { authedMutation, authedQuery, ownedGameMutation, ownedGameQuery };
+export {
+  authedAction,
+  authedMutation,
+  authedQuery,
+  ownedGameMutation,
+  ownedGameQuery,
+};

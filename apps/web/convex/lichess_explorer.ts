@@ -8,7 +8,7 @@ import { fenForExplorerCacheKey } from "../lib/lichess/fen-for-explorer-cache";
 import { fetchOpeningExplorerMasters } from "../lib/lichess/fetch-opening-explorer";
 import { LICHESS_EXPLORER_MAX_FENS_PER_BATCH } from "../lib/lichess/lichess-explorer-batch";
 import { internal } from "./_generated/api";
-import { action } from "./_generated/server";
+import { authedAction } from "./lib/authed_functions";
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const BETWEEN_FETCH_MS = 120;
@@ -22,7 +22,7 @@ function cacheKeyForFen(fen: string): string {
  * Uses Convex cache with TTL; respects fair-use spacing between upstream calls.
  * At most `LICHESS_EXPLORER_MAX_FENS_PER_BATCH` FENs per call — larger inputs throw (chunk on the client).
  */
-const batchExplorerMasters = action({
+const batchExplorerMasters = authedAction({
   args: { fens: v.array(v.string()) },
   returns: v.array(
     v.object({
@@ -31,11 +31,6 @@ const batchExplorerMasters = action({
     })
   ),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
     const { fens } = args;
     if (fens.length > LICHESS_EXPLORER_MAX_FENS_PER_BATCH) {
       throw new Error(

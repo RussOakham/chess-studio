@@ -4,14 +4,17 @@ How this repo structures authentication, game ownership, and string/id validatio
 
 ## Custom function wrappers (`convex-helpers`)
 
-Use **`authedQuery`**, **`authedMutation`**, **`ownedGameQuery`**, and **`ownedGameMutation`** from `apps/web/convex/lib/authed_functions.ts` instead of repeating `getUserIdentity` and ownership checks in every handler.
+Use **`authedQuery`**, **`authedMutation`**, **`authedAction`**, **`ownedGameQuery`**, and **`ownedGameMutation`** from `apps/web/convex/lib/authed_functions.ts` instead of repeating `getUserIdentity` and ownership checks in every handler.
 
 | Builder                                | When to use                               | What the handler gets                          |
 | -------------------------------------- | ----------------------------------------- | ---------------------------------------------- |
 | `authedQuery` / `authedMutation`       | Caller must be signed in                  | `ctx.userId` (Better Auth JWT subject)         |
+| `authedAction`                         | Signed-in action; Convex `v` args         | `ctx.userId`                                   |
 | `ownedGameQuery` / `ownedGameMutation` | Caller must own the game in `args.gameId` | `ctx.game` (loaded document) and `args.gameId` |
 
-Convex `args` still use **`v` validators** from `convex/values` (for example `gameId: v.id("games")` on owned-game builders). The `input` hook runs **`requireOwnedGame`** before your handler.
+Convex `args` still use **`v` validators** from `convex/values` for query/mutation builders (for example `gameId: v.id("games")` on owned-game builders). The `input` hook runs **`requireOwnedGame`** before your handler.
+
+For **actions**, use **`authedAction`** with **`v` args** (see `apps/web/convex/lichess_explorer.ts`). Prefer validating richer shapes in the handler (or shared helpers) when `v` is enough at the boundary.
 
 ## Low-level access helpers
 
@@ -33,10 +36,13 @@ Parse errors use **`zod-validation-error`** (`fromZodError`) so messages stay re
 
 ## `v` vs Zod
 
-- **Inside Convex `args`:** keep using **`v.*`** so the Convex validator story stays consistent and ESLint rules stay satisfied.
+- **Queries and mutations:** keep using **`v.*`** for `args` unless you adopt **`zCustomQuery` / `zCustomMutation`** from **`convex-helpers/server/zod4`** for Zod-defined server args. Compose them with **`customQuery` / `customMutation`** and the same auth `input` pattern as `authed_functions` (see `convex-helpers` docs).
 - **Shared string shapes and client parsing:** use **Zod** in `lib/validation/` (and re-export from `lib/convex-id.ts` if you want a stable import path).
+- **Actions:** use **`authedAction`** with **`v` args**. **`zCustomAction`** (`zod4`) can fail Convex module analysis for **`"use node"`** entrypoints in some setups; re-check with `npx convex codegen` before relying on Zod `args` for Node actions.
 
-Optional later: **`convex-helpers/server/zod`** (`zCustomQuery` / `zCustomMutation`) for Zod-defined args on the server. This repo does not require it for the current game-id flow.
+## Related: `convex-helpers/server/zod4`
+
+For **Zod-defined Convex function arguments** on the server, **`convex-helpers/server/zod4`** exposes **`zCustomQuery`**, **`zCustomMutation`**, and **`zCustomAction`**, plus **`zodToConvex`** / **`zid`** helpers. Use them when you need Zod refinements beyond what `v` expresses, and run **`npx convex codegen`** to confirm the bundle analyzes cleanly.
 
 ## Related docs
 
