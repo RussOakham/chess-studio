@@ -116,12 +116,17 @@
       }
     },
     {
+      "files": ["**/apps/web/convex/**/*.ts"],
+      "rules": {
+        "unicorn/filename-case": "off"
+      }
+    },
+    {
       "files": [
         "**/apps/web/convex/lichess_explorer.ts",
         "**/apps/web/convex/lichess_explorer_cache.ts"
       ],
       "rules": {
-        "unicorn/filename-case": "off",
         "no-await-in-loop": "off"
       }
     },

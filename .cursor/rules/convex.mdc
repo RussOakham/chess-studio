@@ -10,6 +10,7 @@ Follow [Convex docs](https://docs.convex.dev) and these rules when editing `conv
 ## Imports and generated code
 
 - Import `query`, `mutation`, `action` from `"./_generated/server"` (or `"convex/_generated/server"` as appropriate).
+- For **authenticated** or **owned-game** handlers, prefer builders from `convex/lib/authed_functions.ts` (`authedQuery`, `authedMutation`, `ownedGameQuery`, `ownedGameMutation`) built on `convex-helpers/server/customFunctions` instead of calling `getAuthedUserId` / `requireOwnedGame` at the start of every handler. Convex module path segments must not contain hyphens (use underscores in filenames under `convex/`).
 - Import `v` from `"convex/values"`.
 - Import `api` or `internal` from `"./_generated/api"` when calling other functions (e.g. from actions).
 - Run `npx convex dev` so `_generated` is up to date; types depend on it.

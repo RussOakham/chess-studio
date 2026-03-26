@@ -3,11 +3,15 @@ import { v } from "convex/values";
 
 /**
  * Convex queries and mutations for games and moves.
- * Auth via ctx.auth.getUserIdentity() (Better Auth JWT).
+ * Auth via custom wrappers in `./lib/authed_functions` (Better Auth JWT).
  */
 import type { Doc } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
-import { getAuthedUserId, requireOwnedGame } from "./lib/game-access";
+import {
+  authedMutation,
+  authedQuery,
+  ownedGameMutation,
+  ownedGameQuery,
+} from "./lib/authed_functions";
 import {
   gameValidator,
   makeMoveReturnMoveValidator,
@@ -78,23 +82,22 @@ function applyMove(
   };
 }
 
-const getById = query({
-  args: { gameId: v.id("games") },
+const getById = ownedGameQuery({
+  args: {},
   returns: gameValidator,
-  handler: async (ctx, args) => {
-    return await requireOwnedGame(ctx, args.gameId);
+  handler: async ({ game }) => {
+    return game;
   },
 });
 
 /** Maximum moves returned per game (long games are capped). */
 const GET_MOVES_CAP = 500;
 
-const getMoves = query({
-  args: { gameId: v.id("games") },
+const getMoves = ownedGameQuery({
+  args: {},
   returns: v.array(moveValidator),
-  handler: async (ctx, args) => {
-    await requireOwnedGame(ctx, args.gameId);
-    return await ctx.db
+  handler: async ({ db }, args) => {
+    return await db
       .query("moves")
       .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
       .order("asc")
@@ -102,13 +105,12 @@ const getMoves = query({
   },
 });
 
-const list = query({
+const list = authedQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(gameValidator),
-  handler: async (ctx, args) => {
-    const userId = await getAuthedUserId(ctx);
+  handler: async ({ userId, db }, args) => {
     const limit = Math.min(args.limit ?? 50, 100);
-    return await ctx.db
+    return await db
       .query("games")
       .withIndex("by_userId_updatedAt", (idx) => idx.eq("userId", userId))
       .order("desc")
@@ -116,7 +118,7 @@ const list = query({
   },
 });
 
-const create = mutation({
+const create = authedMutation({
   args: {
     difficulty: v.union(
       v.literal("easy"),
@@ -130,8 +132,7 @@ const create = mutation({
     status: v.string(),
     fen: v.string(),
   }),
-  handler: async (ctx, args) => {
-    const userId = await getAuthedUserId(ctx);
+  handler: async ({ userId, db }, args) => {
     const now = Date.now();
     const resolvedColor = (): "white" | "black" => {
       if (args.color === "random") {
@@ -140,7 +141,7 @@ const create = mutation({
       return args.color;
     };
     const color = resolvedColor();
-    const gameId = await ctx.db.insert("games", {
+    const gameId = await db.insert("games", {
       userId,
       status: "in_progress",
       difficulty: args.difficulty,
@@ -149,7 +150,7 @@ const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    const game = await ctx.db.get(gameId);
+    const game = await db.get(gameId);
     if (game === null) {
       throw new Error("Failed to create game");
     }
@@ -157,9 +158,8 @@ const create = mutation({
   },
 });
 
-const makeMove = mutation({
+const makeMove = ownedGameMutation({
   args: {
-    gameId: v.id("games"),
     from: v.string(),
     to: v.string(),
     promotion: v.optional(
@@ -171,8 +171,7 @@ const makeMove = mutation({
     game: gameValidator,
     move: makeMoveReturnMoveValidator,
   }),
-  handler: async (ctx, args) => {
-    const game = await requireOwnedGame(ctx, args.gameId);
+  handler: async ({ game, db }, args) => {
     if (game.status !== "in_progress") {
       throw new Error("Game is not in progress");
     }
@@ -184,7 +183,7 @@ const makeMove = mutation({
       args.promotion
     );
 
-    const existingMoves = await ctx.db
+    const existingMoves = await db
       .query("moves")
       .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
       .order("desc")
@@ -192,7 +191,7 @@ const makeMove = mutation({
     const lastMove = existingMoves.length > 0 ? existingMoves[0] : null;
     const moveNumber = (lastMove?.moveNumber ?? 0) + 1;
 
-    await ctx.db.insert("moves", {
+    await db.insert("moves", {
       gameId: args.gameId,
       moveNumber,
       moveSan: move.san,
@@ -202,7 +201,7 @@ const makeMove = mutation({
       createdAt: Date.now(),
     });
 
-    await ctx.db.patch(args.gameId, {
+    await db.patch(args.gameId, {
       fen: fenAfter,
       pgn,
       status,
@@ -210,7 +209,7 @@ const makeMove = mutation({
       updatedAt: Date.now(),
     });
 
-    const updatedGame = await ctx.db.get(args.gameId);
+    const updatedGame = await db.get(args.gameId);
     if (updatedGame === null) {
       throw new Error("Game not found after update");
     }
@@ -223,18 +222,17 @@ const makeMove = mutation({
   },
 });
 
-const resign = mutation({
-  args: { gameId: v.id("games") },
+const resign = ownedGameMutation({
+  args: {},
   returns: v.object({ success: v.literal(true) }),
-  handler: async (ctx, args) => {
-    const game = await requireOwnedGame(ctx, args.gameId);
+  handler: async ({ game, db }, args) => {
     if (game.status !== "in_progress") {
       throw new Error("Game is not in progress");
     }
     // Resigning player loses; opponent wins. game.color is the user's color.
     const result: "white_wins" | "black_wins" =
       game.color === "white" ? "black_wins" : "white_wins";
-    await ctx.db.patch(args.gameId, {
+    await db.patch(args.gameId, {
       status: "completed",
       result,
       updatedAt: Date.now(),
