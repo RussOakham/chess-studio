@@ -5,9 +5,9 @@ import { v } from "convex/values";
  * Convex queries and mutations for games and moves.
  * Auth via ctx.auth.getUserIdentity() (Better Auth JWT).
  */
-import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { getAuthedUserId, requireOwnedGame } from "./lib/game-access";
 import {
   gameValidator,
   makeMoveReturnMoveValidator,
@@ -15,30 +15,6 @@ import {
 } from "./validators";
 
 const INITIAL_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity === null) {
-    throw new Error("Not authenticated");
-  }
-  return identity.subject;
-}
-
-/** Throws if not authenticated or game not found or not owned by caller. */
-async function requireGameAccess(
-  ctx: QueryCtx | MutationCtx,
-  gameId: Id<"games">
-): Promise<Doc<"games">> {
-  const userId = await getUserId(ctx);
-  const game = await ctx.db.get(gameId);
-  if (game === null) {
-    throw new Error("Game not found");
-  }
-  if (game.userId !== userId) {
-    throw new Error("You do not have access to this game");
-  }
-  return game;
-}
 
 type GameStatus = "waiting" | "in_progress" | "completed" | "abandoned";
 type GameResult = "white_wins" | "black_wins" | "draw";
@@ -106,7 +82,7 @@ const getById = query({
   args: { gameId: v.id("games") },
   returns: gameValidator,
   handler: async (ctx, args) => {
-    return await requireGameAccess(ctx, args.gameId);
+    return await requireOwnedGame(ctx, args.gameId);
   },
 });
 
@@ -117,7 +93,7 @@ const getMoves = query({
   args: { gameId: v.id("games") },
   returns: v.array(moveValidator),
   handler: async (ctx, args) => {
-    await requireGameAccess(ctx, args.gameId);
+    await requireOwnedGame(ctx, args.gameId);
     return await ctx.db
       .query("moves")
       .withIndex("by_gameId_moveNumber", (idx) => idx.eq("gameId", args.gameId))
@@ -130,7 +106,7 @@ const list = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(gameValidator),
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
+    const userId = await getAuthedUserId(ctx);
     const limit = Math.min(args.limit ?? 50, 100);
     return await ctx.db
       .query("games")
@@ -155,7 +131,7 @@ const create = mutation({
     fen: v.string(),
   }),
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
+    const userId = await getAuthedUserId(ctx);
     const now = Date.now();
     const resolvedColor = (): "white" | "black" => {
       if (args.color === "random") {
@@ -196,7 +172,7 @@ const makeMove = mutation({
     move: makeMoveReturnMoveValidator,
   }),
   handler: async (ctx, args) => {
-    const game = await requireGameAccess(ctx, args.gameId);
+    const game = await requireOwnedGame(ctx, args.gameId);
     if (game.status !== "in_progress") {
       throw new Error("Game is not in progress");
     }
@@ -251,7 +227,7 @@ const resign = mutation({
   args: { gameId: v.id("games") },
   returns: v.object({ success: v.literal(true) }),
   handler: async (ctx, args) => {
-    const game = await requireGameAccess(ctx, args.gameId);
+    const game = await requireOwnedGame(ctx, args.gameId);
     if (game.status !== "in_progress") {
       throw new Error("Game is not in progress");
     }

@@ -17,6 +17,7 @@ Canonical reference for how the app uses Convex and authentication.
 
 - `apps/web/convex/schema.ts` — table definitions.
 - `apps/web/convex/auth.ts` — Better Auth integration with Convex.
+- `apps/web/convex/lib/game-access.ts` — shared helpers: `getAuthedUserId`, `requireOwnedGame` (JWT subject + game ownership).
 - `apps/web/convex/games.ts`, `reviews.ts`, `lichess_explorer.ts`, `lichess_explorer_cache.ts` — domain Convex functions (queries, mutations, actions).
 
 ## Lichess Opening Explorer (optional)
