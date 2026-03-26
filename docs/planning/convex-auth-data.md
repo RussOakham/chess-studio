@@ -13,6 +13,10 @@ Canonical reference for how the app uses Convex and authentication.
 - **`NEXT_PUBLIC_CONVEX_URL`** — Convex deployment URL (Uniform Resource Locator); use the value from the dashboard or `npx convex dev`.
 - Better Auth secrets (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc.) as required by your hosting setup.
 
+## Validation and access patterns
+
+See **[Convex validation and access patterns](./convex-validation-patterns.md)** for when to use `authed_functions` wrappers, `game_access`, and Zod for shared id parsing.
+
 ## Code map
 
 - `apps/web/lib/validation/game-id.ts` — Zod schema and helpers for game id strings from URLs/props (`gameIdParamSchema`, `parseGameIdParam`); `@/lib/convex-id` re-exports for stable imports.
