@@ -63,22 +63,27 @@ const batchExplorerMasters = action({
       if (cached !== null && now - cached.fetchedAt < CACHE_TTL_MS) {
         results.push({ cacheKey, payloadJson: cached.payloadJson });
       } else {
-        const data = await fetchOpeningExplorerMasters(fen);
-        if (data === null) {
-          await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
-            cacheKey,
-            payloadJson: null,
-            fetchedAt: now,
-          });
+        try {
+          const data = await fetchOpeningExplorerMasters(fen);
+          if (data === null) {
+            await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
+              cacheKey,
+              payloadJson: null,
+              fetchedAt: now,
+            });
+            results.push({ cacheKey, payloadJson: null });
+          } else {
+            const json = JSON.stringify(data);
+            await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
+              cacheKey,
+              payloadJson: json,
+              fetchedAt: now,
+            });
+            results.push({ cacheKey, payloadJson: json });
+          }
+        } catch {
+          /* Upstream/network error for this FEN only: omit cache write; client still gets a row. */
           results.push({ cacheKey, payloadJson: null });
-        } else {
-          const json = JSON.stringify(data);
-          await ctx.runMutation(internal.lichess_explorer_cache.upsertEntry, {
-            cacheKey,
-            payloadJson: json,
-            fetchedAt: now,
-          });
-          results.push({ cacheKey, payloadJson: json });
         }
 
         await delay(BETWEEN_FETCH_MS);

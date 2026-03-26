@@ -580,7 +580,7 @@ await db.insert(moves).values({
 });
 ```
 
-### API (Convex queries and mutations)
+### Convex function surface (queries, mutations, actions)
 
 1. `api.games.create` - Create new game ✅ **Implemented**
 2. `api.games.list` - List user's games ✅ **Implemented**

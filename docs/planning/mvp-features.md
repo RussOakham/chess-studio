@@ -4,87 +4,87 @@
 
 This document outlines the MVP feature set for a slimmed-down chess.com clone. Features are organized by priority and implementation phase.
 
-**Implementation status:** The live game vs engine flow, Convex-backed persistence, review UI, Lichess explorer enrichment, and most analysis features are implemented; see [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the authoritative phased checklist. This file remains a product backlog; checkboxes below are not automatically synced.
+**Implementation status:** See [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the authoritative phased checklist. This file is a **product backlog** (bullets are not completion checkboxes—do not infer shipped vs. not shipped from this list).
 
 ## Core MVP Features (Phase 1 - Must Have)
 
 ### 1. User Authentication & Profile
 
-- [ ] User registration (email/password)
-- [ ] User login/logout
-- [ ] Session management
-- [ ] Basic user profile
+- User registration (email/password)
+- User login/logout
+- Session management
+- Basic user profile
   - Username
   - Email
   - Profile picture (optional for MVP)
-- [ ] Password reset
+- Password reset
 
 ### 2. Chess Game Play
 
-- [ ] Interactive chess board
+- Interactive chess board
   - Drag and drop piece movement
   - Click to select, click to move
   - Visual move indicators (highlight legal moves)
   - Piece animations
-- [ ] Move validation
+- Move validation
   - Enforce chess rules
   - Prevent illegal moves
   - Handle special moves (castling, en passant, promotion)
-- [ ] Game state management
+- Game state management
   - Current position (FEN)
   - Move history (PGN)
   - Turn indicator
   - Game status (in progress, check, checkmate, stalemate, draw)
-- [ ] Game controls
+- Game controls
   - Resign
   - Offer draw
   - Undo move (optional for MVP)
 
 ### 3. Play vs Engine
 
-- [ ] Start new game vs Stockfish engine
-- [ ] Engine difficulty levels (Easy, Medium, Hard)
-- [ ] Engine move calculation
+- Start new game vs Stockfish engine
+- Engine difficulty levels (Easy, Medium, Hard)
+- Engine move calculation
   - Engine makes moves automatically
   - Configurable thinking time
-- [ ] Engine evaluation display
+- Engine evaluation display
   - Position evaluation bar
   - Best move suggestion (optional for MVP)
 
 ### 4. Game History
 
-- [ ] View past games list
+- View past games list
   - Game date/time
   - Opponent (Engine/Human)
   - Result (Win/Loss/Draw)
   - Game type
-- [ ] Game details view
+- Game details view
   - Full move list
   - Replay game (step through moves)
   - Game metadata (duration, result, etc.)
 
 ### 5. Basic Game Analysis
 
-- [ ] Position evaluation
+- Position evaluation
   - Real-time engine evaluation during game
   - Evaluation bar (advantage visualization)
-- [ ] Move analysis
+- Move analysis
   - Show best move
   - Show move evaluation
-- [ ] Post-game analysis
+- Post-game analysis
   - Engine review of completed game
   - Highlight mistakes/blunders
   - Show best moves at key positions
 
 ### 6. AI Move Hints
 
-- [ ] Request hint during game
-- [ ] Show suggested best move
-- [ ] Explain why move is good (optional for MVP)
+- Request hint during game
+- Show suggested best move
+- Explain why move is good (optional for MVP)
 
 ### 7. Game Review with AI Summary
 
-- [ ] Generate AI summary of completed game
+- Generate AI summary of completed game
   - Game overview
   - Key moments
   - Mistakes analysis
@@ -94,114 +94,114 @@ This document outlines the MVP feature set for a slimmed-down chess.com clone. F
 
 ### 8. Game Modes & Time Controls
 
-- [ ] Time controls
+- Time controls
   - Blitz (3+0, 5+0)
   - Rapid (10+0, 15+10)
   - Classical (30+0)
   - Custom time controls
-- [ ] Game modes
+- Game modes
   - Standard chess
   - Chess variants (optional, future)
 
 ### 9. User Ratings
 
-- [ ] ELO rating system
-- [ ] Rating display on profile
-- [ ] Rating history graph
-- [ ] Different ratings per time control
+- ELO rating system
+- Rating display on profile
+- Rating history graph
+- Different ratings per time control
 
 ### 10. Enhanced Game Features
 
-- [ ] Pre-moves
+- Pre-moves
   - Queue moves before your turn
   - Auto-execute when it becomes your turn
   - Cancel pre-move if opponent's move changes the position
   - Visual indicator for queued pre-move
-- [ ] Planned / Draft Move Mode
+- Planned / Draft Move Mode
   - Plan multiple moves in advance
   - Visualize move sequences
   - Draft mode to explore variations
   - Save/load move plans
   - Execute planned moves when ready
-- [ ] 3D Board View
+- 3D Board View
   - Three.js rendering
   - 3D piece models
   - Camera controls
   - Smooth move animations
   - Toggle between 2D and 3D views
-- [ ] Takeback requests (for human vs human)
-- [ ] Draw offers
-- [ ] Move annotations
-- [ ] Game notes
+- Takeback requests (for human vs human)
+- Draw offers
+- Move annotations
+- Game notes
 
 ### 11. Social Features (Basic)
 
-- [ ] Friend system (optional for MVP)
-- [ ] Challenge friends (optional for MVP)
-- [ ] View friend's games (optional for MVP)
+- Friend system (optional for MVP)
+- Challenge friends (optional for MVP)
+- View friend's games (optional for MVP)
 
 ### 12. Notifications
 
-- [ ] Game notifications
+- Game notifications
   - Your turn notifications
   - Game ended notifications
-- [ ] In-app notification center
+- In-app notification center
 
 ## Advanced Features (Phase 3 - Future)
 
 ### 13. Play vs Human
 
-- [ ] Matchmaking system
-- [ ] Challenge system
-- [ ] Live game play
-- [ ] Spectator mode
+- Matchmaking system
+- Challenge system
+- Live game play
+- Spectator mode
 
 ### 14. Puzzles & Training
 
-- [ ] Chess puzzles
-- [ ] Puzzle solving
-- [ ] Puzzle ratings
-- [ ] Daily puzzles
+- Chess puzzles
+- Puzzle solving
+- Puzzle ratings
+- Daily puzzles
 
 ### 15. Lessons & Learning
 
-- [ ] Chess lessons
-- [ ] Opening explorer
-- [ ] Endgame trainer
+- Chess lessons
+- Opening explorer
+- Endgame trainer
 
 ### 16. Tournaments
 
-- [ ] Tournament creation
-- [ ] Tournament participation
-- [ ] Tournament brackets
-- [ ] Tournament results
+- Tournament creation
+- Tournament participation
+- Tournament brackets
+- Tournament results
 
 ### 17. Advanced Analysis
 
-- [ ] Opening book integration
-- [ ] Endgame tablebase
-- [ ] Position search (similar positions)
-- [ ] Game comparison
+- Opening book integration
+- Endgame tablebase
+- Position search (similar positions)
+- Game comparison
 
 ### 18. Vector Search & AI Features
 
-- [ ] Position similarity search (using pgvector)
-- [ ] Pattern recognition
-- [ ] Personalized recommendations
+- Position similarity search (using pgvector)
+- Pattern recognition
+- Personalized recommendations
 
 ## Technical Features (Infrastructure)
 
 ### MVP Technical Requirements
 
-- [ ] Real-time game updates (Convex subscriptions)
-- [ ] Game state persistence
-- [ ] Move history storage
-- [ ] Engine integration (Stockfish)
-- [ ] AI integration (LLM for summaries/hints)
-- [ ] Responsive design (mobile-friendly)
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Basic analytics
+- Real-time game updates (Convex subscriptions)
+- Game state persistence
+- Move history storage
+- Engine integration (Stockfish)
+- AI integration (LLM for summaries/hints)
+- Responsive design (mobile-friendly)
+- Error handling
+- Loading states
+- Basic analytics
 
 ## Feature Prioritization
 
