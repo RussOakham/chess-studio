@@ -1,6 +1,6 @@
 ---
 name: implement-from-plan
-description: Implements an implementation plan phase-by-phase without editing the plan file. Use when the user attaches or references a plan (docs/implementation/*.md, docs/temp/*.temp.md, or Cursor plan) and asks to implement it.
+description: Implements an implementation plan phase-by-phase without editing the plan file. Use when the user attaches or references a plan (docs/implementation/*.md or Cursor plan) and asks to implement it.
 ---
 
 # Implement from Plan
@@ -10,13 +10,13 @@ Work through an implementation plan in order, update checklists as you go, and r
 ## When to use
 
 - User attaches or references an implementation plan and asks to implement it.
-- Plan lives in `docs/implementation/*.md`, `docs/temp/*.temp.md`, or a Cursor plan with phases/todos.
+- Plan lives in `docs/implementation/*.md`, or a Cursor plan with phases/todos. (Personal `.temp.md` scratch is outside shared git history; see `docs/temp/README.md`—do not cite those paths from repo docs.)
 
 ## Steps
 
-1. **Do not edit the plan file** (unless the plan designates a temp doc as the "living checklist" to update).
+1. **Do not edit the plan file** (unless the plan designates a specific section as the living checklist to update).
 2. **Work through phases in order.** Mark todos in progress, then done. Use existing todos if the plan already created them; do not create duplicate todos.
-3. **After each phase (or logical sub-task):** If the plan says to keep a temp doc as single source of truth, update it: check off `- [ ]` items, add a short Status line (e.g. `Status: Done – validators in convex/validators.ts`).
+3. **After each phase (or logical sub-task):** If the plan says to update a checklist in a **tracked** doc, do so: check off `- [ ]` items, add a short Status line (e.g. `Status: Done – validators in convex/validators.ts`).
 4. **After implementation:** Run `pnpm lint:fix`, `pnpm format:fix`, `pnpm type-check`. If markdown changed, run `pnpm lint:md` or `pnpm lint:md:fix`.
 5. **After Convex or React/Next.js changes:** Run Convex reviewer and consider Vercel React best-practices per `@.cursor/rules/convex-react-review.mdc`.
 6. **Do not commit or push** without explicit user permission (per `@.cursor/rules/git-workflow.mdc`).

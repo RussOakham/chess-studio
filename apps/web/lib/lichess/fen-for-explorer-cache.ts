@@ -13,7 +13,7 @@ function fenForExplorerCacheKey(fen: string): string {
   return `${parts[0]} ${parts[1]} ${parts[2]} ${parts[3]}`;
 }
 
-/** Matches Convex `lichessExplorer` action cache keys (masters DB). */
+/** Matches Convex `lichess_explorer` action cache keys (masters DB). */
 function explorerMastersCacheKey(fen: string): string {
   return `${fenForExplorerCacheKey(fen)}|masters`;
 }

@@ -119,11 +119,11 @@ async function runGameAnalysisImpl(
   let bestCount = 0;
 
   let explorerMap = new Map<string, ExplorerMastersResponse | null>();
-  let openingNameLichess: string | undefined;
+  let openingNameLichess: string | undefined = undefined;
 
   if (getExplorerBatch !== undefined && sorted.length > 0) {
     const openingSlice = sorted.slice(0, OPENING_MAX_PLY);
-    const uniqueFens = [...new Set(openingSlice.map((m) => m.fenBefore))];
+    const uniqueFens = [...new Set(openingSlice.map((move) => move.fenBefore))];
     try {
       explorerMap = await getExplorerBatch(uniqueFens);
     } catch {
@@ -147,11 +147,9 @@ async function runGameAnalysisImpl(
       const turn = fenBefore.split(" ")[1] === "b" ? "black" : "white";
 
       /* Sequential calls so Stockfish's isCalculating guard isn't tripped. */
-      /* eslint-disable no-await-in-loop -- intentional: sequential per-move analysis */
       const evalBefore = await getEvaluation(fenBefore);
       const bestMoveResult = await getBestMove(fenBefore, analysisDepth);
       const evalAfter = await getEvaluation(fenAfter);
-      /* eslint-enable no-await-in-loop */
 
       const cpBefore = evalToCp(evalBefore);
       const cpAfter = evalToCp(evalAfter);

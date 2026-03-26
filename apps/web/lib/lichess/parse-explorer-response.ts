@@ -21,6 +21,33 @@ function parseOpening(
   return { eco, name };
 }
 
+function parseMoveRow(
+  row: Record<string, unknown>
+): ExplorerMastersResponse["moves"][number] | null {
+  const { uci } = row;
+  const { san } = row;
+  const whiteCount = row.white;
+  const drawCount = row.draws;
+  const blackCount = row.black;
+  if (
+    typeof uci !== "string" ||
+    typeof san !== "string" ||
+    typeof whiteCount !== "number" ||
+    typeof drawCount !== "number" ||
+    typeof blackCount !== "number"
+  ) {
+    return null;
+  }
+  return {
+    uci,
+    san,
+    white: whiteCount,
+    draws: drawCount,
+    black: blackCount,
+    opening: parseOpening(row.opening),
+  };
+}
+
 /**
  * Parse JSON from Lichess masters explorer into a typed shape; throws if unusable.
  */
@@ -42,31 +69,12 @@ function parseExplorerMastersResponse(raw: unknown): ExplorerMastersResponse {
   }
   const moves: ExplorerMastersResponse["moves"] = [];
   for (const row of movesRaw) {
-    if (!isRecord(row)) {
-      continue;
+    if (isRecord(row)) {
+      const parsed = parseMoveRow(row);
+      if (parsed !== null) {
+        moves.push(parsed);
+      }
     }
-    const { uci } = row;
-    const { san } = row;
-    const w = row.white;
-    const d = row.draws;
-    const b = row.black;
-    if (
-      typeof uci !== "string" ||
-      typeof san !== "string" ||
-      typeof w !== "number" ||
-      typeof d !== "number" ||
-      typeof b !== "number"
-    ) {
-      continue;
-    }
-    moves.push({
-      uci,
-      san,
-      white: w,
-      draws: d,
-      black: b,
-      opening: parseOpening(row.opening),
-    });
   }
   return {
     white,

@@ -22,20 +22,20 @@ See `docs/planning/mvp-features.md` for detailed feature breakdown.
 - **Chess Game vs Engine**: Play games against a chess engine (Stockfish)
 - **Engine Evaluation**: Real-time position evaluation during games
 - **Move Hints**: AI-powered suggestions for best moves
-- **Game Review**: Post-game analysis with AI-generated summaries
+- **Game Review**: Post-game analysis (engine/rule-based review shipped; optional LLM summaries later)
 - **Game History**: Store and review past games
 - **Interactive Chess Board**: Full chess game mechanics with move validation
 
 ## Milestones
 
-- [ ] Project setup and planning
-- [ ] Tech stack selection
-- [ ] Architecture design
-- [ ] Core game implementation
-- [ ] Chess engine integration
-- [ ] AI implementation
-- [ ] UI/UX development
-- [ ] Testing and refinement
+- [x] Project setup and planning
+- [x] Tech stack selection
+- [x] Architecture design (Convex + Next.js; see [`architecture.md`](./architecture.md))
+- [x] Core game implementation (see [`game-implementation-plan.md`](../implementation/game-implementation-plan.md))
+- [x] Chess engine integration (client Stockfish)
+- [ ] AI implementation (optional LLM summaries; engine/rule-based review shipped)
+- [x] UI/UX development (core flows)
+- [ ] Testing and refinement (ongoing)
 
 ## Notes
 

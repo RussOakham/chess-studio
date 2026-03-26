@@ -69,10 +69,13 @@ const config = [
       parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     },
     rules: {
-      "id-length": ["warn", { min: 2, exceptions: ["q", "a", "b"] }],
       "import/group-exports": "off",
       "unicorn/no-array-sort": "off",
       "jest/require-hook": "off",
+      // Convex module paths allow only [a-zA-Z0-9_.]; kebab-case filenames are invalid.
+      "unicorn/filename-case": "off",
+      // Sequential upstream/cache access is intentional (rate limits, ordering).
+      "no-await-in-loop": "off",
     },
   },
 ];

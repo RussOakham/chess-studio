@@ -5,8 +5,12 @@
  * may return 401; set `LICHESS_API_TOKEN` (Personal Access Token) in the Convex
  * deployment for server-side requests.
  *
+ * Sequential `await` in a retry loop is intentional (backoff, rate limits).
+ *
  * @see https://github.com/lichess-org/api/blob/master/doc/specs/tags/openingexplorer/masters.yaml
  */
+
+import { setTimeout as delay } from "node:timers/promises";
 
 import { parseExplorerMastersResponse } from "./parse-explorer-response";
 import type { ExplorerMastersResponse } from "./types";
@@ -25,8 +29,8 @@ function getExplorerBaseUrl(): string {
 
 function getLichessToken(): string | undefined {
   if (typeof process !== "undefined" && process.env?.LICHESS_API_TOKEN) {
-    const t = process.env.LICHESS_API_TOKEN.trim();
-    return t.length > 0 ? t : undefined;
+    const token = process.env.LICHESS_API_TOKEN.trim();
+    return token.length > 0 ? token : undefined;
   }
   return undefined;
 }
@@ -44,9 +48,7 @@ const CLIENT_UA =
   "chess-studio/1.0 (+https://github.com/RussOakham/chess-studio)";
 
 async function sleepMs(ms: number): Promise<void> {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  await delay(ms);
 }
 
 /**
@@ -77,15 +79,20 @@ async function fetchOpeningExplorerMasters(
   };
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-    let res: Response;
+    let response: Response | undefined = undefined;
     try {
-      res = await fetch(url, { method: "GET", headers });
+      response = await fetch(url, { method: "GET", headers });
     } catch (fetchError: unknown) {
       if (attempt < maxRetries) {
         await backoff();
         continue;
       }
       throw fetchError;
+    }
+
+    const res = response;
+    if (res === undefined) {
+      throw new Error("Lichess explorer: missing response");
     }
 
     if (res.status === 429 && attempt < maxRetries) {

@@ -1,13 +1,13 @@
 import type { ExplorerMastersResponse } from "./types";
 
 /** Only tag book moves in the first N full moves (config). */
-export const OPENING_MAX_PLY = 20;
+const OPENING_MAX_PLY = 20;
 
 /** Minimum share of games (0–1) where this continuation was played. */
-export const MIN_BOOK_SHARE = 0.05;
+const MIN_BOOK_SHARE = 0.05;
 
 /** Or: move is among the top K continuations by frequency. */
-export const BOOK_TOP_K = 3;
+const BOOK_TOP_K = 3;
 
 function normalizeUci(uci: string): string {
   return uci.toLowerCase().trim();
@@ -30,13 +30,13 @@ function isBookContinuation(
     return false;
   }
 
-  const scored = response.moves.map((m) => {
-    const games = m.white + m.draws + m.black;
+  const scored = response.moves.map((moveRow) => {
+    const games = moveRow.white + moveRow.draws + moveRow.black;
     const share = games / total;
-    return { uci: normalizeUci(m.uci), share, games };
+    return { uci: normalizeUci(moveRow.uci), share, games };
   });
 
-  const match = scored.find((s) => s.uci === target);
+  const match = scored.find((scoredRow) => scoredRow.uci === target);
   if (match === undefined) {
     return false;
   }
@@ -45,8 +45,8 @@ function isBookContinuation(
   }
 
   const sorted = [...scored];
-  sorted.sort((a, b) => b.games - a.games);
-  const rank = sorted.findIndex((s) => s.uci === target);
+  sorted.sort((left, right) => right.games - left.games);
+  const rank = sorted.findIndex((scoredRow) => scoredRow.uci === target);
   return rank !== -1 && rank < BOOK_TOP_K;
 }
 
@@ -59,7 +59,9 @@ function getBookOpeningLine(
   playedUci: string
 ): { eco: string; name: string } | undefined {
   const target = normalizeUci(playedUci);
-  const row = response.moves.find((m) => normalizeUci(m.uci) === target);
+  const row = response.moves.find(
+    (moveRow) => normalizeUci(moveRow.uci) === target
+  );
   if (row?.opening) {
     return { eco: row.opening.eco, name: row.opening.name };
   }
@@ -70,8 +72,11 @@ function getBookOpeningLine(
 }
 
 export {
+  BOOK_TOP_K,
   getBookOpeningLine,
   isBookContinuation,
+  MIN_BOOK_SHARE,
   normalizeUci,
+  OPENING_MAX_PLY,
   totalGamesAtPosition,
 };

@@ -332,6 +332,6 @@ All secrets managed via **Doppler**:
 
 - **Web**: `NEXT_PUBLIC_CONVEX_URL`, Better Auth secrets (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc.)
 - **API** (if used): `STOCKFISH_PATH`, `OPENAI_API_KEY`, `JWT_SECRET`
-- **Convex**: Deployment URL; auth is Better Auth with data stored in Convex (see `docs/temp/migrate-convex.temp.md`). Neon and Drizzle are not used.
+- **Convex**: Deployment URL; auth is Better Auth with data stored in Convex (see [`convex-auth-data.md`](./convex-auth-data.md)). Neon and Drizzle are not used.
 
 Doppler service tokens injected into containers at runtime via Docker Compose integration.

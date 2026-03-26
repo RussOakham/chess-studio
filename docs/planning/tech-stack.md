@@ -167,7 +167,7 @@ This document outlines the technology stack for the chess game project.
   - `tsgolint` for TypeScript 7.0 (when available, will integrate with oxlint)
 - **Timeline**: Preview mid-2025, stable release end of 2025
 - **No code changes needed** - just faster tooling
-- See `docs/planning/typescript-go-strategy.temp.md` for detailed strategy
+- Strategy details: follow the official TypeScript/oxlint release notes when upgrading; no separate local strategy doc.
 
 ### Code Quality Tools
 

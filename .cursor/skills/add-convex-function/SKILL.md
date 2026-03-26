@@ -20,7 +20,7 @@ Add a new Convex query, mutation, or action using the Convex plugin patterns plu
    - **Return validators:** Add or reuse validators in `apps/web/convex/validators.ts`; add `returns: …` to the handler (see existing `gameValidator`, `moveValidator`, etc.).
    - **Thin handlers:** Put business logic in plain TS functions (e.g. `applyMove`, internal helpers); keep the exported handler to auth, validation, and delegation.
 3. **Export** from the correct module so the function appears under `api.*` as expected (e.g. `convex/games.ts` → `api.games.getById`).
-4. **If part of a Convex improvements effort:** Update `docs/temp/convex-improvements.temp.md` checklist if it exists and is relevant.
+4. **If the user keeps a personal checklist** for a larger effort, they can update it locally; do not reference paths to `.temp.md` files from tracked repo docs.
 5. **Run Convex reviewer** on the new or changed file(s).
 
 ## References

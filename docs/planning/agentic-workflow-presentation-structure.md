@@ -87,25 +87,25 @@ _Goal: Show how we use rules, skills, plugins, and process so that “implement 
 
 1. **Request:** User describes the feature (optionally with `@` refs to plan or files).
 2. **Context:** Cursor loads always-applied rules, AGENTS.md, and glob-scoped rules for the files the agent touches; skills are used when relevant (e.g. function-creator for a new Convex mutation).
-3. **Plan (for larger work):** We use implementation plans (e.g. `docs/implementation/*.md`, `docs/temp/*.temp.md`) or Cursor plans with phases and todos; the agent works through phases and updates checklists.
+3. **Plan (for larger work):** We use tracked implementation plans (e.g. `docs/implementation/*.md`) or Cursor plans with phases and todos; the agent works through phases and updates checklists. Personal `.temp.md` scratch (see [`docs/temp/README.md`](../temp/README.md)) is not referenced from repo docs.
 4. **Implement:** Agent edits code, runs lint/format/type-check, and follows rules (e.g. thin handlers, validators, no commit without permission).
 5. **Review:** After Convex or React/Next.js changes, we run Convex reviewer and consider Vercel React best-practices (per AGENTS.md and convex-react-review rule).
 6. **Commit/MR:** User reviews; agent suggests commit message and branch; user approves commit/push; MR only when user asks, draft first, build verified before creating/pushing.
 
 ### 2.4 How We Keep Quality and Autonomy in Balance
 
-| Lever                                      | Purpose                                                                                                                      |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Rules**                                  | Constrain _how_ the agent codes (quality, git, Convex, Next.js) so we don’t have to repeat it every time.                    |
-| **AGENTS.md + Continual Learning**         | Persist preferences and facts across chats so “run Convex/React review” and similar become default.                          |
-| **Skills**                                 | Add domain expertise on demand (Convex, Vercel, docs) without bloating the base system prompt.                               |
-| **Plugins / subagents**                    | Convex Reviewer, MCP (Convex, browser, etc.) give the agent tools and checks that would be hard to encode in text alone.     |
-| **Implementation plans + temp checklists** | Break big work into ordered steps and a single source of truth (e.g. `docs/temp/*.temp.md`) so the agent doesn’t lose track. |
-| **Build + MR discipline**                  | `pnpm build` before draft MR and before pushing to a branch with an open MR so CI doesn’t fail on build errors.              |
+| Lever                                        | Purpose                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Rules**                                    | Constrain _how_ the agent codes (quality, git, Convex, Next.js) so we don’t have to repeat it every time.                |
+| **AGENTS.md + Continual Learning**           | Persist preferences and facts across chats so “run Convex/React review” and similar become default.                      |
+| **Skills**                                   | Add domain expertise on demand (Convex, Vercel, docs) without bloating the base system prompt.                           |
+| **Plugins / subagents**                      | Convex Reviewer, MCP (Convex, browser, etc.) give the agent tools and checks that would be hard to encode in text alone. |
+| **Implementation plans + Cursor checklists** | Break big work into ordered steps; durable detail lives in `docs/implementation/*.md` (or attached plans).               |
+| **Build + MR discipline**                    | `pnpm build` before draft MR and before pushing to a branch with an open MR so CI doesn’t fail on build errors.          |
 
 ### 2.5 Concrete Examples from Our Chats
 
-- **Convex improvements:** Convex Reviewer produced a list of improvements; we turned it into a phased plan in `docs/temp/convex-improvements.temp.md`, implemented (returns validators, getMoves cap, makeMove validation, requireGameAccess + applyMove, schema cleanup), and kept the temp file updated as we went.
+- **Convex improvements:** Convex Reviewer produced a list of improvements; we implemented in phases (returns validators, getMoves cap, makeMove validation, requireGameAccess + applyMove, schema cleanup), with durable notes in Convex modules and planning docs—not in personal `.temp.md` files referenced from git.
 - **React/Next improvements:** Reviewed against Vercel React best-practices, wrote `docs/implementation/react-next-improvement-plan.md` (and temp variant), then implemented in phases (bundle, Suspense, conditionals, content-visibility, optional memo/useTransition).
 - **Post-game analysis (Phase 4.3):** Plan attached as reference; agent created branch, schema, Convex API, client-side analysis, UI, and move annotations; we then ran Convex reviewer and Vercel skill, added convex-react-review rule and AGENTS.md so those checks are part of the workflow.
 - **Rules alignment:** Compared local rules to Convex and Vercel best practices; updated nextjs-patterns, typescript-conventions, convex-react-review, and monorepo-structure so the agent and the codebase stay aligned.
@@ -114,7 +114,7 @@ _Goal: Show how we use rules, skills, plugins, and process so that “implement 
 
 - **Less back-and-forth:** Rules and AGENTS.md tell the agent to lint, format, type-check, and not commit without approval.
 - **Right expertise at the right time:** Glob-scoped rules and skills mean Convex/Next.js patterns apply when editing those areas.
-- **Traceable multi-step work:** Plans and temp checklists keep long efforts ordered and visible.
+- **Traceable multi-step work:** Tracked plans and Cursor todos keep long efforts ordered and visible.
 - **Consistent quality:** Pre-commit hooks + Convex/React reviews catch issues before they land.
 - **Human stays in control:** No commit/push/MR without explicit permission; user reviews and approves.
 

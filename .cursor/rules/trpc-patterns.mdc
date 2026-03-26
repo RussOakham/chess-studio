@@ -11,6 +11,6 @@ This project **no longer uses tRPC** for the game and move API. That layer has b
 For current patterns, see:
 
 - **Convex backend and client**: [.cursor/rules/convex.mdc](.cursor/rules/convex.mdc)
-- **Migration and auth**: [docs/temp/migrate-convex.temp.md](docs/temp/migrate-convex.temp.md)
+- **Convex and auth**: [docs/planning/convex-auth-data.md](docs/planning/convex-auth-data.md)
 
 Game and move data use Convex queries and mutations (`api.games.*`) with real-time subscriptions. Auth is Better Auth with Convex JWT integration.

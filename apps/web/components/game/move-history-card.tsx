@@ -125,7 +125,7 @@ function MoveHistoryCardComponent({
               </div>
               {Array.from(
                 { length: Math.ceil(moveHistory.length / 2) },
-                (_, rowIndex) => {
+                (_unused, rowIndex) => {
                   const whiteIdx = 2 * rowIndex;
                   const blackIdx = 2 * rowIndex + 1;
                   const whiteMove = moveHistory[whiteIdx];

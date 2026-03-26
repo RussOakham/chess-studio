@@ -580,7 +580,7 @@ await db.insert(moves).values({
 });
 ```
 
-### API (Convex queries and mutations)
+### Convex function surface (queries, mutations, actions)
 
 1. `api.games.create` - Create new game ✅ **Implemented**
 2. `api.games.list` - List user's games ✅ **Implemented**
@@ -591,6 +591,7 @@ await db.insert(moves).values({
 7. `api.games.resign` - Resign game ✅ **Implemented**
 8. `games.offerDraw` - Offer draw (descoped for PvE; add with PvP)
 9. `games.acceptDraw` / `declineDraw` - (descoped for PvE; add with PvP)
+10. `api.lichess_explorer.batchExplorerMasters` - Lichess Opening Explorer batch (Convex action); cache in `lichess_explorer_cache` ✅
 
 ### State Management Strategy
 

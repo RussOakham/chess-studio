@@ -17,8 +17,7 @@ function parseSquare(square: string): SquareIndices | null {
   if (!/^[a-h][1-8]$/.test(trimmed)) {
     return null;
   }
-  const fileChar = trimmed[0];
-  const rankChar = trimmed[1];
+  const [fileChar, rankChar] = trimmed;
   if (fileChar === undefined || rankChar === undefined) {
     return null;
   }
