@@ -1,337 +1,171 @@
-# Project Architecture
+# Project architecture
 
 ## Overview
 
-This document describes the architecture and design of the chess game application.
+**chess-studio** is a Turborepo monorepo: a **Next.js** app (`apps/web`) for the UI and auth routes, **Convex** for persistence, real-time subscriptions, and server functions, and **Better Auth** integrated with Convex. The chess **Stockfish** engine runs **in the browser** (Web Worker) for evaluation, hints, and opponent moves—not on a separate game API.
 
-**Note:** Some diagrams below (e.g. Postgres, Express API) are partially outdated. The app uses **Convex** for data, real-time subscriptions, and backend logic. The "Service communication" and environment setup reflect the current Convex-based architecture where described.
+**Deployment:** The **current plan** is to host the Next.js app on **[Vercel](https://vercel.com)** (see [`vercel-deployment-plan.md`](./vercel-deployment-plan.md)). **[Convex](https://www.convex.dev/)** stays on Convex Cloud (`npx convex deploy`). An **alternate** self-hosted stack (VPS, Docker, Dokploy) is documented for possible future use in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md); see the index at [`deployment.md`](./deployment.md).
 
-## High-Level Architecture
+**Historical note:** Older sections of this file described a separate **Express/Go API** and **Postgres**; the codebase today uses **Convex only** for game and auth data (no Neon/Drizzle in the live app path). Diagrams labeled **alternate** or **legacy** illustrate that earlier direction.
 
-### Monorepo Structure (Turbo)
+## Deployment strategies (summary)
+
+| Strategy      | Where                               | Document                                                                       |
+| ------------- | ----------------------------------- | ------------------------------------------------------------------------------ |
+| **Primary**   | Next.js on Vercel; Convex Cloud     | [`vercel-deployment-plan.md`](./vercel-deployment-plan.md)                     |
+| **Alternate** | Private VPS, Docker, Dokploy, Nginx | [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md) |
+
+## Monorepo structure (current)
 
 ```text
-chess-game/
+chess-studio/
 ├── apps/
-│   ├── web/                 # Next.js frontend + Auth API routes
-│   │   ├── app/            # Next.js App Router
-│   │   │   ├── api/        # Auth endpoints (Better Auth)
-│   │   │   └── (routes)/   # Frontend routes
-│   │   ├── components/     # React components
-│   │   └── lib/            # Client-side utilities
-│   └── api/                # Backend API (Express.js or Go)
-│       ├── routes/         # API endpoints
-│       ├── services/       # Business logic
-│       └── engine/         # Chess engine integration
+│   └── web/                    # Next.js (App Router), Convex functions live under convex/
+│       ├── app/                # Routes, layouts, Server Components
+│       ├── convex/             # Queries, mutations, schema, HTTP
+│       └── lib/                # Client hooks, Stockfish, game analysis
 ├── packages/
-│   ├── ui/                 # Shared UI components
-│   ├── types/              # Shared TypeScript types
-│   ├── chess/              # Shared chess logic
-│   └── db/                 # Drizzle schema and migrations
-├── docker/
-│   ├── Dockerfile.web
-│   ├── Dockerfile.api
-│   └── docker-compose.yml
+│   ├── chess/                  # Shared chess logic
+│   ├── db/                     # Drizzle types/schema (legacy / tooling; not app DB)
+│   └── types/                  # Shared TypeScript types
 └── docs/
 ```
 
-## System Architecture
+There is **no** `apps/api` service in the repository; backend behavior is **Convex** plus Next.js **route handlers** (e.g. Better Auth under `app/api/auth`).
 
-### Hybrid Architecture (Selected)
+## Runtime architecture (current)
 
 ```text
-┌─────────────────┐
-│   Next.js Web   │  (Frontend + Auth API Routes)
-│                 │
-│  ┌───────────┐  │
-│  │  React UI │  │
-│  └───────────┘  │
-│  ┌───────────┐  │
-│  │ Auth API  │  │ (Better Auth)
-│  └───────────┘  │
-└────────┬────────┘
-         │
-         │ (Auth requests)
-         │
-    ┌────▼──────────────────┐
-    │   Express/Go API      │  (Game Logic, Engine)
-    │                       │
-    │  ┌─────────────────┐ │
-    │  │ Game Service    │ │
-    │  │ Engine Service  │ │
-    │  │ AI Service      │ │
-    │  └─────────────────┘ │
-    └────┬──────────┬───────┘
-         │          │
-    ┌────▼───┐  ┌───▼────┐
-    │   DB   │  │Stockfish│
-    │(Postgres)│ │ Engine │
-    └────────┘  └────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  User (browser)                                              │
+│  ┌──────────────┐    ┌─────────────────────────────────┐ │
+│  │ Next.js UI   │    │ Stockfish (npm package, worker)  │ │
+│  │ (Vercel)     │    │ Eval, hints, engine moves          │ │
+│  └──────┬───────┘    └───────────────────────────────────┘ │
+└─────────┼────────────────────────────────────────────────────┘
+          │ Convex client (WebSocket / HTTP)
+          ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Convex Cloud                                                │
+│  Games, moves, reviews, auth (Better Auth component),       │
+│  Lichess explorer proxy/cache (actions), etc.               │
+└─────────────────────────────────────────────────────────────┘
+          │
+          ▼ (outbound HTTP where applicable)
+┌─────────────────────────────────────────────────────────────┐
+│  External: Lichess Opening Explorer API, OAuth providers     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Deployment Architecture (Docker Compose)
+## Frontend (Next.js App Router)
+
+High-level route layout:
+
+```text
+apps/web/app/
+├── (auth)/                 # login, register
+├── (main)/                 # home, games list, game play, review
+│   ├── game/[gameId]/      # Live game + review subroutes
+│   └── ...
+├── api/auth/[...all]/      # Better Auth handler
+└── ...
+```
+
+Key UI concepts: chessboard, move list, evaluation bar, game review with move-quality annotations, replay controls.
+
+## Data and backend (Convex)
+
+- **Games and moves** — Stored and queried via Convex; real-time updates for active games.
+- **Reviews** — Analysis results (summary, evaluations, key moments, move annotations) saved after **client-side** Stockfish runs over completed games (`run-game-analysis.ts`), then persisted through Convex.
+- **Auth** — Better Auth with Convex; see [`convex-auth-data.md`](./convex-auth-data.md).
+
+There is **no** separate REST API document for game CRUD in production; clients use **Convex generated APIs** (`useQuery`, `useMutation`, etc.).
+
+## Stockfish and analysis
+
+- **In-browser:** The `stockfish` package drives evaluation, hints (`use-hint.ts`), and engine moves on the client.
+- **Game review:** Full-game analysis walks the move list, calls into Stockfish per position, classifies moves (blunder / mistake / inaccuracy / book / best), and may use **Lichess Opening Explorer** data (via Convex) for opening names and book lines—not for generating `keyMoments` strings (those come from engine classification).
+
+## Integration points
+
+- **Lichess** — Opening explorer (masters) for book metadata and explorer-backed UI; implemented with caching in Convex (`lichess_explorer.ts`, related libs under `apps/web/lib/lichess/`).
+- **OAuth** — GitHub (and any others configured) via Better Auth.
+- **Future AI** — Not wired in production at the time of this writing; see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) for product direction.
+
+## Security considerations
+
+- Authentication via Better Auth; Convex functions use authenticated helpers where required.
+- Validate user input in Convex (arguments and access rules per function).
+- Rate-limit or cache external API calls (e.g. Lichess) to respect third-party limits.
+
+## Performance considerations
+
+- Client Stockfish: cap depth for UI responsiveness; sequential analysis for full-game review to avoid overloading the worker.
+- Convex: indexes and pagination for large lists (follow Convex best practices in `convex/`).
+
+---
+
+## Alternate deployment architecture (reference only)
+
+The following reflects a **self-hosted** layout **not** in use as the primary plan. It matches the narrative in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md) (Nginx, multiple containers). A future migration might still keep **Convex Cloud** and only move the Next.js workload to a VPS.
 
 ```text
 ┌─────────────────────────────────────────┐
 │         Nginx (Reverse Proxy)           │
-│         (via Dokploy)                   │
+│         (e.g. via Dokploy)              │
 └───────────────┬─────────────────────────┘
                 │
     ┌───────────┼───────────┐
     │           │           │
 ┌───▼───┐  ┌────▼────┐  ┌───▼────┐
-│  Web  │  │   API   │  │   DB   │
-│(Next.js)│ │(Express/Go)│ │(Postgres)│
-│ Docker │  │  Docker │  │ Docker │
+│  Web  │  │   API   │  │ (opt)  │
+│(Next.js)│ │(legacy  │  │ extras │
+│ Docker │  │ design) │  │        │
 └────────┘  └─────────┘  └────────┘
-    │           │           │
-    └───────────┴───────────┘
-                │
-         ┌──────▼──────┐
-         │  Stockfish  │
-         │  (Process)  │
-         └─────────────┘
 ```
 
-## Component Structure
+---
 
-### Frontend (Next.js App Router)
+## Legacy reference: earlier hybrid API + Postgres sketch
+
+The block below is **retained for historical context** only. It does **not** describe the current chess-studio implementation.
+
+### Earlier monorepo sketch (outdated)
 
 ```text
-app/
-├── (auth)/
-│   ├── login/
-│   └── register/
-├── (dashboard)/
-│   ├── games/
-│   │   ├── [id]/          # Game detail/review
-│   │   └── new/           # New game
-│   ├── history/           # Game history list
-│   └── profile/
-└── api/
-    └── auth/              # Auth endpoints (Better Auth)
-                          # Note: Game API calls go to separate backend
+chess-game/                    # illustrative only
+├── apps/
+│   ├── web/
+│   └── api/                   # not present in chess-studio today
+├── packages/
+└── docker/
 ```
 
-### Backend API (Express.js or Go)
+### Earlier “hybrid” diagram (outdated)
 
 ```text
-api/
-├── routes/
-│   ├── games/             # Game CRUD operations
-│   ├── moves/             # Move submission and validation
-│   ├── analysis/          # Position analysis (Stockfish)
-│   ├── hints/             # AI move hints
-│   └── reviews/           # Game review generation
-├── services/
-│   ├── game.service.ts    # Game business logic
-│   ├── engine.service.ts  # Stockfish integration
-│   ├── ai.service.ts      # LLM integration for hints/reviews
-│   └── db.service.ts      # Database operations (Drizzle)
-└── middleware/
-    ├── auth.middleware.ts # JWT/session validation
-    └── rate-limit.ts      # Rate limiting
+┌─────────────────┐
+│   Next.js Web   │
+│  Auth API       │
+└────────┬────────┘
+         │
+    ┌────▼──────────────────┐
+    │   Express/Go API      │  ← superseded by Convex
+    └────┬──────────┬───────┘
+         │          │
+    ┌────▼───┐  ┌───▼────┐
+    │Postgres│  │Stockfish│
+    └────────┘  └────────┘
 ```
 
-### Key Components
+### Earlier data model sketch (SQL, outdated)
 
-- `ChessBoard`: Main game board component
-- `GameControls`: Move controls, engine settings
-- `EvaluationBar`: Engine evaluation display
-- `MoveList`: Move history sidebar
-- `GameReview`: Post-game analysis view
-- `HintPanel`: AI move suggestions
-
-## Data Flow
-
-### Game Play Flow
-
-1. User authenticates → Next.js Auth API (Better Auth)
-2. User creates new game → Frontend calls Backend API → Creates game record in DB
-3. User makes move → Frontend validates with chess.js
-4. Move sent to Backend API → API stores move in DB
-5. **Client-side**: Stockfish WASM evaluates position (quick eval, depth 5-8) → Updates evaluation bar
-6. Frontend updates board and evaluation display
-7. **Server-side**: Engine move (if playing vs engine) → Frontend calls `POST /api/games/[gameId]/engine/move` → Backend API uses Stockfish WASM to calculate best move (depth 10-20+ based on difficulty)
-8. Engine move stored in DB → Frontend receives move → Board updates → Cycle continues
-
-### Game Review Flow
-
-1. Game ends → Backend API marks game as completed
-2. User requests review → Frontend calls Backend API
-3. Backend API fetches all moves → Sends to LLM → Generates summary and key moments
-4. Review stored in DB → Displayed to user
-
-## API Design
-
-### Next.js Auth API (Better Auth)
-
-- Handled by Better Auth library
-- Endpoints: `/api/auth/*` (login, register, session, etc.)
-
-### Backend API (Express.js/Go)
-
-#### Base URL
-
-- Development: `http://localhost:3001/api`
-- Production: `https://api.yourdomain.com/api` (or subdomain)
-
-#### Games
-
-- `GET /api/games` - List user's games (requires auth token)
-- `POST /api/games` - Create new game
-- `GET /api/games/:id` - Get game details
-- `PATCH /api/games/:id` - Update game (resign, draw, etc.)
-- `DELETE /api/games/:id` - Delete game
-
-#### Moves
-
-- `POST /api/games/:id/moves` - Submit move
-- `GET /api/games/:id/moves` - Get all moves for game
-
-#### Engine & Analysis
-
-- `POST /api/games/:id/engine/move` - Get engine move (uses Stockfish WASM server-side)
-- `POST /api/analysis/evaluate` - Deep position evaluation (optional, for game reviews)
-- `POST /api/analysis/hint` - Get AI move hint (Stockfish + LLM)
-- `POST /api/games/:id/review` - Generate game review (Stockfish analysis + LLM)
-
-#### History
-
-- `GET /api/games/history` - Get game history with filters (pagination, date range, etc.)
-
-### Authentication Flow
-
-1. User logs in via Next.js Auth API → Receives session cookie
-2. Frontend includes session token in requests to Backend API
-3. Backend API validates token with Next.js Auth session
-4. Alternative: JWT tokens passed from Next.js to Backend API
-
-## Integration Points
-
-### Chess Engine (Stockfish) - Hybrid Approach
-
-We use `stockfish.wasm` (WebAssembly) in both client and server environments for optimal performance and flexibility.
-
-**Client-Side (Browser):**
-
-- **Purpose**: Real-time position evaluation, move hints, legal move highlighting
-- **Library**: `stockfish.wasm` runs directly in the browser
-- **Use Cases**:
-  - Quick position evaluation (depth 5-8) for UI feedback
-  - Highlighting legal moves on hover
-  - Showing evaluation bar in real-time
-  - Move suggestions/hints (shallow analysis)
-- **Benefits**: Instant feedback, no network latency, better UX
-- **Limitations**: Limited depth to avoid blocking UI, uses user's CPU
-
-**Server-Side (API):**
-
-- **Purpose**: Engine moves, deeper analysis, game reviews, controlled difficulty
-- **Library**: `stockfish.wasm` runs in Node.js API routes
-- **Use Cases**:
-  - Calculating engine moves (depth 10-20+ based on difficulty)
-  - Deep position analysis for game reviews
-  - Post-game analysis and evaluation
-  - AI integration (LLM hints, game summaries)
-- **Benefits**:
-  - Controlled difficulty levels
-  - Rate limiting and cost control
-  - Consistent performance
-  - Server CPU resources
-  - Integration with AI services
-- **API Endpoint**: `POST /api/games/[gameId]/engine/move`
-
-**Communication:**
-
-- Client-side: Direct JavaScript API calls to WASM module
-- Server-side: JavaScript API calls to WASM module in Node.js
-- Client ↔ Server: HTTP REST API for engine moves
-
-### AI Integration
-
-- **Move Hints**: Stockfish best moves → LLM API → Human-readable hints
-- **Game Reviews**: Full game PGN → LLM API → Summary and analysis
-
-### Database Schema (High-Level)
+Convex schema replaces direct SQL tables for app data; the conceptual entities (users, games, moves, reviews) remain similar at a high level.
 
 ```sql
-users (id, email, name, created_at)
-games (id, user_id, white_player, black_player, result, pgn, created_at, completed_at)
-moves (id, game_id, move_number, move_san, move_uci, fen_before, fen_after, evaluation, created_at)
-game_reviews (id, game_id, summary, key_moments, created_at)
+-- Illustrative only — actual storage is Convex documents
+users (id, email, ...)
+games (id, user_id, ...)
+moves (id, game_id, ...)
+game_reviews (id, game_id, summary, key_moments, ...)
 ```
-
-## Security Considerations
-
-- Authentication via Better Auth (handles sessions, tokens)
-- API routes protected by auth middleware
-- Rate limiting on engine/AI endpoints (cost control)
-- Input validation on all moves (prevent invalid positions)
-- CORS configuration for API access
-
-## Performance Considerations
-
-- **Hybrid Engine Approach**: Client-side for quick evaluations (no network latency), server-side for deep analysis
-- Cache Stockfish evaluations for common positions (both client and server)
-- Debounce client-side evaluation requests during rapid moves
-- Limit client-side depth to 5-8 to avoid blocking UI thread
-- Server-side engine moves use deeper analysis (10-20+ depth) based on difficulty
-- Paginate game history
-- Index database on user_id, game_id for fast queries
-- Consider WebSocket for real-time updates (future enhancement)
-- Docker containers allow independent scaling of services
-- Client-side WASM reduces server load for common operations
-
-## Deployment Architecture
-
-### Docker Compose Structure
-
-```yaml
-services:
-  web:
-    build: ./apps/web
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://api:3001
-      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL} # Convex (games + auth)
-
-  api:
-    build: ./apps/api
-    ports:
-      - "3001:3001"
-    environment:
-      - STOCKFISH_PATH=/usr/bin/stockfish
-
-# Note: All persisted data (games and auth) is in Convex. Neon and Drizzle are not used.
-```
-
-### Deployment Flow (Dokploy)
-
-1. **Code Push** → Git repository
-2. **Dokploy Webhook** → Triggers build
-3. **Docker Build** → Creates images for web and api
-4. **Docker Compose** → Orchestrates services
-5. **Nginx** → Routes traffic (via Dokploy or separate container)
-   - `/` → Next.js web app
-   - `/api/*` → Backend API service
-6. **DNS** → Route 53 points custom domain to VPS
-
-### Service Communication
-
-- **Frontend → Convex**: Convex client (WebSocket/HTTP) for game/move queries and mutations and for auth; real-time subscriptions
-- **Frontend → Next.js API**: Better Auth routes (e.g. `/api/auth/*`) proxy to Convex
-- **Convex**: Stores games, moves, and auth data (Better Auth component); no Neon or Drizzle
-- **Stockfish**: Client-side WASM (browser) or server process/UCI
-- **LLM API**: HTTP requests (OpenAI/Anthropic) for AI features
-
-### Environment Variables
-
-All secrets managed via **Doppler**:
-
-- **Web**: `NEXT_PUBLIC_CONVEX_URL`, Better Auth secrets (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc.)
-- **API** (if used): `STOCKFISH_PATH`, `OPENAI_API_KEY`, `JWT_SECRET`
-- **Convex**: Deployment URL; auth is Better Auth with data stored in Convex (see [`convex-auth-data.md`](./convex-auth-data.md)). Neon and Drizzle are not used.
-
-Doppler service tokens injected into containers at runtime via Docker Compose integration.
