@@ -75,7 +75,8 @@ async function saveReviewInternal(
       bookOpeningEco?: string;
       bookOpeningName?: string;
     }[];
-    openingNameLichess?: string;
+    /** `undefined` = leave unchanged; `null` = clear stored value. */
+    openingNameLichess?: string | null;
   }
 ): Promise<Id<"game_reviews">> {
   const now = Date.now();
@@ -92,7 +93,12 @@ async function saveReviewInternal(
       suggestions: payload.suggestions,
       moveAnnotations: payload.moveAnnotations,
       ...(payload.openingNameLichess !== undefined
-        ? { openingNameLichess: payload.openingNameLichess }
+        ? {
+            openingNameLichess:
+              payload.openingNameLichess === null
+                ? undefined
+                : payload.openingNameLichess,
+          }
         : {}),
     });
     return existing._id;
@@ -105,7 +111,8 @@ async function saveReviewInternal(
     keyMoments: payload.keyMoments,
     suggestions: payload.suggestions,
     moveAnnotations: payload.moveAnnotations,
-    ...(payload.openingNameLichess !== undefined
+    ...(payload.openingNameLichess !== undefined &&
+    payload.openingNameLichess !== null
       ? { openingNameLichess: payload.openingNameLichess }
       : {}),
     createdAt: now,
@@ -119,7 +126,7 @@ const save = ownedGameMutation({
     keyMoments: v.optional(v.array(v.string())),
     suggestions: v.optional(v.array(v.string())),
     moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
-    openingNameLichess: v.optional(v.string()),
+    openingNameLichess: v.optional(v.union(v.string(), v.null())),
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
@@ -145,13 +152,21 @@ const save = ownedGameMutation({
       MAX_MOVE_ANNOTATIONS
     );
 
+    let openingNameLichess: string | null | undefined = undefined;
+    if (args.openingNameLichess === null) {
+      openingNameLichess = null;
+    } else if (args.openingNameLichess !== undefined) {
+      const trimmed = args.openingNameLichess.trim();
+      openingNameLichess = trimmed === "" ? null : trimmed;
+    }
+
     return await saveReviewInternal(ctx, args.gameId, {
       summary: summaryTrimmed,
       evaluations,
       keyMoments,
       suggestions,
       moveAnnotations,
-      openingNameLichess: args.openingNameLichess?.trim() || undefined,
+      openingNameLichess,
     });
   },
 });

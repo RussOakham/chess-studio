@@ -33,9 +33,7 @@ export default defineSchema({
     pgn: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index("by_userId", ["userId"])
-    .index("by_userId_updatedAt", ["userId", "updatedAt"]),
+  }).index("by_userId_updatedAt", ["userId", "updatedAt"]),
 
   moves: defineTable({
     gameId: v.id("games"),
@@ -46,9 +44,7 @@ export default defineSchema({
     fenAfter: v.string(),
     evaluation: v.optional(v.number()),
     createdAt: v.number(),
-  })
-    .index("by_gameId", ["gameId"])
-    .index("by_gameId_moveNumber", ["gameId", "moveNumber"]),
+  }).index("by_gameId_moveNumber", ["gameId", "moveNumber"]),
 
   /** Post-game analysis: summary, key moments, suggestions, per-move annotations. */
   game_reviews: defineTable({
