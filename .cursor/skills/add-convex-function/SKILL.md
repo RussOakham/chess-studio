@@ -5,7 +5,7 @@ description: Adds a new Convex query, mutation, or action following this project
 
 # Add Convex Function (Project-Specific)
 
-Add a new Convex query, mutation, or action using the Convex plugin patterns plus this repo's conventions (requireGameAccess, validators.ts, thin handlers).
+Add a new Convex query, mutation, or action using the Convex plugin patterns plus this repo's conventions (`getAuthedUserId` / `requireOwnedGame`, validators.ts, thin handlers).
 
 ## When to use
 
@@ -16,7 +16,7 @@ Add a new Convex query, mutation, or action using the Convex plugin patterns plu
 
 1. **Use Convex plugin function-creator** (or schema/validators rules) for the generic pattern (args, handler shape, auth).
 2. **Project specifics:**
-   - **Game/move access:** Use `requireGameAccess(ctx, gameId)` (or equivalent) from `apps/web/convex/games.ts`; do not duplicate auth logic.
+   - **Game/move access:** Use `requireOwnedGame(ctx, gameId)` and `getAuthedUserId(ctx)` from `apps/web/convex/lib/game-access.ts`; do not duplicate auth logic.
    - **Return validators:** Add or reuse validators in `apps/web/convex/validators.ts`; add `returns: …` to the handler (see existing `gameValidator`, `moveValidator`, etc.).
    - **Thin handlers:** Put business logic in plain TS functions (e.g. `applyMove`, internal helpers); keep the exported handler to auth, validation, and delegation.
 3. **Export** from the correct module so the function appears under `api.*` as expected (e.g. `convex/games.ts` → `api.games.getById`).
@@ -27,5 +27,5 @@ Add a new Convex query, mutation, or action using the Convex plugin patterns plu
 
 - Convex rules: `@.cursor/rules/convex.mdc`
 - Architecture (Convex usage): `@.cursor/rules/architecture-patterns.mdc`
-- Validators and games: `@apps/web/convex/validators.ts`, `@apps/web/convex/games.ts`
+- Validators and auth helpers: `@apps/web/convex/validators.ts`, `@apps/web/convex/lib/game-access.ts`, `@apps/web/convex/games.ts`
 - Review after changes: `@.cursor/skills/run-convex-react-review/SKILL.md`

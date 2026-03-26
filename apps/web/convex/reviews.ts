@@ -4,39 +4,16 @@ import { v } from "convex/values";
  * Convex queries and mutations for game reviews (post-game analysis).
  * Auth: caller must own the game. Only completed games can have reviews saved.
  */
-import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { requireOwnedGame } from "./lib/game-access";
 
 const MAX_KEY_MOMENTS = 20;
 const MAX_SUGGESTIONS = 10;
 const MAX_MOVE_ANNOTATIONS = 500;
 const MAX_EVALUATIONS = 500;
 const MAX_SUMMARY_LENGTH = 10_000;
-
-async function getUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity === null) {
-    throw new Error("Not authenticated");
-  }
-  return identity.subject;
-}
-
-/** Throws if not authenticated or game not found or not owned by caller. Returns the game doc. */
-async function requireGameAccess(
-  ctx: QueryCtx | MutationCtx,
-  gameId: Id<"games">
-): Promise<Doc<"games">> {
-  const userId = await getUserId(ctx);
-  const game = await ctx.db.get(gameId);
-  if (game === null) {
-    throw new Error("Game not found");
-  }
-  if (game.userId !== userId) {
-    throw new Error("You do not have access to this game");
-  }
-  return game;
-}
 
 const moveAnnotationValidator = v.object({
   moveNumber: v.number(),
@@ -72,7 +49,7 @@ const getByGameId = query({
     v.null()
   ),
   handler: async (ctx, args) => {
-    await requireGameAccess(ctx, args.gameId);
+    await requireOwnedGame(ctx, args.gameId);
     const review = await ctx.db
       .query("game_reviews")
       .withIndex("by_gameId", (indexQuery) =>
@@ -149,7 +126,7 @@ const save = mutation({
   },
   returns: v.id("game_reviews"),
   handler: async (ctx, args) => {
-    const game = await requireGameAccess(ctx, args.gameId);
+    const game = await requireOwnedGame(ctx, args.gameId);
     if (game.status !== "completed") {
       throw new Error("Only completed games can be analyzed");
     }
