@@ -24,7 +24,7 @@
     "**/*.mts",
     "types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", ".next"],
+  "exclude": ["node_modules", ".next", "**/convex/_generated/**"],
   "references": [
     {
       "path": "../../packages/types"

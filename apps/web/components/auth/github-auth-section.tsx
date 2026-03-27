@@ -59,6 +59,8 @@ export function GitHubAuthSection({
   const handleGitHubSignIn = async (): Promise<void> => {
     setOauthError(null);
     setPending(true);
+    /** If true, full-page navigation is in progress — do not clear `pending` in `finally` or the button flickers back before unload. */
+    let navigatingToOAuth = false;
     try {
       const result = await signIn.social({
         provider: "github",
@@ -72,6 +74,7 @@ export function GitHubAuthSection({
 
       const url = result.data?.url;
       if (typeof url === "string" && url.length > 0) {
+        navigatingToOAuth = true;
         globalThis.location.assign(url);
         return;
       }
@@ -81,7 +84,9 @@ export function GitHubAuthSection({
         error instanceof Error ? error.message : "Something went wrong"
       );
     } finally {
-      setPending(false);
+      if (!navigatingToOAuth) {
+        setPending(false);
+      }
     }
   };
 

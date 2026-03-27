@@ -15,6 +15,7 @@ import { PlayerStrip } from "@/components/game/player-strip";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -48,6 +49,7 @@ import { getOpeningLabelFromPgn } from "@repo/chess";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
@@ -55,6 +57,15 @@ interface GamePageClientProps {
   initialBoardOrientation?: "white" | "black";
   /** Display name for the human player (e.g. email until usernames exist). */
   userDisplayName?: string;
+}
+
+interface GamePageContentProps extends GamePageClientProps {
+  /**
+   * Tracks last known `game.status` across Convex reconnect remounts so we only
+   * show the completion modal on a live `in_progress` → `completed` transition,
+   * not when opening an already-finished game from history.
+   */
+  lastGameStatusRef: RefObject<string | undefined>;
 }
 
 /**
@@ -151,7 +162,8 @@ function GamePageContent({
   gameId,
   initialBoardOrientation,
   userDisplayName = "You",
-}: GamePageClientProps) {
+  lastGameStatusRef,
+}: GamePageContentProps) {
   const {
     game,
     moves,
@@ -176,8 +188,30 @@ function GamePageContent({
   const resignMutation = useMutation(api.games.resign);
   const router = useRouter();
   const [isResigning, setIsResigning] = useState(false);
+  /** True only after a live `in_progress` → `completed` transition this session. */
+  const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
+
+  useEffect(() => {
+    setCompletionModalOpen(false);
+    setGameOverDismissed(false);
+  }, [gameId]);
+
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+    const prev = lastGameStatusRef.current;
+    if (prev === undefined) {
+      lastGameStatusRef.current = game.status;
+      return;
+    }
+    if (prev === "in_progress" && game.status === "completed") {
+      setCompletionModalOpen(true);
+    }
+    lastGameStatusRef.current = game.status;
+  }, [game, lastGameStatusRef]);
 
   const review = useQuery(
     api.reviews.getByGameId,
@@ -235,6 +269,8 @@ function GamePageContent({
 
   const isGameOver = game?.status === "completed";
   const gameOverMessage = getGameOverMessage(game?.result);
+  const showGameCompletionModal =
+    completionModalOpen && !gameOverDismissed && isGameOver;
 
   // All hooks must run before any early return (Rules of Hooks)
   const boardOrientation: "white" | "black" =
@@ -304,24 +340,34 @@ function GamePageContent({
   return (
     <GameLayoutRoot gameSurface>
       <AlertDialog
-        open={isGameOver && !gameOverDismissed}
+        open={showGameCompletionModal}
         onOpenChange={(open) => {
           if (!open) {
             setGameOverDismissed(true);
           }
         }}
       >
-        <AlertDialogContent size="default" className="max-w-sm">
-          <AlertDialogHeader>
+        <AlertDialogContent size="default" className="relative max-w-sm">
+          <AlertDialogClose />
+          <AlertDialogHeader className="pr-10 sm:pr-12">
             <AlertDialogTitle>Game Over</AlertDialogTitle>
             <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => router.push("/game/new")}>
-              New Game
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              onClick={() => {
+                router.push(reviewUrl);
+              }}
+            >
+              Review game
             </AlertDialogAction>
-            <AlertDialogAction onClick={() => router.push("/games")}>
-              View History
+            <AlertDialogAction
+              variant="outline"
+              onClick={() => {
+                router.push("/");
+              }}
+            >
+              Back to dashboard
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -653,6 +699,11 @@ export function GamePageClient(props: GamePageClientProps) {
   const connectionState = useConvexConnectionState();
   const wasDisconnectedRef = useRef(false);
   const [connectionRefreshKey, setConnectionRefreshKey] = useState(0);
+  const lastGameStatusRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    lastGameStatusRef.current = undefined;
+  }, [props.gameId]);
 
   useEffect(() => {
     const connected = connectionState?.isWebSocketConnected ?? false;
@@ -670,6 +721,7 @@ export function GamePageClient(props: GamePageClientProps) {
       gameId={props.gameId}
       initialBoardOrientation={props.initialBoardOrientation}
       userDisplayName={props.userDisplayName}
+      lastGameStatusRef={lastGameStatusRef}
     />
   );
 }

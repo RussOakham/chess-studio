@@ -35,6 +35,7 @@ export default function NewGamePage() {
     watch,
     formState: { errors },
     setError: setFormError,
+    clearErrors,
   } = useForm<NewGameFormData>({
     resolver: zodResolver(newGameSchema),
     defaultValues: {
@@ -50,12 +51,15 @@ export default function NewGamePage() {
 
   const onSubmit = async (data: NewGameFormData) => {
     setIsPending(true);
-    setFormError("root", { message: undefined });
+    clearErrors("root");
+    /** Avoid clearing pending in `finally` after `router.push` — same flicker as full-page OAuth redirect. */
+    let navigatingToGame = false;
     try {
       const result = await createGameMutation({
         difficulty: data.difficulty,
         color: data.color,
       });
+      navigatingToGame = true;
       router.push(`/game/${result.id}`);
     } catch (error: unknown) {
       setFormError("root", {
@@ -63,7 +67,9 @@ export default function NewGamePage() {
           error instanceof Error ? error.message : "Failed to create game",
       });
     } finally {
-      setIsPending(false);
+      if (!navigatingToGame) {
+        setIsPending(false);
+      }
     }
   };
 
@@ -78,11 +84,11 @@ export default function NewGamePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {errors.root && (
+            {errors.root?.message ? (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {errors.root.message}
               </div>
-            )}
+            ) : null}
 
             <Field>
               <FieldLabel htmlFor="difficulty">Difficulty</FieldLabel>

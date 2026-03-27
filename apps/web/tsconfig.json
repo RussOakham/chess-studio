@@ -28,7 +28,8 @@
   "exclude": [
     "node_modules",
     "../../packages/config/**/*.js",
-    "../../packages/config/**/*.mjs"
+    "../../packages/config/**/*.mjs",
+    "**/convex/_generated/**"
   ],
   "references": [
     {
