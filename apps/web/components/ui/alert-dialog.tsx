@@ -173,8 +173,9 @@ function AlertDialogCancel({
 
 function AlertDialogClose({
   className,
+  disabled = false,
   ...props
-}: AlertDialogPrimitive.Close.Props) {
+}: AlertDialogPrimitive.Close.Props & { disabled?: boolean }) {
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-close"
@@ -186,6 +187,7 @@ function AlertDialogClose({
           size="icon"
           className="size-8 shrink-0"
           aria-label="Close"
+          disabled={disabled}
         />
       }
       {...props}

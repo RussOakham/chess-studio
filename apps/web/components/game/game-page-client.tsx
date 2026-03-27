@@ -15,6 +15,7 @@ import { PlayerStrip } from "@/components/game/player-strip";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
@@ -191,12 +192,28 @@ function GamePageContent({
   /** True only after a live `in_progress` → `completed` transition this session. */
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [resignDialogOpen, setResignDialogOpen] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
 
   useEffect(() => {
     setCompletionModalOpen(false);
     setGameOverDismissed(false);
+    setResignDialogOpen(false);
   }, [gameId]);
+
+  const handleConfirmResign = useCallback(async () => {
+    setIsResigning(true);
+    try {
+      await resignMutation({
+        gameId: toGameId(gameId),
+      });
+      setResignDialogOpen(false);
+    } catch (error) {
+      console.error("Resign error:", error);
+    } finally {
+      setIsResigning(false);
+    }
+  }, [gameId, resignMutation]);
 
   useEffect(() => {
     if (!game) {
@@ -347,29 +364,78 @@ function GamePageContent({
           }
         }}
       >
-        <AlertDialogContent size="default" className="relative max-w-sm">
-          <AlertDialogClose />
-          <AlertDialogHeader className="pr-10 sm:pr-12">
-            <AlertDialogTitle>Game Over</AlertDialogTitle>
-            <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
-            <AlertDialogAction
-              onClick={() => {
-                router.push(reviewUrl);
-              }}
-            >
-              Review game
-            </AlertDialogAction>
-            <AlertDialogAction
-              variant="outline"
-              onClick={() => {
-                router.push("/");
-              }}
-            >
-              Back to dashboard
-            </AlertDialogAction>
-          </AlertDialogFooter>
+        <AlertDialogContent size="default" className="max-w-sm">
+          <div className="flex flex-col gap-3">
+            <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
+              <div className="flex w-full items-center gap-2">
+                <AlertDialogTitle className="flex-1 leading-tight">
+                  Game Over
+                </AlertDialogTitle>
+                <AlertDialogClose className="static shrink-0" />
+              </div>
+              <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+              <AlertDialogAction
+                onClick={() => {
+                  router.push(reviewUrl);
+                }}
+              >
+                Review game
+              </AlertDialogAction>
+              <AlertDialogAction
+                variant="outline"
+                onClick={() => {
+                  router.push("/");
+                }}
+              >
+                Back to dashboard
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={resignDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && isResigning) {
+            return;
+          }
+          setResignDialogOpen(open);
+        }}
+      >
+        <AlertDialogContent size="default" className="max-w-sm">
+          <div className="flex flex-col gap-3">
+            <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
+              <div className="flex w-full items-center gap-2">
+                <AlertDialogTitle className="flex-1 leading-tight">
+                  Resign?
+                </AlertDialogTitle>
+                <AlertDialogClose
+                  className="static shrink-0"
+                  disabled={isResigning}
+                />
+              </div>
+              <AlertDialogDescription>
+                Are you sure you want to resign? This will end the game.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <AlertDialogCancel disabled={isResigning}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isResigning}
+                onClick={() => {
+                  void handleConfirmResign();
+                }}
+              >
+                {isResigning ? "Resigning…" : "Resign"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -659,26 +725,11 @@ function GamePageContent({
                   size="lg"
                   className="w-full"
                   disabled={isResigning}
-                  onClick={async () => {
-                    if (
-                      !globalThis.confirm(
-                        "Are you sure you want to resign? This will end the game."
-                      )
-                    ) {
-                      return;
-                    }
-                    setIsResigning(true);
-                    try {
-                      await resignMutation({
-                        gameId: toGameId(gameId),
-                      });
-                    } catch (error) {
-                      console.error("Resign error:", error);
-                      setIsResigning(false);
-                    }
+                  onClick={() => {
+                    setResignDialogOpen(true);
                   }}
                 >
-                  {isResigning ? "Resigning…" : "Resign"}
+                  Resign
                 </Button>
               </div>
               {hint && (

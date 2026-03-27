@@ -16,6 +16,10 @@ import {
 } from "@/components/game/game-layout";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
 import { PlayerStrip } from "@/components/game/player-strip";
+import {
+  AnalysisProgressBar,
+  CircularAnalysisProgress,
+} from "@/components/review/review-analysis-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
@@ -440,7 +444,7 @@ function ReviewMidReview({
         {/* Right: review details + move history (move history grows to fill) */}
         <GameSidebarColumn variant="dense">
           <div className="flex shrink-0 items-center justify-between">
-            <h2 className="font-display text-lg font-semibold tracking-tight">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
               Game Review
             </h2>
             <Button
@@ -630,18 +634,41 @@ export function ReviewPageClient({
   }
 
   if (review === null) {
-    const pendingReviewMessage = (() => {
+    const moveCount = moves?.length ?? 0;
+    const completed = progress?.completed ?? 0;
+    const total = progress?.total ?? Math.max(1, moveCount);
+    const showCircle = isAnalyzing && isStockfishReady && moveCount > 0;
+
+    const loadingSubtitle = ((): string => {
+      if (!isStockfishReady) {
+        return "Loading chess engine…";
+      }
       if (isAnalyzing) {
-        return `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
+        return "Evaluating each position. This may take a moment.";
       }
-      if (isStockfishReady) {
-        return "Starting analysis…";
-      }
-      return "Loading engine…";
+      return "Starting analysis…";
     })();
+
     return (
-      <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">{pendingReviewMessage}</p>
+      <div className="min-h-full bg-background p-4 md:p-6">
+        <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-8 py-10 md:min-h-[55vh] md:py-16">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Game Review
+            </h1>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {loadingSubtitle}
+            </p>
+          </div>
+          {showCircle ? (
+            <div className="flex flex-col items-center gap-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                Analyzing
+              </h2>
+              <CircularAnalysisProgress completed={completed} total={total} />
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -668,7 +695,7 @@ export function ReviewPageClient({
     <div className="min-h-full bg-background p-4 md:p-6" data-game-surface="">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className="font-display text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Game Review
           </h1>
           {openingLabel ? (
@@ -681,16 +708,32 @@ export function ReviewPageClient({
         {/* Coach block */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl leading-none">
                 ♔
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-foreground">
-                  {isAnalyzing
-                    ? `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`
-                    : review.summary}
-                </p>
+              <div className="min-w-0 flex-1 space-y-2">
+                {isAnalyzing ? (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      Analyzing
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {progress
+                        ? `Move ${String(progress.completed)} of ${String(progress.total)}`
+                        : "Starting…"}
+                    </p>
+                    <AnalysisProgressBar
+                      completed={progress?.completed ?? 0}
+                      total={
+                        progress?.total ??
+                        Math.max(1, (moves ?? EMPTY_GAME_MOVES).length)
+                      }
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-foreground">{review.summary}</p>
+                )}
               </div>
             </div>
           </CardContent>
