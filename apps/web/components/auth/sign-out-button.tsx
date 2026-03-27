@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
+import { auth } from "@/lib/copy";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -24,7 +25,7 @@ export function SignOutButton() {
 
   return (
     <Button onClick={handleSignOut} disabled={isLoading} variant="outline">
-      {isLoading ? "Signing out..." : "Sign Out"}
+      {isLoading ? auth.signOut.pending : auth.signOut.label}
     </Button>
   );
 }

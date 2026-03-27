@@ -1,5 +1,6 @@
 "use client";
 
+import { a11y } from "@/lib/copy";
 import { moveAnnotationTextGlyph } from "@/lib/move-annotation-glyph";
 import { cn } from "@/lib/utils";
 import type { MoveAnnotationType } from "@repo/chess";
@@ -34,7 +35,7 @@ function MoveAnnotationGlyph({
           height={iconPx}
           className="shrink-0 text-white"
           strokeWidth={2.5}
-          aria-label="Book"
+          aria-label={a11y.bookMove}
         />
       );
     }
@@ -45,7 +46,7 @@ function MoveAnnotationGlyph({
           className ?? "size-3.5"
         )}
         strokeWidth={2.25}
-        aria-label="Book"
+        aria-label={a11y.bookMove}
       />
     );
   }

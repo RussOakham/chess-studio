@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signUp } from "@/lib/auth-client";
+import { auth, common } from "@/lib/copy";
 import type { RegisterFormData } from "@/lib/validations/auth";
 import { registerSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +41,7 @@ export function RegisterPageClient({
       if (result.error) {
         const validationError = fromError(result.error);
         setFormError("root", {
-          message: validationError.message || "Failed to sign up",
+          message: validationError.message || auth.register.errors.failedSignUp,
         });
         return;
       }
@@ -51,11 +52,11 @@ export function RegisterPageClient({
       if (error instanceof Error) {
         const validationError = fromError(error);
         setFormError("root", {
-          message: validationError.message || "An unexpected error occurred",
+          message: validationError.message || common.unexpectedError,
         });
       } else {
         setFormError("root", {
-          message: "An unexpected error occurred",
+          message: common.unexpectedError,
         });
       }
     }
@@ -64,7 +65,7 @@ export function RegisterPageClient({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md p-6">
-        <h1 className="mb-6 text-2xl font-bold">Create Account</h1>
+        <h1 className="mb-6 text-2xl font-bold">{auth.register.heading}</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errors.root && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -72,37 +73,39 @@ export function RegisterPageClient({
             </div>
           )}
           <Field>
-            <FieldLabel htmlFor="name">Name</FieldLabel>
+            <FieldLabel htmlFor="name">{auth.register.nameLabel}</FieldLabel>
             <Input
               id="name"
               type="text"
               {...register("name")}
               disabled={isSubmitting}
-              placeholder="Your name"
+              placeholder={auth.register.namePlaceholder}
               aria-invalid={errors.name ? "true" : "false"}
             />
             {errors.name && <FieldError>{errors.name.message}</FieldError>}
           </Field>
           <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <FieldLabel htmlFor="email">{auth.register.emailLabel}</FieldLabel>
             <Input
               id="email"
               type="email"
               {...register("email")}
               disabled={isSubmitting}
-              placeholder="you@example.com"
+              placeholder={auth.register.emailPlaceholder}
               aria-invalid={errors.email ? "true" : "false"}
             />
             {errors.email && <FieldError>{errors.email.message}</FieldError>}
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">
+              {auth.register.passwordLabel}
+            </FieldLabel>
             <Input
               id="password"
               type="password"
               {...register("password")}
               disabled={isSubmitting}
-              placeholder="••••••••"
+              placeholder={auth.register.passwordPlaceholder}
               aria-invalid={errors.password ? "true" : "false"}
             />
             {errors.password && (
@@ -110,14 +113,14 @@ export function RegisterPageClient({
             )}
           </Field>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Sign Up"}
+            {isSubmitting ? auth.register.submitting : auth.register.submit}
           </Button>
         </form>
         <GitHubAuthSection callbackURL="/" enabled={githubOAuthEnabled} />
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {auth.register.footerHasAccount}{" "}
           <Link href="/login" className="text-primary hover:underline">
-            Sign in
+            {auth.signIn}
           </Link>
         </p>
       </Card>

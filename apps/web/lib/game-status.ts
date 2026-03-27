@@ -1,16 +1,20 @@
+import { gameStatusMessages } from "@/lib/copy";
 import type { Chess } from "chess.js";
+
+const { statusDescription, gameOver, whiteWins, blackWins, draw } =
+  gameStatusMessages;
 
 /**
  * Human-readable status description for the game page header.
  */
 function getStatusDescription(status: string): string {
   if (status === "in_progress") {
-    return "Make your move";
+    return statusDescription.makeYourMove;
   }
   if (status === "waiting") {
-    return "Waiting to start";
+    return statusDescription.waitingToStart;
   }
-  return "Game ended";
+  return statusDescription.gameEnded;
 }
 
 /**
@@ -41,15 +45,15 @@ type GameResult = "white_wins" | "black_wins" | "draw";
  */
 function getGameOverMessage(result: GameResult | undefined): string {
   if (!result) {
-    return "Game over";
+    return gameOver;
   }
   if (result === "white_wins") {
-    return "White wins";
+    return whiteWins;
   }
   if (result === "black_wins") {
-    return "Black wins";
+    return blackWins;
   }
-  return "Draw";
+  return draw;
 }
 
 /** Square styles for highlighting (e.g. king in check). */

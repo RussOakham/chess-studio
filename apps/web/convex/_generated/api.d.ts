@@ -8,12 +8,6 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
 import type * as auth from "../auth.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
@@ -23,6 +17,12 @@ import type * as lichess_explorer from "../lichess_explorer.js";
 import type * as lichess_explorer_cache from "../lichess_explorer_cache.js";
 import type * as reviews from "../reviews.js";
 import type * as validators from "../validators.js";
+
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;

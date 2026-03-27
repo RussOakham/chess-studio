@@ -4,6 +4,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import type { ServerSession } from "@/lib/auth-server";
+import { navigation } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,9 +17,9 @@ interface AppShellProps {
 function NavLinks() {
   const pathname = usePathname();
   const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/games", label: "Games" },
-    { href: "/game/new", label: "New Game" },
+    { href: "/", label: navigation.home },
+    { href: "/games", label: navigation.games },
+    { href: "/game/new", label: navigation.newGame },
   ];
   return (
     <nav className="flex flex-col gap-1">
@@ -53,7 +54,7 @@ export function AppShell({ session, children }: AppShellProps) {
       <aside className="flex w-56 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
           <Link href="/" className="font-semibold text-sidebar-foreground">
-            Chess Studio
+            {navigation.shellTitle}
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto p-3">

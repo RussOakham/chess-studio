@@ -1,6 +1,8 @@
 "use client";
 
+import { LoadingSpinner } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
+import { auth } from "@/lib/copy";
 import { useQuery } from "convex/react";
 
 /**
@@ -12,16 +14,23 @@ export function ConvexUserBadge() {
 
   if (user === undefined) {
     return (
-      <span className="text-xs text-muted-foreground" title="Convex auth">
-        Convex: loading…
+      <span
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+        title={auth.convexDebug.loadingTitle}
+      >
+        <LoadingSpinner size="sm" />
+        {auth.convexDebug.loadingBadge}
       </span>
     );
   }
 
   if (user === null) {
     return (
-      <span className="text-xs text-muted-foreground" title="Convex auth">
-        Convex: not signed in
+      <span
+        className="text-xs text-muted-foreground"
+        title={auth.convexDebug.notSignedInTitle}
+      >
+        {auth.convexDebug.notSignedIn}
       </span>
     );
   }
@@ -29,9 +38,9 @@ export function ConvexUserBadge() {
   return (
     <span
       className="text-xs text-muted-foreground"
-      title="Signed in via Convex (Better Auth)"
+      title={auth.convexDebug.signedInTitle}
     >
-      Convex: {user.name || user.email}
+      {auth.convexDebug.signedInPrefix} {user.name || user.email}
     </span>
   );
 }

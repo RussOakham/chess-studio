@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth-client";
+import { auth, common } from "@/lib/copy";
 import type { LoginFormData } from "@/lib/validations/auth";
 import { loginSchema } from "@/lib/validations/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,7 +44,7 @@ export function LoginForm({
       if (result.error) {
         const validationError = fromError(result.error);
         setFormError("root", {
-          message: validationError.message || "Failed to sign in",
+          message: validationError.message || auth.login.errors.failedSignIn,
         });
         return;
       }
@@ -57,11 +58,11 @@ export function LoginForm({
       if (error instanceof Error) {
         const validationError = fromError(error);
         setFormError("root", {
-          message: validationError.message || "An unexpected error occurred",
+          message: validationError.message || common.unexpectedError,
         });
       } else {
         setFormError("root", {
-          message: "An unexpected error occurred",
+          message: common.unexpectedError,
         });
       }
     }
@@ -70,7 +71,7 @@ export function LoginForm({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md p-6">
-        <h1 className="mb-6 text-2xl font-bold">Sign In</h1>
+        <h1 className="mb-6 text-2xl font-bold">{auth.login.heading}</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errors.root && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -78,25 +79,27 @@ export function LoginForm({
             </div>
           )}
           <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <FieldLabel htmlFor="email">{auth.login.emailLabel}</FieldLabel>
             <Input
               id="email"
               type="email"
               {...register("email")}
               disabled={isSubmitting}
-              placeholder="you@example.com"
+              placeholder={auth.login.emailPlaceholder}
               aria-invalid={errors.email ? "true" : "false"}
             />
             {errors.email && <FieldError>{errors.email.message}</FieldError>}
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">
+              {auth.login.passwordLabel}
+            </FieldLabel>
             <Input
               id="password"
               type="password"
               {...register("password")}
               disabled={isSubmitting}
-              placeholder="••••••••"
+              placeholder={auth.login.passwordPlaceholder}
               aria-invalid={errors.password ? "true" : "false"}
             />
             {errors.password && (
@@ -116,18 +119,18 @@ export function LoginForm({
               htmlFor="rememberMe"
               className="shrink-0 cursor-pointer font-normal"
             >
-              Remember me
+              {auth.login.rememberMe}
             </FieldLabel>
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
+            {isSubmitting ? auth.login.submitting : auth.login.submit}
           </Button>
         </form>
         <GitHubAuthSection enabled={githubOAuthEnabled} />
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          {auth.login.footerNoAccount}{" "}
           <Link href="/register" className="text-primary hover:underline">
-            Sign up
+            {auth.signUp}
           </Link>
         </p>
       </Card>

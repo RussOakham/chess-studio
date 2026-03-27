@@ -15,6 +15,8 @@ import { PlayerStrip } from "@/components/game/player-strip";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -24,11 +26,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
+import { game as gameCopy, loading } from "@/lib/copy";
 import {
   getGameOverMessage,
   getKingInCheckSquareStyles,
@@ -48,6 +52,7 @@ import { getOpeningLabelFromPgn } from "@repo/chess";
 import { useConvexConnectionState, useMutation, useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface GamePageClientProps {
@@ -55,6 +60,15 @@ interface GamePageClientProps {
   initialBoardOrientation?: "white" | "black";
   /** Display name for the human player (e.g. email until usernames exist). */
   userDisplayName?: string;
+}
+
+interface GamePageContentProps extends GamePageClientProps {
+  /**
+   * Tracks last known `game.status` across Convex reconnect remounts so we only
+   * show the completion modal on a live `in_progress` → `completed` transition,
+   * not when opening an already-finished game from history.
+   */
+  lastGameStatusRef: RefObject<string | undefined>;
 }
 
 /**
@@ -81,24 +95,26 @@ function TurnStatusIndicator({
   };
 
   let dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
-  let label = "Unknown";
+  let label: string = gameCopy.turn.unknown;
   if (makeMove.isError) {
     dotClass = "bg-red-500";
-    label = "Error";
+    label = gameCopy.turn.error;
   } else if (isEngineActive) {
     dotClass = "bg-yellow-500";
-    label = "Engine thinking";
+    label = gameCopy.turn.engineThinking;
   } else if (currentTurn === "white") {
     dotClass = "bg-white ring-1 ring-border";
-    label = "White";
+    label = gameCopy.colors.white;
   } else if (currentTurn === "black") {
     dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
-    label = "Black";
+    label = gameCopy.colors.black;
   }
 
   return (
     <div className="flex h-5 items-center gap-2">
-      <span className="font-medium text-foreground">Turn:</span>
+      <span className="font-medium text-foreground">
+        {gameCopy.turn.prefix}
+      </span>
       <div
         className={`h-3 w-3 shrink-0 rounded-full ${dotClass}`}
         aria-label={getTurnStatusLabel(params)}
@@ -134,7 +150,9 @@ function GameInfoTurnOrResult({
   if (game.result) {
     return (
       <>
-        <span className="font-medium text-foreground">Result:</span>{" "}
+        <span className="font-medium text-foreground">
+          {gameCopy.result.prefix}
+        </span>{" "}
         <span className="capitalize">{game.result.replaceAll("_", " ")}</span>
       </>
     );
@@ -150,8 +168,9 @@ function GameInfoTurnOrResult({
 function GamePageContent({
   gameId,
   initialBoardOrientation,
-  userDisplayName = "You",
-}: GamePageClientProps) {
+  userDisplayName = gameCopy.defaultUserDisplayName,
+  lastGameStatusRef,
+}: GamePageContentProps) {
   const {
     game,
     moves,
@@ -176,8 +195,50 @@ function GamePageContent({
   const resignMutation = useMutation(api.games.resign);
   const router = useRouter();
   const [isResigning, setIsResigning] = useState(false);
+  /** True only after a live `in_progress` → `completed` transition this session. */
+  const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
+  const [resignDialogOpen, setResignDialogOpen] = useState(false);
+  const [resignError, setResignError] = useState<string | null>(null);
   const [pgnCopied, setPgnCopied] = useState(false);
+
+  useEffect(() => {
+    setCompletionModalOpen(false);
+    setGameOverDismissed(false);
+    setResignDialogOpen(false);
+    setResignError(null);
+  }, [gameId]);
+
+  const handleConfirmResign = useCallback(async () => {
+    setResignError(null);
+    setIsResigning(true);
+    try {
+      await resignMutation({
+        gameId: toGameId(gameId),
+      });
+      setResignDialogOpen(false);
+    } catch (error) {
+      console.error("Resign error:", error);
+      setResignError(gameCopy.resign.failed);
+    } finally {
+      setIsResigning(false);
+    }
+  }, [gameId, resignMutation]);
+
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+    const prev = lastGameStatusRef.current;
+    if (prev === undefined) {
+      lastGameStatusRef.current = game.status;
+      return;
+    }
+    if (prev === "in_progress" && game.status === "completed") {
+      setCompletionModalOpen(true);
+    }
+    lastGameStatusRef.current = game.status;
+  }, [game, lastGameStatusRef]);
 
   const review = useQuery(
     api.reviews.getByGameId,
@@ -235,6 +296,8 @@ function GamePageContent({
 
   const isGameOver = game?.status === "completed";
   const gameOverMessage = getGameOverMessage(game?.result);
+  const showGameCompletionModal =
+    completionModalOpen && !gameOverDismissed && isGameOver;
 
   // All hooks must run before any early return (Rules of Hooks)
   const boardOrientation: "white" | "black" =
@@ -285,26 +348,28 @@ function GamePageContent({
 
   if (isLoading || !game) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading game...</p>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <PageLoading className="flex-1 justify-center" message={loading.game} />
       </div>
     );
   }
 
-  const opponentLabel = `Engine (${game.difficulty})`;
+  const opponentLabel = gameCopy.opponent(game.difficulty);
   const reviewUrl = `/game/${gameId}/review`;
 
   // Player color (stored game.color is always "white" | "black" after creation)
   const playerColor = game.color === "random" ? "white" : game.color;
-  const playerColorLabel = playerColor === "white" ? "White" : "Black";
-  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+  const playerColorLabel =
+    playerColor === "white" ? gameCopy.colors.white : gameCopy.colors.black;
+  const opponentColorLabel =
+    playerColor === "white" ? gameCopy.colors.black : gameCopy.colors.white;
 
   const openingLabel = getOpeningLabelFromPgn(game.pgn ?? undefined);
 
   return (
     <GameLayoutRoot gameSurface>
       <AlertDialog
-        open={isGameOver && !gameOverDismissed}
+        open={showGameCompletionModal}
         onOpenChange={(open) => {
           if (!open) {
             setGameOverDismissed(true);
@@ -312,18 +377,87 @@ function GamePageContent({
         }}
       >
         <AlertDialogContent size="default" className="max-w-sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Game Over</AlertDialogTitle>
-            <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => router.push("/game/new")}>
-              New Game
-            </AlertDialogAction>
-            <AlertDialogAction onClick={() => router.push("/games")}>
-              View History
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <div className="flex flex-col gap-3">
+            <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
+              <div className="flex w-full items-center gap-2">
+                <AlertDialogTitle className="flex-1 leading-tight">
+                  {gameCopy.completionModal.title}
+                </AlertDialogTitle>
+                <AlertDialogClose className="static shrink-0" />
+              </div>
+              <AlertDialogDescription>{gameOverMessage}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+              <AlertDialogAction
+                onClick={() => {
+                  router.push(reviewUrl);
+                }}
+              >
+                {gameCopy.completionModal.reviewGame}
+              </AlertDialogAction>
+              <AlertDialogAction
+                variant="outline"
+                onClick={() => {
+                  router.push("/");
+                }}
+              >
+                {gameCopy.completionModal.backToDashboard}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={resignDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && isResigning) {
+            return;
+          }
+          setResignDialogOpen(open);
+          if (open) {
+            setResignError(null);
+          }
+        }}
+      >
+        <AlertDialogContent size="default" className="max-w-sm">
+          <div className="flex flex-col gap-3">
+            <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
+              <div className="flex w-full items-center gap-2">
+                <AlertDialogTitle className="flex-1 leading-tight">
+                  {gameCopy.resign.title}
+                </AlertDialogTitle>
+                <AlertDialogClose
+                  className="static shrink-0"
+                  disabled={isResigning}
+                />
+              </div>
+              <AlertDialogDescription>
+                {gameCopy.resign.description}
+              </AlertDialogDescription>
+              {resignError ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {resignError}
+                </p>
+              ) : null}
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <AlertDialogCancel disabled={isResigning}>
+                {gameCopy.resign.cancel}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isResigning}
+                onClick={() => {
+                  void handleConfirmResign();
+                }}
+              >
+                {isResigning
+                  ? gameCopy.resign.pending
+                  : gameCopy.resign.confirm}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -344,22 +478,22 @@ function GamePageContent({
                 <>
                   {isInCheck && (
                     <Badge variant="destructive" className="shrink-0">
-                      Check
+                      {gameCopy.badges.check}
                     </Badge>
                   )}
                   {isCheckmate && (
                     <Badge variant="destructive" className="shrink-0">
-                      Checkmate
+                      {gameCopy.badges.checkmate}
                     </Badge>
                   )}
                   {isStalemate && (
                     <Badge variant="secondary" className="shrink-0">
-                      Stalemate
+                      {gameCopy.badges.stalemate}
                     </Badge>
                   )}
                   {isDraw && (
                     <Badge variant="secondary" className="shrink-0">
-                      Draw
+                      {gameCopy.badges.draw}
                     </Badge>
                   )}
                 </>
@@ -396,7 +530,7 @@ function GamePageContent({
             </GameBoardSquare>
             {!isViewingLive && (
               <p className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
-                Viewing past position — use controls to return to live
+                {gameCopy.replay.viewingPastPosition}
               </p>
             )}
           </GameBoardArea>
@@ -417,12 +551,16 @@ function GamePageContent({
           {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
-              <CardTitle className="text-base">Game Info</CardTitle>
+              <CardTitle className="text-base">
+                {gameCopy.info.cardTitle}
+              </CardTitle>
             </CardHeader>
             <CardContent className="py-2">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Status:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.status}
+                  </span>{" "}
                   <span className="capitalize">
                     {game.status.replaceAll("_", " ")}
                   </span>
@@ -437,11 +575,15 @@ function GamePageContent({
                   />
                 </div>
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Created:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.created}
+                  </span>{" "}
                   {new Date(game.createdAt).toLocaleDateString()}
                 </div>
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Updated:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.updated}
+                  </span>{" "}
                   {new Date(game.updatedAt).toLocaleDateString()}
                 </div>
               </div>
@@ -463,7 +605,7 @@ function GamePageContent({
           {game.status === "completed" && (
             <Card>
               <CardHeader>
-                <CardTitle>Play Bots</CardTitle>
+                <CardTitle>{gameCopy.postGame.playBotsTitle}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Bot message */}
@@ -472,13 +614,13 @@ function GamePageContent({
                     ♔
                   </div>
                   <div className="min-w-0 flex-1 rounded-lg rounded-tl-none bg-muted/50 px-3 py-2 text-sm text-foreground">
-                    Great game! Open Game Review to see how you did.
+                    {gameCopy.postGame.botMessage}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {openingLabel
-                    ? `Opening: ${openingLabel}`
-                    : "Game complete · Review available below"}
+                    ? gameCopy.postGame.openingPrefix(openingLabel)
+                    : gameCopy.postGame.completeReviewAvailable}
                 </p>
                 {/* Summary stats from moveAnnotations */}
                 {review?.moveAnnotations &&
@@ -499,13 +641,13 @@ function GamePageContent({
                             {good > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">!</span>
-                                {good} Good
+                                {gameCopy.postGame.statGood(good)}
                               </span>
                             )}
                             {best > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">★</span>
-                                {best} Best
+                                {gameCopy.postGame.statBest(best)}
                               </span>
                             )}
                             {inaccuracy > 0 && (
@@ -513,7 +655,7 @@ function GamePageContent({
                                 <span className="text-orange-600 dark:text-orange-400">
                                   ?!
                                 </span>
-                                {inaccuracy} Inaccuracy
+                                {gameCopy.postGame.statInaccuracy(inaccuracy)}
                               </span>
                             )}
                           </>
@@ -523,9 +665,12 @@ function GamePageContent({
                   )}
                 {isAnalyzing && (
                   <p className="text-sm text-muted-foreground">
-                    Analyzing…
+                    {gameCopy.postGame.analyzing}
                     {progress &&
-                      ` Move ${progress.completed} of ${progress.total}`}
+                      gameCopy.postGame.analyzingProgress(
+                        progress.completed,
+                        progress.total
+                      )}
                   </p>
                 )}
                 {/* Primary CTA: Game Review (new tab) */}
@@ -534,9 +679,9 @@ function GamePageContent({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${buttonVariants({ size: "lg" })} inline-flex w-full`}
-                  aria-label="Open Game Review in new tab"
+                  aria-label={gameCopy.postGame.reviewNewTabAria}
                 >
-                  Game Review
+                  {gameCopy.postGame.reviewCta}
                 </a>
                 {/* Secondary: New Game, Rematch */}
                 <div className="flex gap-2">
@@ -545,14 +690,14 @@ function GamePageContent({
                     className="flex-1"
                     onClick={() => router.push("/game/new")}
                   >
-                    + New Game
+                    {gameCopy.postGame.newGame}
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1"
                     onClick={() => router.push("/game/new")}
                   >
-                    Rematch
+                    {gameCopy.postGame.rematch}
                   </Button>
                 </div>
               </CardContent>
@@ -562,11 +707,11 @@ function GamePageContent({
           {/* PGN: accordion */}
           <details className="group rounded-lg border border-border bg-card">
             <summary className="cursor-pointer list-none px-4 py-3 font-medium">
-              PGN (Portable Game Notation)
+              {gameCopy.pgn.summaryTitle}
             </summary>
             <div className="border-t border-border px-4 pt-2 pb-4">
               <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
-                {game.pgn ?? "No moves yet"}
+                {game.pgn ?? gameCopy.pgn.noMovesYet}
               </pre>
               <Button
                 variant="outline"
@@ -582,7 +727,7 @@ function GamePageContent({
                   }
                 }}
               >
-                {pgnCopied ? "Copied" : "Copy PGN"}
+                {pgnCopied ? gameCopy.pgn.copied : gameCopy.pgn.copy}
               </Button>
             </div>
           </details>
@@ -605,7 +750,9 @@ function GamePageContent({
                     }
                     onClick={() => void requestHint()}
                   >
-                    {isHintLoading ? "Thinking…" : "Hint"}
+                    {isHintLoading
+                      ? gameCopy.controls.hintThinking
+                      : gameCopy.controls.hint}
                   </Button>
                 )}
                 <Button
@@ -613,31 +760,18 @@ function GamePageContent({
                   size="lg"
                   className="w-full"
                   disabled={isResigning}
-                  onClick={async () => {
-                    if (
-                      !globalThis.confirm(
-                        "Are you sure you want to resign? This will end the game."
-                      )
-                    ) {
-                      return;
-                    }
-                    setIsResigning(true);
-                    try {
-                      await resignMutation({
-                        gameId: toGameId(gameId),
-                      });
-                    } catch (error) {
-                      console.error("Resign error:", error);
-                      setIsResigning(false);
-                    }
+                  onClick={() => {
+                    setResignDialogOpen(true);
                   }}
                 >
-                  {isResigning ? "Resigning…" : "Resign"}
+                  {gameCopy.resign.button}
                 </Button>
               </div>
               {hint && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+                  {hintSan
+                    ? gameCopy.controls.hintLine(hintSan)
+                    : gameCopy.controls.hintAvailable}
                 </p>
               )}
             </div>
@@ -653,6 +787,19 @@ export function GamePageClient(props: GamePageClientProps) {
   const connectionState = useConvexConnectionState();
   const wasDisconnectedRef = useRef(false);
   const [connectionRefreshKey, setConnectionRefreshKey] = useState(0);
+  const lastGameStatusRef = useRef<string | undefined>(undefined);
+  const prevRouteGameIdRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const routeGameId = props.gameId;
+    if (
+      prevRouteGameIdRef.current !== undefined &&
+      prevRouteGameIdRef.current !== routeGameId
+    ) {
+      lastGameStatusRef.current = undefined;
+    }
+    prevRouteGameIdRef.current = routeGameId;
+  }, [props.gameId]);
 
   useEffect(() => {
     const connected = connectionState?.isWebSocketConnected ?? false;
@@ -670,6 +817,7 @@ export function GamePageClient(props: GamePageClientProps) {
       gameId={props.gameId}
       initialBoardOrientation={props.initialBoardOrientation}
       userDisplayName={props.userDisplayName}
+      lastGameStatusRef={lastGameStatusRef}
     />
   );
 }

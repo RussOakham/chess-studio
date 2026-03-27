@@ -1,6 +1,7 @@
 import { ConvexClientProvider } from "@/app/convex-client-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getToken } from "@/lib/auth-server";
+import { brand } from "@/lib/copy";
 import type { Metadata } from "next";
 import { Instrument_Serif, JetBrains_Mono, Roboto } from "next/font/google";
 
@@ -29,8 +30,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chess Studio",
-  description: "AI-driven chess game application",
+  title: brand.name,
+  description: brand.description,
 };
 
 export default async function RootLayout({

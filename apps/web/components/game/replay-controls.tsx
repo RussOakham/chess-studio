@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { a11y } from "@/lib/copy";
 import { Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -84,9 +85,9 @@ export function ReplayControls({
             stopPlaying();
             setReplayIndex(0);
           }}
-          aria-label="Jump to start"
+          aria-label={a11y.replay.jumpToStart}
         >
-          <span className="hidden sm:inline">Start</span>
+          <span className="hidden sm:inline">{a11y.replay.labelStart}</span>
           <span className="sm:hidden">|&lt;</span>
         </Button>
         <Button
@@ -99,9 +100,9 @@ export function ReplayControls({
             stopPlaying();
             setReplayIndex((prev) => Math.max(0, prev - 1));
           }}
-          aria-label="Previous move"
+          aria-label={a11y.replay.previousMove}
         >
-          Prev
+          {a11y.replay.labelPrev}
         </Button>
         <Button
           type="button"
@@ -112,7 +113,7 @@ export function ReplayControls({
           onClick={() => {
             togglePlay();
           }}
-          aria-label={playing ? "Pause" : "Play"}
+          aria-label={playing ? a11y.replay.pause : a11y.replay.play}
         >
           {playing ? (
             <Pause className="size-4 shrink-0" />
@@ -130,9 +131,9 @@ export function ReplayControls({
             stopPlaying();
             setReplayIndex((prev) => Math.min(sortedMovesLength, prev + 1));
           }}
-          aria-label="Next move"
+          aria-label={a11y.replay.nextMove}
         >
-          Next
+          {a11y.replay.labelNext}
         </Button>
         <Button
           type="button"
@@ -144,9 +145,9 @@ export function ReplayControls({
             stopPlaying();
             setReplayIndex(sortedMovesLength);
           }}
-          aria-label="Jump to end"
+          aria-label={a11y.replay.jumpToEnd}
         >
-          <span className="hidden sm:inline">End</span>
+          <span className="hidden sm:inline">{a11y.replay.labelEnd}</span>
           <span className="sm:hidden">&gt;|</span>
         </Button>
       </div>

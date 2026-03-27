@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
+import { newGame } from "@/lib/copy";
 import type { NewGameFormData } from "@/lib/validations/game";
 import { newGameSchema } from "@/lib/validations/game";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +36,7 @@ export default function NewGamePage() {
     watch,
     formState: { errors },
     setError: setFormError,
+    clearErrors,
   } = useForm<NewGameFormData>({
     resolver: zodResolver(newGameSchema),
     defaultValues: {
@@ -50,20 +52,25 @@ export default function NewGamePage() {
 
   const onSubmit = async (data: NewGameFormData) => {
     setIsPending(true);
-    setFormError("root", { message: undefined });
+    clearErrors("root");
+    /** Avoid clearing pending in `finally` after `router.push` — same flicker as full-page OAuth redirect. */
+    let navigatingToGame = false;
     try {
       const result = await createGameMutation({
         difficulty: data.difficulty,
         color: data.color,
       });
+      navigatingToGame = true;
       router.push(`/game/${result.id}`);
     } catch (error: unknown) {
       setFormError("root", {
         message:
-          error instanceof Error ? error.message : "Failed to create game",
+          error instanceof Error ? error.message : newGame.errors.failedCreate,
       });
     } finally {
-      setIsPending(false);
+      if (!navigatingToGame) {
+        setIsPending(false);
+      }
     }
   };
 
@@ -71,21 +78,21 @@ export default function NewGamePage() {
     <div className="flex min-h-full items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">New Game</CardTitle>
-          <CardDescription>
-            Choose your difficulty level and color to start a new chess game
-          </CardDescription>
+          <CardTitle className="text-2xl">{newGame.title}</CardTitle>
+          <CardDescription>{newGame.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {errors.root && (
+            {errors.root?.message ? (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {errors.root.message}
               </div>
-            )}
+            ) : null}
 
             <Field>
-              <FieldLabel htmlFor="difficulty">Difficulty</FieldLabel>
+              <FieldLabel htmlFor="difficulty">
+                {newGame.fields.difficulty}
+              </FieldLabel>
               <Select
                 value={difficulty}
                 onValueChange={(value) => {
@@ -108,11 +115,15 @@ export default function NewGamePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">Easy (Engine depth: 5-8)</SelectItem>
-                  <SelectItem value="medium">
-                    Medium (Engine depth: 10-12)
+                  <SelectItem value="easy">
+                    {newGame.difficulty.easy}
                   </SelectItem>
-                  <SelectItem value="hard">Hard (Engine depth: 15+)</SelectItem>
+                  <SelectItem value="medium">
+                    {newGame.difficulty.medium}
+                  </SelectItem>
+                  <SelectItem value="hard">
+                    {newGame.difficulty.hard}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {errors.difficulty && (
@@ -121,7 +132,7 @@ export default function NewGamePage() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="color">Play As</FieldLabel>
+              <FieldLabel htmlFor="color">{newGame.fields.color}</FieldLabel>
               <Select
                 value={color}
                 onValueChange={(value) => {
@@ -146,9 +157,9 @@ export default function NewGamePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="white">White</SelectItem>
-                  <SelectItem value="black">Black</SelectItem>
-                  <SelectItem value="random">Random</SelectItem>
+                  <SelectItem value="white">{newGame.color.white}</SelectItem>
+                  <SelectItem value="black">{newGame.color.black}</SelectItem>
+                  <SelectItem value="random">{newGame.color.random}</SelectItem>
                 </SelectContent>
               </Select>
               {errors.color && <FieldError>{errors.color.message}</FieldError>}
@@ -162,7 +173,7 @@ export default function NewGamePage() {
                   className="flex-1"
                   disabled
                 >
-                  Cancel
+                  {newGame.actions.cancel}
                 </Button>
               ) : (
                 <Link
@@ -172,11 +183,13 @@ export default function NewGamePage() {
                     className: "flex-1",
                   })}
                 >
-                  Cancel
+                  {newGame.actions.cancel}
                 </Link>
               )}
               <Button type="submit" className="flex-1" disabled={isPending}>
-                {isPending ? "Creating game..." : "Start Game"}
+                {isPending
+                  ? newGame.actions.creating
+                  : newGame.actions.startGame}
               </Button>
             </div>
           </form>

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
+import { X } from "lucide-react";
 import * as React from "react";
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
@@ -170,10 +171,37 @@ function AlertDialogCancel({
   );
 }
 
+function AlertDialogClose({
+  className,
+  disabled = false,
+  ...props
+}: AlertDialogPrimitive.Close.Props & { disabled?: boolean }) {
+  return (
+    <AlertDialogPrimitive.Close
+      data-slot="alert-dialog-close"
+      className={cn("absolute end-3 top-3", className)}
+      render={
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0"
+          aria-label="Close"
+          disabled={disabled}
+        />
+      }
+      {...props}
+    >
+      <X className="size-4" />
+    </AlertDialogPrimitive.Close>
+  );
+}
+
 export {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,

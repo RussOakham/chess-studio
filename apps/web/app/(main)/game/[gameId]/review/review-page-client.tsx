@@ -16,12 +16,18 @@ import {
 } from "@/components/game/game-layout";
 import { MoveHistoryCard } from "@/components/game/move-history-card";
 import { PlayerStrip } from "@/components/game/player-strip";
+import {
+  AnalysisProgressBar,
+  CircularAnalysisProgress,
+} from "@/components/review/review-analysis-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
+import { game as gameCopy, review as reviewCopy } from "@/lib/copy";
 import {
   formatBookMoveCaption,
   openingNameSuffix,
@@ -46,7 +52,7 @@ import type {
 import { useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const EMPTY_GAME_MOVES: Doc<"moves">[] = [];
 
@@ -119,36 +125,36 @@ function midReviewAnnotationCaption(annotation: {
     case "best": {
       return (
         (annotation.bestMoveSan
-          ? `Best move — engine prefers ${annotation.bestMoveSan}.`
-          : "Best move.") + openingLine
+          ? reviewCopy.annotation.bestWithSan(annotation.bestMoveSan)
+          : reviewCopy.annotation.bestFallback) + openingLine
       );
     }
     case "good": {
       return (
         (annotation.bestMoveSan
-          ? `Good move — engine prefers ${annotation.bestMoveSan}.`
-          : "Good move.") + openingLine
+          ? reviewCopy.annotation.goodWithSan(annotation.bestMoveSan)
+          : reviewCopy.annotation.goodFallback) + openingLine
       );
     }
     case "inaccuracy": {
       return (
         (annotation.bestMoveSan
-          ? `Inaccuracy — engine prefers ${annotation.bestMoveSan}.`
-          : "Inaccuracy — small eval slip.") + openingLine
+          ? reviewCopy.annotation.inaccuracyWithSan(annotation.bestMoveSan)
+          : reviewCopy.annotation.inaccuracyFallback) + openingLine
       );
     }
     case "blunder": {
       return (
         (annotation.bestMoveSan
-          ? `Blunder — engine prefers ${annotation.bestMoveSan}.`
-          : "Blunder.") + openingLine
+          ? reviewCopy.annotation.blunderWithSan(annotation.bestMoveSan)
+          : reviewCopy.annotation.blunderFallback) + openingLine
       );
     }
     case "mistake": {
       return (
         (annotation.bestMoveSan
-          ? `Mistake — engine prefers ${annotation.bestMoveSan}.`
-          : "Mistake.") + openingLine
+          ? reviewCopy.annotation.mistakeWithSan(annotation.bestMoveSan)
+          : reviewCopy.annotation.mistakeFallback) + openingLine
       );
     }
     case "book": {
@@ -298,11 +304,13 @@ function ReviewMidReview({
   const boardSize = useBoardContainerSize(boardContainerRef);
 
   const playerColor = game.color === "random" ? "white" : game.color;
-  const playerColorLabel = playerColor === "white" ? "White" : "Black";
-  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+  const playerColorLabel =
+    playerColor === "white" ? gameCopy.colors.white : gameCopy.colors.black;
+  const opponentColorLabel =
+    playerColor === "white" ? gameCopy.colors.black : gameCopy.colors.white;
   const boardOrientation: "white" | "black" =
     playerColor === "black" ? "black" : "white";
-  const opponentLabel = `Engine (${game.difficulty})`;
+  const opponentLabel = gameCopy.opponent(game.difficulty);
 
   const badgeDestinationSquare = useMemo(() => {
     if (
@@ -342,16 +350,23 @@ function ReviewMidReview({
       replayIndex > 0 &&
       currentAnnotation !== undefined &&
       badgeDestinationSquare !== null
-        ? ` Move quality: ${currentAnnotation.type}.`
+        ? reviewCopy.boardAria.moveQualitySuffix(currentAnnotation.type)
         : "";
     if (
       canShowEngineLine &&
       overlayBuild.error === null &&
       currentMove !== null
     ) {
-      return `Position before move ${String(currentMove.moveNumber)}. Green arrow shows engine best move; colored arrow shows your move.${qualitySuffix}`;
+      return reviewCopy.boardAria.positionBeforeMove(
+        String(currentMove.moveNumber),
+        qualitySuffix
+      );
     }
-    return `Game position at replay step ${String(replayIndex)} of ${String(moves.length)}.${qualitySuffix}`;
+    return reviewCopy.boardAria.gamePositionStep(
+      String(replayIndex),
+      String(moves.length),
+      qualitySuffix
+    );
   }, [
     canShowEngineLine,
     overlayBuild.error,
@@ -440,15 +455,15 @@ function ReviewMidReview({
         {/* Right: review details + move history (move history grows to fill) */}
         <GameSidebarColumn variant="dense">
           <div className="flex shrink-0 items-center justify-between">
-            <h2 className="font-display text-lg font-semibold tracking-tight">
-              Game Review
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              {reviewCopy.midReview.sidebarTitle}
             </h2>
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push(`/game/${gameId}/review`)}
             >
-              Back to overview
+              {reviewCopy.midReview.backToOverview}
             </Button>
           </div>
           <Card className="shrink-0 bg-card">
@@ -461,7 +476,10 @@ function ReviewMidReview({
                     </div>
                     <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-sm font-medium">
-                        Move {currentMove.moveNumber}: {currentMove.moveSan}
+                        {reviewCopy.midReview.moveLine(
+                          currentMove.moveNumber,
+                          currentMove.moveSan
+                        )}
                         {currentAnnotation ? (
                           <span className="ml-1 text-primary">
                             <MoveAnnotationGlyph
@@ -473,7 +491,7 @@ function ReviewMidReview({
                       <p className="text-xs text-muted-foreground">
                         {currentAnnotation
                           ? midReviewAnnotationCaption(currentAnnotation)
-                          : "Review this move."}
+                          : reviewCopy.midReview.reviewThisMove}
                       </p>
                     </div>
                   </div>
@@ -492,13 +510,13 @@ function ReviewMidReview({
                     }
                     disabled={replayIndex >= moves.length}
                   >
-                    Next
+                    {reviewCopy.midReview.next}
                   </Button>
                 </>
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground">
-                    Start position. Use the move list or Next to step through.
+                    {reviewCopy.midReview.startPosition}
                   </p>
                   <Button
                     className="mt-4 w-full"
@@ -506,7 +524,7 @@ function ReviewMidReview({
                     onClick={() => setReplayIndexAndUrl(1)}
                     disabled={moves.length === 0}
                   >
-                    Next
+                    {reviewCopy.midReview.next}
                   </Button>
                 </>
               )}
@@ -545,7 +563,12 @@ export function ReviewPageClient({
     getBestMove,
     getEvaluation,
   } = useStockfish();
-  const { runAnalysis, isAnalyzing, progress } = useGameAnalysis({
+  const {
+    runAnalysis,
+    isAnalyzing,
+    progress,
+    error: analysisError,
+  } = useGameAnalysis({
     gameId,
     game: game ?? undefined,
     moves: moves ?? [],
@@ -555,6 +578,7 @@ export function ReviewPageClient({
 
   /** Caps auto backfill retries so repeated failures cannot spin forever. */
   const analysisBackfillAttemptsRef = useRef(0);
+  const [backfillExhausted, setBackfillExhausted] = useState(false);
 
   useEffect(() => {
     const moveCount = moves?.length ?? 0;
@@ -562,6 +586,7 @@ export function ReviewPageClient({
       review === null || reviewNeedsEvaluationsRefresh(review, moveCount);
     if (!needsInitialOrBackfillAnalysis) {
       analysisBackfillAttemptsRef.current = 0;
+      setBackfillExhausted(false);
       return;
     }
     if (
@@ -571,12 +596,19 @@ export function ReviewPageClient({
       isStockfishReady
     ) {
       if (analysisBackfillAttemptsRef.current >= 5) {
+        setBackfillExhausted(true);
         return;
       }
       analysisBackfillAttemptsRef.current += 1;
       void runAnalysis();
     }
   }, [review, isAnalyzing, game?.status, moves, isStockfishReady, runAnalysis]);
+
+  const handleRetryAnalysis = useCallback(() => {
+    analysisBackfillAttemptsRef.current = 0;
+    setBackfillExhausted(false);
+    void runAnalysis();
+  }, [runAnalysis]);
 
   const userAccuracy = useMemo(
     () => accuracyPercent(review?.moveAnnotations ?? undefined),
@@ -606,7 +638,7 @@ export function ReviewPageClient({
   if (!game) {
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">Loading game…</p>
+        <PageLoading message={reviewCopy.pageLoadingGame} />
       </div>
     );
   }
@@ -614,9 +646,7 @@ export function ReviewPageClient({
   if (game.status !== "completed") {
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">
-          Game is not finished. Complete the game to review.
-        </p>
+        <p className="text-muted-foreground">{reviewCopy.gameNotFinished}</p>
       </div>
     );
   }
@@ -624,24 +654,97 @@ export function ReviewPageClient({
   if (review === undefined) {
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">Loading review…</p>
+        <PageLoading message={reviewCopy.pageLoadingReview} />
       </div>
     );
   }
 
   if (review === null) {
-    const pendingReviewMessage = (() => {
+    const moveCount = moves?.length ?? 0;
+    const completed = progress?.completed ?? 0;
+    const total = progress?.total ?? Math.max(1, moveCount);
+    const showCircle = isAnalyzing && isStockfishReady && moveCount > 0;
+
+    if (game.status === "completed" && moveCount === 0) {
+      return (
+        <div className="min-h-full bg-background p-4 md:p-6">
+          <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-6 py-10 md:min-h-[55vh] md:py-16">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {reviewCopy.title}
+            </h1>
+            <p className="max-w-md text-center text-sm text-muted-foreground">
+              {reviewCopy.analysisNoMoves}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                router.push(`/game/${gameId}`);
+              }}
+            >
+              {reviewCopy.backToGame}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const showTerminalAnalysisFailure =
+      !isAnalyzing && backfillExhausted && moveCount > 0;
+
+    if (showTerminalAnalysisFailure) {
+      const message =
+        analysisError !== null && analysisError !== ""
+          ? analysisError
+          : reviewCopy.analysisBackfillExhausted;
+
+      return (
+        <div className="min-h-full bg-background p-4 md:p-6">
+          <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-6 py-10 md:min-h-[55vh] md:py-16">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {reviewCopy.title}
+            </h1>
+            <p className="max-w-md text-center text-sm text-muted-foreground">
+              {message}
+            </p>
+            <Button type="button" onClick={handleRetryAnalysis}>
+              {reviewCopy.analysisRetry}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const loadingSubtitle = ((): string => {
+      if (!isStockfishReady) {
+        return reviewCopy.loadingEngine;
+      }
       if (isAnalyzing) {
-        return `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`;
+        return reviewCopy.evaluatingPositions;
       }
-      if (isStockfishReady) {
-        return "Starting analysis…";
-      }
-      return "Loading engine…";
+      return reviewCopy.startingAnalysis;
     })();
+
     return (
-      <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">{pendingReviewMessage}</p>
+      <div className="min-h-full bg-background p-4 md:p-6">
+        <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-8 py-10 md:min-h-[55vh] md:py-16">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {reviewCopy.title}
+            </h1>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {loadingSubtitle}
+            </p>
+          </div>
+          {showCircle ? (
+            <div className="flex flex-col items-center gap-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                {reviewCopy.analyzingHeading}
+              </h2>
+              <CircularAnalysisProgress completed={completed} total={total} />
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -668,12 +771,12 @@ export function ReviewPageClient({
     <div className="min-h-full bg-background p-4 md:p-6" data-game-surface="">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className="font-display text-2xl font-bold tracking-tight">
-            Game Review
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {reviewCopy.title}
           </h1>
           {openingLabel ? (
             <p className="text-sm text-muted-foreground">
-              Opening: {openingLabel}
+              {reviewCopy.openingPrefix(openingLabel)}
             </p>
           ) : null}
         </div>
@@ -681,16 +784,35 @@ export function ReviewPageClient({
         {/* Coach block */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl">
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-2xl leading-none">
                 ♔
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-foreground">
-                  {isAnalyzing
-                    ? `Analyzing… ${progress ? `Move ${progress.completed} of ${progress.total}` : ""}`
-                    : review.summary}
-                </p>
+              <div className="min-w-0 flex-1 space-y-2">
+                {isAnalyzing ? (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      {reviewCopy.coachAnalyzing}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {progress
+                        ? reviewCopy.coachProgress(
+                            progress.completed,
+                            progress.total
+                          )
+                        : reviewCopy.coachStarting}
+                    </p>
+                    <AnalysisProgressBar
+                      completed={progress?.completed ?? 0}
+                      total={
+                        progress?.total ??
+                        Math.max(1, (moves ?? EMPTY_GAME_MOVES).length)
+                      }
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-foreground">{review.summary}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -699,7 +821,9 @@ export function ReviewPageClient({
         {review.evaluations && review.evaluations.length >= 2 ? (
           <Card className="animate-in fade-in-0 fill-mode-both slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
             <CardHeader>
-              <CardTitle className="text-base">Advantage over time</CardTitle>
+              <CardTitle className="text-base">
+                {reviewCopy.advantageOverTime}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <EvaluationSparkline
@@ -720,7 +844,7 @@ export function ReviewPageClient({
         {review.moveAnnotations && review.moveAnnotations.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Accuracy</CardTitle>
+              <CardTitle className="text-base">{reviewCopy.accuracy}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-8 w-full overflow-hidden rounded-md bg-muted">
@@ -730,7 +854,7 @@ export function ReviewPageClient({
                 />
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Your accuracy: {userAccuracy ?? 0}%
+                {reviewCopy.yourAccuracy(userAccuracy ?? 0)}
               </p>
             </CardContent>
           </Card>
@@ -739,29 +863,47 @@ export function ReviewPageClient({
         {/* Player comparison */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Move quality</CardTitle>
+            <CardTitle className="text-base">
+              {reviewCopy.moveQuality}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium text-muted-foreground">You</p>
+                <p className="font-medium text-muted-foreground">
+                  {reviewCopy.you}
+                </p>
                 <p className="text-2xl font-semibold text-primary">
                   {userAccuracy ?? "—"}%
                 </p>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
-                  <li>Best: {counts.best}</li>
-                  <li>Good: {counts.good}</li>
-                  <li>Book: {counts.book}</li>
-                  <li>Inaccuracy: {counts.inaccuracy}</li>
-                  <li>Mistake: {counts.mistake}</li>
-                  <li>Blunder: {counts.blunder}</li>
+                  <li>
+                    {reviewCopy.countLabels.best}: {counts.best}
+                  </li>
+                  <li>
+                    {reviewCopy.countLabels.good}: {counts.good}
+                  </li>
+                  <li>
+                    {reviewCopy.countLabels.book}: {counts.book}
+                  </li>
+                  <li>
+                    {reviewCopy.countLabels.inaccuracy}: {counts.inaccuracy}
+                  </li>
+                  <li>
+                    {reviewCopy.countLabels.mistake}: {counts.mistake}
+                  </li>
+                  <li>
+                    {reviewCopy.countLabels.blunder}: {counts.blunder}
+                  </li>
                 </ul>
               </div>
               <div>
-                <p className="font-medium text-muted-foreground">Engine</p>
+                <p className="font-medium text-muted-foreground">
+                  {reviewCopy.engine}
+                </p>
                 <p className="text-2xl font-semibold">—</p>
                 <p className="mt-2 text-muted-foreground">
-                  Engine moves not rated
+                  {reviewCopy.engineMovesNotRated}
                 </p>
               </div>
             </div>
@@ -775,7 +917,7 @@ export function ReviewPageClient({
             onClick={handleStartReview}
             disabled={isAnalyzing}
           >
-            Start Review
+            {reviewCopy.startReview}
           </Button>
           <Button
             variant="outline"
@@ -786,7 +928,7 @@ export function ReviewPageClient({
               void runAnalysis();
             }}
           >
-            Re-run analysis
+            {reviewCopy.rerunAnalysis}
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { a11y } from "@/lib/copy";
 import type { PositionEvaluation } from "@repo/chess";
 import { useMemo } from "react";
 
@@ -51,16 +52,17 @@ function formatBlackScoreText(evaluation: PositionEvaluation): string {
 function getAriaLabel(evaluation: PositionEvaluation): string {
   if (evaluation.type === "mate") {
     if (evaluation.value > 0) {
-      return `Mate in ${evaluation.value} for white`;
+      return a11y.evaluation.mateForWhite(evaluation.value);
     }
-    return `Mate in ${Math.abs(evaluation.value)} for black`;
+    return a11y.evaluation.mateForBlack(Math.abs(evaluation.value));
   }
   const pawns = evaluation.value / 100;
   if (evaluation.value === 0) {
-    return "Evaluation: 0.0 — equal position";
+    return a11y.evaluation.equal;
   }
-  const favour = evaluation.value > 0 ? "white" : "black";
-  return `Evaluation: ${pawns > 0 ? "+" : ""}${pawns.toFixed(1)} in favour of ${favour}`;
+  const favour: "white" | "black" = evaluation.value > 0 ? "white" : "black";
+  const signed = `${pawns > 0 ? "+" : ""}${pawns.toFixed(1)}`;
+  return a11y.evaluation.favour(signed, favour);
 }
 
 /** Props for the vertical evaluation bar component. */
@@ -80,7 +82,7 @@ export function EvaluationBar({
   const displayPercent = orientation === "black" ? 100 - percent : percent;
   const ariaLabel = evaluation
     ? getAriaLabel(evaluation)
-    : "Evaluation loading";
+    : a11y.evaluation.loading;
 
   const whiteStyle = useMemo(
     () => ({ height: `${displayPercent}%` }),
