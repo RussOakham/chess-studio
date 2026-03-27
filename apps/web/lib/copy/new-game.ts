@@ -28,5 +28,7 @@ export const newGame = {
   validation: {
     difficultyRequired: "Please select a difficulty level",
     colorRequired: "Please select a color",
+    invalidDifficulty: "Please select a valid difficulty level",
+    invalidColor: "Please select a valid color",
   },
 } as const;

@@ -199,15 +199,18 @@ function GamePageContent({
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const [resignDialogOpen, setResignDialogOpen] = useState(false);
+  const [resignError, setResignError] = useState<string | null>(null);
   const [pgnCopied, setPgnCopied] = useState(false);
 
   useEffect(() => {
     setCompletionModalOpen(false);
     setGameOverDismissed(false);
     setResignDialogOpen(false);
+    setResignError(null);
   }, [gameId]);
 
   const handleConfirmResign = useCallback(async () => {
+    setResignError(null);
     setIsResigning(true);
     try {
       await resignMutation({
@@ -216,6 +219,7 @@ function GamePageContent({
       setResignDialogOpen(false);
     } catch (error) {
       console.error("Resign error:", error);
+      setResignError(gameCopy.resign.failed);
     } finally {
       setIsResigning(false);
     }
@@ -411,6 +415,9 @@ function GamePageContent({
             return;
           }
           setResignDialogOpen(open);
+          if (open) {
+            setResignError(null);
+          }
         }}
       >
         <AlertDialogContent size="default" className="max-w-sm">
@@ -428,6 +435,11 @@ function GamePageContent({
               <AlertDialogDescription>
                 {gameCopy.resign.description}
               </AlertDialogDescription>
+              {resignError ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {resignError}
+                </p>
+              ) : null}
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <AlertDialogCancel disabled={isResigning}>

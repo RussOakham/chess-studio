@@ -32,6 +32,7 @@ export const game = {
     confirm: "Resign",
     pending: "Resigning…",
     button: "Resign",
+    failed: "Could not resign. Please try again.",
   },
   badges: {
     check: "Check",

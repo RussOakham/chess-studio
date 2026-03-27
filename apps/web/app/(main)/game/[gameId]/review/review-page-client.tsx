@@ -52,7 +52,7 @@ import type {
 import { useQuery } from "convex/react";
 import { Bot, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const EMPTY_GAME_MOVES: Doc<"moves">[] = [];
 
@@ -563,7 +563,12 @@ export function ReviewPageClient({
     getBestMove,
     getEvaluation,
   } = useStockfish();
-  const { runAnalysis, isAnalyzing, progress } = useGameAnalysis({
+  const {
+    runAnalysis,
+    isAnalyzing,
+    progress,
+    error: analysisError,
+  } = useGameAnalysis({
     gameId,
     game: game ?? undefined,
     moves: moves ?? [],
@@ -573,6 +578,7 @@ export function ReviewPageClient({
 
   /** Caps auto backfill retries so repeated failures cannot spin forever. */
   const analysisBackfillAttemptsRef = useRef(0);
+  const [backfillExhausted, setBackfillExhausted] = useState(false);
 
   useEffect(() => {
     const moveCount = moves?.length ?? 0;
@@ -580,6 +586,7 @@ export function ReviewPageClient({
       review === null || reviewNeedsEvaluationsRefresh(review, moveCount);
     if (!needsInitialOrBackfillAnalysis) {
       analysisBackfillAttemptsRef.current = 0;
+      setBackfillExhausted(false);
       return;
     }
     if (
@@ -589,12 +596,19 @@ export function ReviewPageClient({
       isStockfishReady
     ) {
       if (analysisBackfillAttemptsRef.current >= 5) {
+        setBackfillExhausted(true);
         return;
       }
       analysisBackfillAttemptsRef.current += 1;
       void runAnalysis();
     }
   }, [review, isAnalyzing, game?.status, moves, isStockfishReady, runAnalysis]);
+
+  const handleRetryAnalysis = useCallback(() => {
+    analysisBackfillAttemptsRef.current = 0;
+    setBackfillExhausted(false);
+    void runAnalysis();
+  }, [runAnalysis]);
 
   const userAccuracy = useMemo(
     () => accuracyPercent(review?.moveAnnotations ?? undefined),
@@ -650,6 +664,56 @@ export function ReviewPageClient({
     const completed = progress?.completed ?? 0;
     const total = progress?.total ?? Math.max(1, moveCount);
     const showCircle = isAnalyzing && isStockfishReady && moveCount > 0;
+
+    if (game.status === "completed" && moveCount === 0) {
+      return (
+        <div className="min-h-full bg-background p-4 md:p-6">
+          <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-6 py-10 md:min-h-[55vh] md:py-16">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {reviewCopy.title}
+            </h1>
+            <p className="max-w-md text-center text-sm text-muted-foreground">
+              {reviewCopy.analysisNoMoves}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                router.push(`/game/${gameId}`);
+              }}
+            >
+              {reviewCopy.backToGame}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    const showTerminalAnalysisFailure =
+      !isAnalyzing && backfillExhausted && moveCount > 0;
+
+    if (showTerminalAnalysisFailure) {
+      const message =
+        analysisError !== null && analysisError !== ""
+          ? analysisError
+          : reviewCopy.analysisBackfillExhausted;
+
+      return (
+        <div className="min-h-full bg-background p-4 md:p-6">
+          <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-6 py-10 md:min-h-[55vh] md:py-16">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {reviewCopy.title}
+            </h1>
+            <p className="max-w-md text-center text-sm text-muted-foreground">
+              {message}
+            </p>
+            <Button type="button" onClick={handleRetryAnalysis}>
+              {reviewCopy.analysisRetry}
+            </Button>
+          </div>
+        </div>
+      );
+    }
 
     const loadingSubtitle = ((): string => {
       if (!isStockfishReady) {

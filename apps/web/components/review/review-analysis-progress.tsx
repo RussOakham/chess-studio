@@ -1,5 +1,6 @@
 "use client";
 
+import { review as reviewCopy } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
@@ -102,6 +103,10 @@ function AnalysisProgressBar({
 }: ProgressNumbers & { className?: string }) {
   const pct = percent({ completed, total });
   const barFillStyle = useMemo(() => ({ width: `${String(pct)}%` }), [pct]);
+  const ariaLabel = useMemo(
+    () => reviewCopy.analysisProgressBarLabel(completed, total),
+    [completed, total]
+  );
 
   return (
     <div
@@ -110,6 +115,7 @@ function AnalysisProgressBar({
         className
       )}
       role="progressbar"
+      aria-label={ariaLabel}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(pct)}

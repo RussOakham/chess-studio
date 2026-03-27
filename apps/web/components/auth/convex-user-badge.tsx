@@ -28,7 +28,7 @@ export function ConvexUserBadge() {
     return (
       <span
         className="text-xs text-muted-foreground"
-        title={auth.convexDebug.loadingTitle}
+        title={auth.convexDebug.notSignedInTitle}
       >
         {auth.convexDebug.notSignedIn}
       </span>

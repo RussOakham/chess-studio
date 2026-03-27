@@ -6,7 +6,10 @@ import { z } from "zod";
 const { validation } = auth;
 
 const loginSchema = z.object({
-  email: z.email(validation.emailInvalid).min(1, validation.emailRequired),
+  email: z.pipe(
+    z.string().trim().min(1, validation.emailRequired),
+    z.email(validation.emailInvalid)
+  ),
   password: z.string().min(1, validation.passwordRequired),
   rememberMe: z.boolean(),
 });
@@ -19,7 +22,10 @@ const registerSchema = z.object({
     .min(1, validation.nameRequired)
     .min(2, validation.nameMinLength)
     .max(100, validation.nameMaxLength),
-  email: z.email(validation.emailInvalid).min(1, validation.emailRequired),
+  email: z.pipe(
+    z.string().trim().min(1, validation.emailRequired),
+    z.email(validation.emailInvalid)
+  ),
   password: z
     .string()
     .min(8, validation.passwordMinLength)

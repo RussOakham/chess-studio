@@ -6,6 +6,14 @@ export const review = {
   pageLoadingGame: loading.game,
   pageLoadingReview: loading.review,
   gameNotFinished: "Game is not finished. Complete the game to review.",
+  analysisNoMoves:
+    "This completed game has no moves to analyze, so there is nothing to review.",
+  backToGame: "Back to game",
+  analysisRetry: "Try again",
+  analysisBackfillExhausted:
+    "Analysis could not be completed after several attempts. You can try again.",
+  analysisProgressBarLabel: (completed: number, total: number) =>
+    `Analysis progress: ${String(completed)} of ${String(total)} moves`,
   loadingEngine: "Loading chess engine…",
   evaluatingPositions: "Evaluating each position. This may take a moment.",
   startingAnalysis: "Starting analysis…",
