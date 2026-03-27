@@ -36,6 +36,7 @@
     "react": "19.2.3",
     "react-chessboard": "^4.6.0",
     "react-dom": "19.2.3",
+    "react-error-boundary": "^6.1.1",
     "react-hook-form": "^7.71.2",
     "shadcn": "^3.8.5",
     "stockfish": "^17.1.0",

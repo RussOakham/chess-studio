@@ -1,84 +1,59 @@
 "use client";
 
+import { SegmentError } from "@/components/ui/segment-error";
 import { isConvexAuthError } from "@/lib/auth-error";
 import type { ReactNode } from "react";
-import { Component } from "react";
+import { useEffect } from "react";
+import type { FallbackProps } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 
-interface Props {
-  children: ReactNode;
+function AuthRedirectFallback() {
+  useEffect(() => {
+    if (typeof globalThis.window === "undefined") {
+      return;
+    }
+    const path = globalThis.window.location.pathname;
+    const { search } = globalThis.window.location;
+    const redirect = path + search;
+    const loginUrl =
+      redirect && redirect !== "/"
+        ? `/login?redirect=${encodeURIComponent(redirect)}`
+        : "/login";
+    globalThis.window.location.assign(loginUrl);
+  }, []);
+
+  return (
+    <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
+      Redirecting to sign in…
+    </div>
+  );
 }
 
-interface State {
-  hasError: boolean;
-  isAuthError: boolean;
+function ConvexAuthFallback({ error, resetErrorBoundary }: FallbackProps) {
+  if (isConvexAuthError(error)) {
+    return <AuthRedirectFallback />;
+  }
+
+  return (
+    <SegmentError
+      title="Something went wrong"
+      description="Please try again."
+      error={error}
+      fullScreen={false}
+      onReset={resetErrorBoundary}
+      resetLabel="Retry"
+    />
+  );
 }
 
 /**
  * Catches Convex auth errors (e.g. "Not authenticated") and redirects to login
- * instead of breaking the app. Other errors display a generic fallback with a
- * Retry button.
+ * instead of breaking the app. Other errors use the shared segment error UI with Retry.
  */
-export class ConvexAuthErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, isAuthError: false };
-  }
-
-  static getDerivedStateFromError(error: unknown): Partial<State> {
-    return {
-      hasError: true,
-      isAuthError: isConvexAuthError(error),
-    };
-  }
-
-  componentDidUpdate(_prevProps: Props, prevState: State): void {
-    if (
-      this.state.hasError &&
-      this.state.isAuthError &&
-      !prevState.isAuthError &&
-      typeof globalThis.window !== "undefined"
-    ) {
-      const path = globalThis.window.location.pathname;
-      const { search } = globalThis.window.location;
-      const redirect = path + search;
-      const loginUrl =
-        redirect && redirect !== "/"
-          ? `/login?redirect=${encodeURIComponent(redirect)}`
-          : "/login";
-      globalThis.window.location.assign(loginUrl);
-    }
-  }
-
-  override render(): ReactNode {
-    if (this.state.hasError) {
-      if (this.state.isAuthError) {
-        return (
-          <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
-            Redirecting to sign in…
-          </div>
-        );
-      }
-      return (
-        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-destructive">
-          <p>Something went wrong. Please try again.</p>
-          <button
-            type="button"
-            onClick={() => {
-              // Intentional: reset boundary state so children can re-render
-              // eslint-disable-next-line react/no-set-state -- Retry resets boundary
-              this.setState({ hasError: false, isAuthError: false });
-            }}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-
-  override componentDidCatch(): void {
-    // Error already captured in state via getDerivedStateFromError
-  }
+export function ConvexAuthErrorBoundary({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary FallbackComponent={ConvexAuthFallback}>
+      {children}
+    </ErrorBoundary>
+  );
 }
