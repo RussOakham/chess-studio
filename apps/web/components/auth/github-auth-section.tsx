@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
+import { github } from "@/lib/copy";
 import { Github } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -68,7 +69,7 @@ export function GitHubAuthSection({
       });
 
       if (result.error) {
-        setOauthError(result.error.message ?? "Failed to sign in with GitHub");
+        setOauthError(result.error.message ?? github.errors.failedSignIn);
         return;
       }
 
@@ -78,10 +79,10 @@ export function GitHubAuthSection({
         globalThis.location.assign(url);
         return;
       }
-      setOauthError("Failed to start GitHub sign-in. Please try again.");
+      setOauthError(github.errors.failedStart);
     } catch (error: unknown) {
       setOauthError(
-        error instanceof Error ? error.message : "Something went wrong"
+        error instanceof Error ? error.message : github.errors.generic
       );
     } finally {
       if (!navigatingToOAuth) {
@@ -97,7 +98,9 @@ export function GitHubAuthSection({
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or</span>
+          <span className="bg-card px-2 text-muted-foreground">
+            {github.divider}
+          </span>
         </div>
       </div>
       {oauthError && (
@@ -115,7 +118,7 @@ export function GitHubAuthSection({
         }}
       >
         <Github className="mr-2 size-4" />
-        {pending ? "Connecting…" : "Continue with GitHub"}
+        {pending ? github.connecting : github.continueWithGithub}
       </Button>
     </div>
   );

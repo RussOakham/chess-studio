@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
-import { formatBadgeText, isActive, isRecent } from "@/lib/game-list-helpers";
+import { gameList, loading } from "@/lib/copy";
+import {
+  formatBadgeText,
+  getStatusLabel,
+  isActive,
+  isRecent,
+} from "@/lib/game-list-helpers";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 
@@ -25,20 +31,22 @@ export function HomeGamesList() {
   const recentGames = games.filter((game) => isRecent(game.status));
 
   if (isLoading) {
-    return <PageLoading message="Loading games…" />;
+    return <PageLoading message={loading.games} />;
   }
 
   return (
     <>
       <section className="mb-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Active Games</h2>
+          <h2 className="text-2xl font-semibold">
+            {gameList.sections.activeGames}
+          </h2>
           {activeGames.length > 0 && (
             <Link
               href="/games"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              View all →
+              {gameList.viewAll}
             </Link>
           )}
         </div>
@@ -47,10 +55,10 @@ export function HomeGamesList() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="mb-4 text-muted-foreground">
-                No active games. Start a new game to begin playing!
+                {gameList.empty.noActiveGames}
               </p>
               <Link href="/game/new">
-                <Button>Create New Game</Button>
+                <Button>{gameList.actions.createNewGame}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -62,11 +70,11 @@ export function HomeGamesList() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle>Game {game._id.slice(0, 8)}</CardTitle>
+                        <CardTitle>
+                          {gameList.gameCardTitle(game._id.slice(0, 8))}
+                        </CardTitle>
                         <CardDescription>
-                          {game.status === "in_progress"
-                            ? "In Progress"
-                            : "Waiting"}
+                          {getStatusLabel(game.status)}
                         </CardDescription>
                       </div>
                       <CardAction>
@@ -78,15 +86,16 @@ export function HomeGamesList() {
                           }
                         >
                           {game.status === "in_progress"
-                            ? "Playing"
-                            : "Waiting"}
+                            ? gameList.homeActiveBadge.playing
+                            : gameList.homeActiveBadge.waiting}
                         </Badge>
                       </CardAction>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="text-xs text-muted-foreground">
-                      Updated: {new Date(game.updatedAt).toLocaleDateString()}
+                      {gameList.meta.updatedPrefix}{" "}
+                      {new Date(game.updatedAt).toLocaleDateString()}
                     </div>
                   </CardContent>
                 </Card>
@@ -98,13 +107,15 @@ export function HomeGamesList() {
 
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Recent Games</h2>
+          <h2 className="text-2xl font-semibold">
+            {gameList.sections.recentGames}
+          </h2>
           {recentGames.length > 0 && (
             <Link
               href="/games"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              View all →
+              {gameList.viewAll}
             </Link>
           )}
         </div>
@@ -113,7 +124,7 @@ export function HomeGamesList() {
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
-                No completed games yet. Your game history will appear here.
+                {gameList.empty.noCompletedGames}
               </p>
             </CardContent>
           </Card>
@@ -125,11 +136,11 @@ export function HomeGamesList() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle>Game {game._id.slice(0, 8)}</CardTitle>
+                        <CardTitle>
+                          {gameList.gameCardTitle(game._id.slice(0, 8))}
+                        </CardTitle>
                         <CardDescription>
-                          {game.status === "completed"
-                            ? "Completed"
-                            : "Abandoned"}
+                          {getStatusLabel(game.status)}
                         </CardDescription>
                       </div>
                       <CardAction>
@@ -148,8 +159,12 @@ export function HomeGamesList() {
                   <CardContent>
                     <div className="text-xs text-muted-foreground">
                       {game.status === "completed"
-                        ? `Completed: ${new Date(game.updatedAt).toLocaleDateString()}`
-                        : `Abandoned: ${new Date(game.updatedAt).toLocaleDateString()}`}
+                        ? gameList.meta.completedOn(
+                            new Date(game.updatedAt).toLocaleDateString()
+                          )
+                        : gameList.meta.abandonedOn(
+                            new Date(game.updatedAt).toLocaleDateString()
+                          )}
                     </div>
                   </CardContent>
                 </Card>

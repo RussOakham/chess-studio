@@ -1,7 +1,10 @@
 import type { Doc } from "@/convex/_generated/dataModel";
+import { gameList } from "@/lib/copy";
 
 /** Game status union from schema; use for exhaustive switch. */
 type GameStatus = Doc<"games">["status"];
+
+const STATUS = gameList.status;
 
 const ACTIVE_STATUSES = ["in_progress", "waiting"] as const;
 const RECENT_STATUSES = ["completed", "abandoned"] as const;
@@ -26,15 +29,15 @@ function formatBadgeText(game: Doc<"games">): string {
       .replaceAll(/\b\w/g, (letter: string) => letter.toUpperCase());
   }
   if (game.status === "completed") {
-    return "Draw";
+    return STATUS.draw;
   }
   if (game.status === "in_progress") {
-    return "In Progress";
+    return STATUS.inProgress;
   }
   if (game.status === "waiting") {
-    return "Waiting";
+    return STATUS.waiting;
   }
-  return "Abandoned";
+  return STATUS.abandoned;
 }
 
 /**
@@ -43,21 +46,21 @@ function formatBadgeText(game: Doc<"games">): string {
 function getStatusLabel(status: GameStatus): string {
   switch (status) {
     case "in_progress": {
-      return "In Progress";
+      return STATUS.inProgress;
     }
     case "waiting": {
-      return "Waiting";
+      return STATUS.waiting;
     }
     case "completed": {
-      return "Completed";
+      return STATUS.completed;
     }
     case "abandoned": {
-      return "Abandoned";
+      return STATUS.abandoned;
     }
     default: {
       const _never: never = status;
       void _never;
-      return "Abandoned";
+      return STATUS.abandoned;
     }
   }
 }

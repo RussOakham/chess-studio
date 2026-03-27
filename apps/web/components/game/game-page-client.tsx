@@ -32,6 +32,7 @@ import type { Doc } from "@/convex/_generated/dataModel";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
 import { getSanForMove } from "@/lib/chess-notation";
 import { toGameId } from "@/lib/convex-id";
+import { game as gameCopy, loading } from "@/lib/copy";
 import {
   getGameOverMessage,
   getKingInCheckSquareStyles,
@@ -94,24 +95,26 @@ function TurnStatusIndicator({
   };
 
   let dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
-  let label = "Unknown";
+  let label: string = gameCopy.turn.unknown;
   if (makeMove.isError) {
     dotClass = "bg-red-500";
-    label = "Error";
+    label = gameCopy.turn.error;
   } else if (isEngineActive) {
     dotClass = "bg-yellow-500";
-    label = "Engine thinking";
+    label = gameCopy.turn.engineThinking;
   } else if (currentTurn === "white") {
     dotClass = "bg-white ring-1 ring-border";
-    label = "White";
+    label = gameCopy.colors.white;
   } else if (currentTurn === "black") {
     dotClass = "bg-neutral-800 ring-1 ring-border dark:bg-neutral-600";
-    label = "Black";
+    label = gameCopy.colors.black;
   }
 
   return (
     <div className="flex h-5 items-center gap-2">
-      <span className="font-medium text-foreground">Turn:</span>
+      <span className="font-medium text-foreground">
+        {gameCopy.turn.prefix}
+      </span>
       <div
         className={`h-3 w-3 shrink-0 rounded-full ${dotClass}`}
         aria-label={getTurnStatusLabel(params)}
@@ -147,7 +150,9 @@ function GameInfoTurnOrResult({
   if (game.result) {
     return (
       <>
-        <span className="font-medium text-foreground">Result:</span>{" "}
+        <span className="font-medium text-foreground">
+          {gameCopy.result.prefix}
+        </span>{" "}
         <span className="capitalize">{game.result.replaceAll("_", " ")}</span>
       </>
     );
@@ -163,7 +168,7 @@ function GameInfoTurnOrResult({
 function GamePageContent({
   gameId,
   initialBoardOrientation,
-  userDisplayName = "You",
+  userDisplayName = gameCopy.defaultUserDisplayName,
   lastGameStatusRef,
 }: GamePageContentProps) {
   const {
@@ -340,21 +345,20 @@ function GamePageContent({
   if (isLoading || !game) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <PageLoading
-          className="flex-1 justify-center"
-          message="Loading game…"
-        />
+        <PageLoading className="flex-1 justify-center" message={loading.game} />
       </div>
     );
   }
 
-  const opponentLabel = `Engine (${game.difficulty})`;
+  const opponentLabel = gameCopy.opponent(game.difficulty);
   const reviewUrl = `/game/${gameId}/review`;
 
   // Player color (stored game.color is always "white" | "black" after creation)
   const playerColor = game.color === "random" ? "white" : game.color;
-  const playerColorLabel = playerColor === "white" ? "White" : "Black";
-  const opponentColorLabel = playerColor === "white" ? "Black" : "White";
+  const playerColorLabel =
+    playerColor === "white" ? gameCopy.colors.white : gameCopy.colors.black;
+  const opponentColorLabel =
+    playerColor === "white" ? gameCopy.colors.black : gameCopy.colors.white;
 
   const openingLabel = getOpeningLabelFromPgn(game.pgn ?? undefined);
 
@@ -373,7 +377,7 @@ function GamePageContent({
             <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
               <div className="flex w-full items-center gap-2">
                 <AlertDialogTitle className="flex-1 leading-tight">
-                  Game Over
+                  {gameCopy.completionModal.title}
                 </AlertDialogTitle>
                 <AlertDialogClose className="static shrink-0" />
               </div>
@@ -385,7 +389,7 @@ function GamePageContent({
                   router.push(reviewUrl);
                 }}
               >
-                Review game
+                {gameCopy.completionModal.reviewGame}
               </AlertDialogAction>
               <AlertDialogAction
                 variant="outline"
@@ -393,7 +397,7 @@ function GamePageContent({
                   router.push("/");
                 }}
               >
-                Back to dashboard
+                {gameCopy.completionModal.backToDashboard}
               </AlertDialogAction>
             </AlertDialogFooter>
           </div>
@@ -414,7 +418,7 @@ function GamePageContent({
             <AlertDialogHeader className="flex flex-col gap-1 p-0 text-left sm:text-left">
               <div className="flex w-full items-center gap-2">
                 <AlertDialogTitle className="flex-1 leading-tight">
-                  Resign?
+                  {gameCopy.resign.title}
                 </AlertDialogTitle>
                 <AlertDialogClose
                   className="static shrink-0"
@@ -422,12 +426,12 @@ function GamePageContent({
                 />
               </div>
               <AlertDialogDescription>
-                Are you sure you want to resign? This will end the game.
+                {gameCopy.resign.description}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <AlertDialogCancel disabled={isResigning}>
-                Cancel
+                {gameCopy.resign.cancel}
               </AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
@@ -436,7 +440,9 @@ function GamePageContent({
                   void handleConfirmResign();
                 }}
               >
-                {isResigning ? "Resigning…" : "Resign"}
+                {isResigning
+                  ? gameCopy.resign.pending
+                  : gameCopy.resign.confirm}
               </AlertDialogAction>
             </AlertDialogFooter>
           </div>
@@ -460,22 +466,22 @@ function GamePageContent({
                 <>
                   {isInCheck && (
                     <Badge variant="destructive" className="shrink-0">
-                      Check
+                      {gameCopy.badges.check}
                     </Badge>
                   )}
                   {isCheckmate && (
                     <Badge variant="destructive" className="shrink-0">
-                      Checkmate
+                      {gameCopy.badges.checkmate}
                     </Badge>
                   )}
                   {isStalemate && (
                     <Badge variant="secondary" className="shrink-0">
-                      Stalemate
+                      {gameCopy.badges.stalemate}
                     </Badge>
                   )}
                   {isDraw && (
                     <Badge variant="secondary" className="shrink-0">
-                      Draw
+                      {gameCopy.badges.draw}
                     </Badge>
                   )}
                 </>
@@ -512,7 +518,7 @@ function GamePageContent({
             </GameBoardSquare>
             {!isViewingLive && (
               <p className="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">
-                Viewing past position — use controls to return to live
+                {gameCopy.replay.viewingPastPosition}
               </p>
             )}
           </GameBoardArea>
@@ -533,12 +539,16 @@ function GamePageContent({
           {/* Game Info: 2x2 grid (shrink-0 so Move History can grow) */}
           <Card className="shrink-0">
             <CardHeader className="py-3">
-              <CardTitle className="text-base">Game Info</CardTitle>
+              <CardTitle className="text-base">
+                {gameCopy.info.cardTitle}
+              </CardTitle>
             </CardHeader>
             <CardContent className="py-2">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Status:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.status}
+                  </span>{" "}
                   <span className="capitalize">
                     {game.status.replaceAll("_", " ")}
                   </span>
@@ -553,11 +563,15 @@ function GamePageContent({
                   />
                 </div>
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Created:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.created}
+                  </span>{" "}
                   {new Date(game.createdAt).toLocaleDateString()}
                 </div>
                 <div className="text-muted-foreground">
-                  <span className="font-medium text-foreground">Updated:</span>{" "}
+                  <span className="font-medium text-foreground">
+                    {gameCopy.info.updated}
+                  </span>{" "}
                   {new Date(game.updatedAt).toLocaleDateString()}
                 </div>
               </div>
@@ -579,7 +593,7 @@ function GamePageContent({
           {game.status === "completed" && (
             <Card>
               <CardHeader>
-                <CardTitle>Play Bots</CardTitle>
+                <CardTitle>{gameCopy.postGame.playBotsTitle}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Bot message */}
@@ -588,13 +602,13 @@ function GamePageContent({
                     ♔
                   </div>
                   <div className="min-w-0 flex-1 rounded-lg rounded-tl-none bg-muted/50 px-3 py-2 text-sm text-foreground">
-                    Great game! Open Game Review to see how you did.
+                    {gameCopy.postGame.botMessage}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {openingLabel
-                    ? `Opening: ${openingLabel}`
-                    : "Game complete · Review available below"}
+                    ? gameCopy.postGame.openingPrefix(openingLabel)
+                    : gameCopy.postGame.completeReviewAvailable}
                 </p>
                 {/* Summary stats from moveAnnotations */}
                 {review?.moveAnnotations &&
@@ -615,13 +629,13 @@ function GamePageContent({
                             {good > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">!</span>
-                                {good} Good
+                                {gameCopy.postGame.statGood(good)}
                               </span>
                             )}
                             {best > 0 && (
                               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                                 <span className="text-primary">★</span>
-                                {best} Best
+                                {gameCopy.postGame.statBest(best)}
                               </span>
                             )}
                             {inaccuracy > 0 && (
@@ -629,7 +643,7 @@ function GamePageContent({
                                 <span className="text-orange-600 dark:text-orange-400">
                                   ?!
                                 </span>
-                                {inaccuracy} Inaccuracy
+                                {gameCopy.postGame.statInaccuracy(inaccuracy)}
                               </span>
                             )}
                           </>
@@ -639,9 +653,12 @@ function GamePageContent({
                   )}
                 {isAnalyzing && (
                   <p className="text-sm text-muted-foreground">
-                    Analyzing…
+                    {gameCopy.postGame.analyzing}
                     {progress &&
-                      ` Move ${progress.completed} of ${progress.total}`}
+                      gameCopy.postGame.analyzingProgress(
+                        progress.completed,
+                        progress.total
+                      )}
                   </p>
                 )}
                 {/* Primary CTA: Game Review (new tab) */}
@@ -650,9 +667,9 @@ function GamePageContent({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${buttonVariants({ size: "lg" })} inline-flex w-full`}
-                  aria-label="Open Game Review in new tab"
+                  aria-label={gameCopy.postGame.reviewNewTabAria}
                 >
-                  Game Review
+                  {gameCopy.postGame.reviewCta}
                 </a>
                 {/* Secondary: New Game, Rematch */}
                 <div className="flex gap-2">
@@ -661,14 +678,14 @@ function GamePageContent({
                     className="flex-1"
                     onClick={() => router.push("/game/new")}
                   >
-                    + New Game
+                    {gameCopy.postGame.newGame}
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-1"
                     onClick={() => router.push("/game/new")}
                   >
-                    Rematch
+                    {gameCopy.postGame.rematch}
                   </Button>
                 </div>
               </CardContent>
@@ -678,11 +695,11 @@ function GamePageContent({
           {/* PGN: accordion */}
           <details className="group rounded-lg border border-border bg-card">
             <summary className="cursor-pointer list-none px-4 py-3 font-medium">
-              PGN (Portable Game Notation)
+              {gameCopy.pgn.summaryTitle}
             </summary>
             <div className="border-t border-border px-4 pt-2 pb-4">
               <pre className="max-h-48 overflow-auto rounded border bg-muted/50 p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
-                {game.pgn ?? "No moves yet"}
+                {game.pgn ?? gameCopy.pgn.noMovesYet}
               </pre>
               <Button
                 variant="outline"
@@ -698,7 +715,7 @@ function GamePageContent({
                   }
                 }}
               >
-                {pgnCopied ? "Copied" : "Copy PGN"}
+                {pgnCopied ? gameCopy.pgn.copied : gameCopy.pgn.copy}
               </Button>
             </div>
           </details>
@@ -721,7 +738,9 @@ function GamePageContent({
                     }
                     onClick={() => void requestHint()}
                   >
-                    {isHintLoading ? "Thinking…" : "Hint"}
+                    {isHintLoading
+                      ? gameCopy.controls.hintThinking
+                      : gameCopy.controls.hint}
                   </Button>
                 )}
                 <Button
@@ -733,12 +752,14 @@ function GamePageContent({
                     setResignDialogOpen(true);
                   }}
                 >
-                  Resign
+                  {gameCopy.resign.button}
                 </Button>
               </div>
               {hint && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {hintSan ? `Hint: ${hintSan}` : "Hint available"}
+                  {hintSan
+                    ? gameCopy.controls.hintLine(hintSan)
+                    : gameCopy.controls.hintAvailable}
                 </p>
               )}
             </div>

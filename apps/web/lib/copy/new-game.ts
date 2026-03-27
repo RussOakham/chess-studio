@@ -1,0 +1,32 @@
+/** New game creation form copy. */
+export const newGame = {
+  title: "New Game",
+  description:
+    "Choose your difficulty level and color to start a new chess game",
+  fields: {
+    difficulty: "Difficulty",
+    color: "Play As",
+  },
+  difficulty: {
+    easy: "Easy (Engine depth: 5-8)",
+    medium: "Medium (Engine depth: 10-12)",
+    hard: "Hard (Engine depth: 15+)",
+  },
+  color: {
+    white: "White",
+    black: "Black",
+    random: "Random",
+  },
+  actions: {
+    cancel: "Cancel",
+    startGame: "Start Game",
+    creating: "Creating game...",
+  },
+  errors: {
+    failedCreate: "Failed to create game",
+  },
+  validation: {
+    difficultyRequired: "Please select a difficulty level",
+    colorRequired: "Please select a color",
+  },
+} as const;

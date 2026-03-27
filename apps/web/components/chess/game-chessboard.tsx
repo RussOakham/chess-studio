@@ -2,6 +2,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { toGameId } from "@/lib/convex-id";
+import { a11y } from "@/lib/copy";
 import { Chess } from "chess.js";
 import { useMutation } from "convex/react";
 import type { ReactNode } from "react";
@@ -60,7 +61,7 @@ export function GameChessboard({
     promotion?: string;
   }) {
     if (status !== "in_progress") {
-      setError("Game is not in progress");
+      setError(a11y.gameChessboard.notInProgress);
       return;
     }
 
@@ -108,7 +109,7 @@ export function GameChessboard({
       setError(
         makeMoveError instanceof Error
           ? makeMoveError.message
-          : "Failed to make move"
+          : a11y.gameChessboard.failedMove
       );
       if (errorClearTimerRef.current !== null) {
         clearTimeout(errorClearTimerRef.current);

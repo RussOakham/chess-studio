@@ -4,6 +4,7 @@ import {
   getAnnotationMarkerClassName,
   shouldShowTimelineMarker,
 } from "@/lib/annotation-chart-styles";
+import { a11y } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import type { MoveAnnotation } from "@repo/chess";
 import { useCallback, useMemo, useRef } from "react";
@@ -285,9 +286,9 @@ export function EvaluationSparkline({
 
   const ariaLabel = useMemo(() => {
     if (replayIndex === undefined) {
-      return "Evaluation over the game";
+      return a11y.sparkline.overGame;
     }
-    return `Evaluation over the game, step ${replayIndex} of ${maxReplay}`;
+    return a11y.sparkline.withStep(replayIndex, maxReplay);
   }, [replayIndex, maxReplay]);
 
   if (pointCount < 2) {

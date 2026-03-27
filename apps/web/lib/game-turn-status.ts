@@ -2,12 +2,16 @@
  * Helpers for the turn/status indicator (dot and label) on the game page.
  */
 
+import { gameStatusMessages } from "@/lib/copy";
+
 interface TurnStatusParams {
   isMoveError: boolean;
   isEngineTurn: boolean;
   isCalculating: boolean;
   isMovePending: boolean;
 }
+
+const { turnIndicator } = gameStatusMessages;
 
 /** Tailwind class for the status dot. */
 function getTurnStatusColor(params: TurnStatusParams): string {
@@ -23,26 +27,26 @@ function getTurnStatusColor(params: TurnStatusParams): string {
 /** Aria label for the status dot. */
 function getTurnStatusLabel(params: TurnStatusParams): string {
   if (params.isMoveError) {
-    return "Server error";
+    return turnIndicator.serverError;
   }
   if (params.isEngineTurn || params.isCalculating || params.isMovePending) {
-    return "Engine turn or calculating";
+    return turnIndicator.engineTurnOrCalculating;
   }
-  return "Player turn";
+  return turnIndicator.playerTurn;
 }
 
 /** Short text for the status indicator. */
 function getTurnStatusText(params: TurnStatusParams): string {
   if (params.isMoveError) {
-    return "Error";
+    return turnIndicator.error;
   }
   if (params.isCalculating || params.isMovePending) {
-    return "Engine thinking";
+    return turnIndicator.engineThinking;
   }
   if (params.isEngineTurn) {
-    return "Engine's turn";
+    return turnIndicator.enginesTurn;
   }
-  return "Your turn";
+  return turnIndicator.yourTurn;
 }
 
 export type { TurnStatusParams };

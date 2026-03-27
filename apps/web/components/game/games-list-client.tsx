@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
+import { gameList, loading } from "@/lib/copy";
 import {
   formatBadgeText,
   getBadgeVariant,
@@ -25,21 +26,19 @@ export function GamesListClient() {
   const isLoading = gamesQuery === undefined;
 
   if (isLoading) {
-    return <PageLoading message="Loading games…" />;
+    return <PageLoading message={loading.games} />;
   }
 
   if (games.length === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            No games yet. Start a new game to begin playing!
-          </p>
+          <p className="text-muted-foreground">{gameList.empty.noGamesYet}</p>
           <Link
             href="/game/new"
             className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
           >
-            Create New Game →
+            {gameList.actions.createNewGameArrow}
           </Link>
         </CardContent>
       </Card>
@@ -54,7 +53,9 @@ export function GamesListClient() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle>Game {game._id.slice(0, 8)}</CardTitle>
+                  <CardTitle>
+                    {gameList.gameCardTitle(game._id.slice(0, 8))}
+                  </CardTitle>
                   <CardDescription>
                     {getStatusLabel(game.status)}
                   </CardDescription>
@@ -68,7 +69,8 @@ export function GamesListClient() {
             </CardHeader>
             <CardContent>
               <div className="text-xs text-muted-foreground">
-                Updated: {new Date(game.updatedAt).toLocaleDateString()}
+                {gameList.meta.updatedPrefix}{" "}
+                {new Date(game.updatedAt).toLocaleDateString()}
               </div>
             </CardContent>
           </Card>

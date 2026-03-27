@@ -1,12 +1,13 @@
 // Zod validation schemas for authentication forms
 
+import { auth } from "@/lib/copy";
 import { z } from "zod";
 
+const { validation } = auth;
+
 const loginSchema = z.object({
-  email: z
-    .email("Please enter a valid email address")
-    .min(1, "Email is required"),
-  password: z.string().min(1, "Password is required"),
+  email: z.email(validation.emailInvalid).min(1, validation.emailRequired),
+  password: z.string().min(1, validation.passwordRequired),
   rememberMe: z.boolean(),
 });
 
@@ -15,20 +16,15 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const registerSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must be less than 100 characters"),
-  email: z
-    .email("Please enter a valid email address")
-    .min(1, "Email is required"),
+    .min(1, validation.nameRequired)
+    .min(2, validation.nameMinLength)
+    .max(100, validation.nameMaxLength),
+  email: z.email(validation.emailInvalid).min(1, validation.emailRequired),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password must be less than 100 characters")
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-    ),
+    .min(8, validation.passwordMinLength)
+    .max(100, validation.passwordMaxLength)
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, validation.passwordComplexity),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
