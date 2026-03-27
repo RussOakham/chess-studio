@@ -1,4 +1,5 @@
 import { LoginForm } from "@/components/auth/login-form";
+import { PageLoading } from "@/components/ui/page-loading";
 import { isGithubOAuthEnvConfigured } from "@/lib/github-oauth-config";
 import { Suspense } from "react";
 
@@ -6,13 +7,7 @@ export default function LoginPage() {
   const githubOAuthEnabled = isGithubOAuthEnvConfigured();
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center p-4">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoading fullScreen message="Loading…" />}>
       <LoginForm githubOAuthEnabled={githubOAuthEnabled} />
     </Suspense>
   );

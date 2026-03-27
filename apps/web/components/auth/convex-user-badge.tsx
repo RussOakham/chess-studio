@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingSpinner } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 
@@ -12,7 +13,11 @@ export function ConvexUserBadge() {
 
   if (user === undefined) {
     return (
-      <span className="text-xs text-muted-foreground" title="Convex auth">
+      <span
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+        title="Convex auth"
+      >
+        <LoadingSpinner size="sm" />
         Convex: loading…
       </span>
     );

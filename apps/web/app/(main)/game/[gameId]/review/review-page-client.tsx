@@ -22,6 +22,7 @@ import {
 } from "@/components/review/review-analysis-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { shouldShowTimelineMarker } from "@/lib/annotation-chart-styles";
@@ -610,7 +611,7 @@ export function ReviewPageClient({
   if (!game) {
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">Loading game…</p>
+        <PageLoading message="Loading game…" />
       </div>
     );
   }
@@ -628,7 +629,7 @@ export function ReviewPageClient({
   if (review === undefined) {
     return (
       <div className="min-h-full bg-background p-6">
-        <p className="text-muted-foreground">Loading review…</p>
+        <PageLoading message="Loading review…" />
       </div>
     );
   }

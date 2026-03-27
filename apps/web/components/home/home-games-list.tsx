@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import { formatBadgeText, isActive, isRecent } from "@/lib/game-list-helpers";
 import { useQuery } from "convex/react";
@@ -24,11 +25,7 @@ export function HomeGamesList() {
   const recentGames = games.filter((game) => isRecent(game.status));
 
   if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <p className="text-muted-foreground">Loading games…</p>
-      </div>
-    );
+    return <PageLoading message="Loading games…" />;
   }
 
   return (

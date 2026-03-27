@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import {
   formatBadgeText,
@@ -24,11 +25,7 @@ export function GamesListClient() {
   const isLoading = gamesQuery === undefined;
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <p className="text-muted-foreground">Loading games…</p>
-      </div>
-    );
+    return <PageLoading message="Loading games…" />;
   }
 
   if (games.length === 0) {

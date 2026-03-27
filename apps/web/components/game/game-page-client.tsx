@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { capturedToSymbols, getCapturedPieces } from "@/lib/captured-pieces";
@@ -338,8 +339,11 @@ function GamePageContent({
 
   if (isLoading || !game) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading game...</p>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <PageLoading
+          className="flex-1 justify-center"
+          message="Loading game…"
+        />
       </div>
     );
   }

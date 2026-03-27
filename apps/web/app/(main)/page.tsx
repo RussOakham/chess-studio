@@ -1,6 +1,7 @@
 import { ConvexUserBadge } from "@/components/auth/convex-user-badge";
 import { HomeGamesList } from "@/components/home/home-games-list";
 import { buttonVariants } from "@/components/ui/button-variants";
+import { PageLoading } from "@/components/ui/page-loading";
 import { getSession } from "@/lib/auth-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -31,13 +32,7 @@ export default async function Home() {
           </Link>
         </div>
 
-        <Suspense
-          fallback={
-            <div className="space-y-8 py-4">
-              <p className="text-muted-foreground">Loading games…</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<PageLoading message="Loading games…" />}>
           <HomeGamesList />
         </Suspense>
       </main>

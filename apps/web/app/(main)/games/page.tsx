@@ -1,5 +1,6 @@
 import { GamesListClient } from "@/components/game/games-list-client";
 import { Button } from "@/components/ui/button";
+import { PageLoading } from "@/components/ui/page-loading";
 import { getSession } from "@/lib/auth-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,13 +27,7 @@ export default async function GamesPage() {
             <Button variant="outline">Back to Home</Button>
           </Link>
         </div>
-        <Suspense
-          fallback={
-            <div className="space-y-4 py-4">
-              <p className="text-muted-foreground">Loading games…</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<PageLoading message="Loading games…" />}>
           <GamesListClient />
         </Suspense>
       </main>
