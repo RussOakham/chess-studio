@@ -203,11 +203,12 @@ function GamePageContent({
   const [pgnCopied, setPgnCopied] = useState(false);
 
   useEffect(() => {
+    lastGameStatusRef.current = undefined;
     setCompletionModalOpen(false);
     setGameOverDismissed(false);
     setResignDialogOpen(false);
     setResignError(null);
-  }, [gameId]);
+  }, [gameId, lastGameStatusRef]);
 
   const handleConfirmResign = useCallback(async () => {
     setResignError(null);
@@ -788,10 +789,6 @@ export function GamePageClient(props: GamePageClientProps) {
   const wasDisconnectedRef = useRef(false);
   const [connectionRefreshKey, setConnectionRefreshKey] = useState(0);
   const lastGameStatusRef = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    lastGameStatusRef.current = undefined;
-  }, [props.gameId]);
 
   useEffect(() => {
     const connected = connectionState?.isWebSocketConnected ?? false;
