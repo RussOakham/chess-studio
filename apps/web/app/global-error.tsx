@@ -1,9 +1,11 @@
 "use client";
 
+import { common, errors } from "@/lib/copy";
+
 /**
  * Minimal global error boundary. Replaces root layout when a fatal error occurs.
- * Kept dependency-free (no app providers) so prerender does not run useContext
- * in a context-free tree (Next.js 16 prerender bug).
+ * Kept free of React context providers so prerender does not run useContext
+ * in a context-free tree (Next.js 16 prerender bug). String copy may import from `@/lib/copy`.
  */
 export default function GlobalError({
   error,
@@ -15,10 +17,10 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body>
-        <h1>Something went wrong</h1>
-        <p>{error.message ?? "An unexpected error occurred."}</p>
+        <h1>{errors.global.title}</h1>
+        <p>{error.message ?? errors.global.fallbackMessage}</p>
         <button type="button" onClick={() => reset()}>
-          Try again
+          {common.actions.tryAgain}
         </button>
       </body>
     </html>

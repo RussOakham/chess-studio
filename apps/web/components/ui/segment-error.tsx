@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
+import { common } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -54,7 +55,7 @@ function SegmentError({
   title,
   description,
   onReset,
-  resetLabel = "Try again",
+  resetLabel = common.actions.tryAgain,
   fullScreen = true,
   error,
   extraActions,

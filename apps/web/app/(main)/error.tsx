@@ -4,6 +4,7 @@ import {
   SegmentError,
   SegmentErrorHomeLink,
 } from "@/components/ui/segment-error";
+import { errors } from "@/lib/copy";
 import { useEffect } from "react";
 
 export default function MainSegmentError({
@@ -19,8 +20,8 @@ export default function MainSegmentError({
 
   return (
     <SegmentError
-      title="This part of the app crashed"
-      description="Try again, or go home and come back. If it keeps happening, refresh the page."
+      title={errors.segment.main.title}
+      description={errors.segment.main.description}
       error={error}
       onReset={reset}
       extraActions={<SegmentErrorHomeLink />}

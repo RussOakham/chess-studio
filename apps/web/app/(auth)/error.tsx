@@ -4,6 +4,7 @@ import {
   SegmentError,
   SegmentErrorHomeLink,
 } from "@/components/ui/segment-error";
+import { errors } from "@/lib/copy";
 import { useEffect } from "react";
 
 export default function AuthSegmentError({
@@ -19,12 +20,14 @@ export default function AuthSegmentError({
 
   return (
     <SegmentError
-      title="Sign-in ran into a problem"
-      description="Try again. You can also return home and start over."
+      title={errors.segment.auth.title}
+      description={errors.segment.auth.description}
       error={error}
       onReset={reset}
       extraActions={
-        <SegmentErrorHomeLink href="/login">Sign in</SegmentErrorHomeLink>
+        <SegmentErrorHomeLink href="/login">
+          {errors.segment.auth.signInLink}
+        </SegmentErrorHomeLink>
       }
     />
   );

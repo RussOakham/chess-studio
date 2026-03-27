@@ -4,6 +4,7 @@ import {
   SegmentError,
   SegmentErrorHomeLink,
 } from "@/components/ui/segment-error";
+import { errors } from "@/lib/copy";
 import { useEffect } from "react";
 
 /**
@@ -23,8 +24,8 @@ export default function AppError({
 
   return (
     <SegmentError
-      title="Something went wrong"
-      description="An unexpected error occurred. You can try again or go back home."
+      title={errors.segment.root.title}
+      description={errors.segment.root.description}
       error={error}
       onReset={reset}
       extraActions={<SegmentErrorHomeLink />}

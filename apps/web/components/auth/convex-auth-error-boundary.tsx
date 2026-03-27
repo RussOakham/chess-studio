@@ -2,6 +2,7 @@
 
 import { SegmentError } from "@/components/ui/segment-error";
 import { isConvexAuthError } from "@/lib/auth-error";
+import { errors } from "@/lib/copy";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import type { FallbackProps } from "react-error-boundary";
@@ -24,7 +25,7 @@ function AuthRedirectFallback() {
 
   return (
     <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
-      Redirecting to sign in…
+      {errors.redirectingToSignIn}
     </div>
   );
 }
@@ -36,12 +37,12 @@ function ConvexAuthFallback({ error, resetErrorBoundary }: FallbackProps) {
 
   return (
     <SegmentError
-      title="Something went wrong"
-      description="Please try again."
+      title={errors.convexFallback.title}
+      description={errors.convexFallback.description}
       error={error}
       fullScreen={false}
       onReset={resetErrorBoundary}
-      resetLabel="Retry"
+      resetLabel={errors.convexFallback.retryLabel}
     />
   );
 }
