@@ -4,6 +4,8 @@
 
 This document outlines the CI/CD strategy for the chess game application using GitHub Actions.
 
+**Current state:** The repository includes **[`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)** — PR checks (format, lint, type-check, test, Next.js production build with Doppler). **Production deployment** is intended to run via **Vercel’s Git integration** (see [`vercel-deployment-plan.md`](./vercel-deployment-plan.md)). Workflows such as `deploy.yml`, `docker-build.yml`, or `terraform.yml` described below are **planned / optional**, especially if you adopt the **alternate VPS** path in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md).
+
 ## CI/CD Platform
 
 ### GitHub Actions ✅ **Selected**
