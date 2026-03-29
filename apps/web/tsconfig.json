@@ -6,9 +6,7 @@
       "@repo/types": ["../../packages/types/src/index.ts"],
       "@repo/types/*": ["../../packages/types/src/*"],
       "@repo/chess": ["../../packages/chess/src/index.ts"],
-      "@repo/chess/*": ["../../packages/chess/src/*"],
-      "@repo/db": ["../../packages/db/src/index.ts"],
-      "@repo/db/*": ["../../packages/db/src/*"]
+      "@repo/chess/*": ["../../packages/chess/src/*"]
     },
     "plugins": [
       {
@@ -37,9 +35,6 @@
     },
     {
       "path": "../../packages/chess"
-    },
-    {
-      "path": "../../packages/db"
     }
   ]
 }

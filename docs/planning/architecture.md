@@ -26,7 +26,6 @@ chess-studio/
 │       └── lib/                # Client hooks, Stockfish, game analysis
 ├── packages/
 │   ├── chess/                  # Shared chess logic
-│   ├── db/                     # Drizzle types/schema (legacy / tooling; not app DB)
 │   └── types/                  # Shared TypeScript types
 └── docs/
 ```

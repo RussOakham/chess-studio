@@ -1,9 +1,0 @@
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'beginner' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'casual' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'club' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'intermediate' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'strong' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'advanced' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'expert' BEFORE 'easy';--> statement-breakpoint
-ALTER TYPE "public"."game_difficulty" ADD VALUE 'maximum' BEFORE 'easy';--> statement-breakpoint
-ALTER TABLE "games" ALTER COLUMN "difficulty" SET DEFAULT 'strong';

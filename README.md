@@ -38,7 +38,6 @@ chess-game/
 ├── packages/
 │   ├── types/            # Shared TypeScript types
 │   ├── chess/            # Chess logic and utilities
-│   ├── db/               # Database schema and client
 │   └── config/           # Shared configurations
 └── docs/                 # Documentation
 ```
@@ -77,10 +76,9 @@ chess-game/
    ```bash
    cp .env.example .env
    cp apps/web/.env.example apps/web/.env
-   cp packages/db/.env.example packages/db/.env
    ```
 
-   Fill in the required values in each `.env` file. The web app uses Convex; you can skip `packages/db/.env` unless you use that package (e.g. for another app).
+   Fill in the required values in each `.env` file.
 
 5. **Start development server**
 

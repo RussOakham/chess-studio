@@ -37,7 +37,6 @@ Thank you for your interest in contributing to Chess Studio! This document provi
    ```bash
    cp .env.example .env
    cp apps/web/.env.example apps/web/.env
-   cp packages/db/.env.example packages/db/.env
    ```
 
    Fill in the required values in each `.env` file.
@@ -57,7 +56,6 @@ chess-game/
 ├── packages/
 │   ├── types/            # Shared TypeScript types
 │   ├── chess/            # Chess logic and utilities
-│   ├── db/               # Database schema and client (Drizzle ORM)
 │   └── config/           # Shared configurations (TypeScript)
 └── docs/                 # Documentation
 ```

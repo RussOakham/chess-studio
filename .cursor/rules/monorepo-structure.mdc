@@ -13,21 +13,20 @@ This project uses a pnpm workspace with Turbo for monorepo management.
 ```text
 chess-studio/
 ├── apps/
-│   └── web/              # Next.js application (game/move data in apps/web/convex/)
+│   └── web/              # Next.js application (Convex backend under apps/web/convex/)
 ├── packages/
-│   ├── db/              # Database schema and client (Drizzle ORM; not used for game/move data)
 │   ├── chess/           # Chess logic and utilities
 │   ├── types/           # Shared TypeScript types
 │   └── config/          # Shared configurations
 └── docs/                # Documentation
 ```
 
-**Game and move data** live in **Convex** (`apps/web/convex/`), not in `packages/db`. See `@.cursor/rules/architecture-patterns.mdc`.
+**Game data, auth (Better Auth), and reviews** live in **Convex** (`apps/web/convex/`). See `@.cursor/rules/architecture-patterns.mdc`.
 
 ## Package Naming
 
 - **Apps**: `@repo/web` (e.g., `apps/web`)
-- **Packages**: `@repo/db`, `@repo/chess`, `@repo/types`
+- **Packages**: `@repo/chess`, `@repo/types`
 
 ## Dependencies
 
@@ -43,13 +42,12 @@ pnpm add -D <package> -w
 
 ```bash
 pnpm add <package> --filter @repo/web
-pnpm add <package> --filter @repo/db
 ```
 
 **Workspace dependencies** (internal packages):
 
 ```bash
-pnpm add @repo/db --filter @repo/web
+pnpm add @repo/chess --filter @repo/web
 ```
 
 ### Dependency Rules
@@ -75,7 +73,7 @@ Run with filter:
 
 ```bash
 pnpm --filter @repo/web dev
-pnpm --filter @repo/db build
+pnpm --filter @repo/chess build
 ```
 
 ## TypeScript Configuration
@@ -104,7 +102,6 @@ Configure in `turbo.json` at root.
 ### Shared Utilities
 
 - Chess logic: `packages/chess/`
-- Database: `packages/db/`
 
 ### Shared Config
 
@@ -114,7 +111,6 @@ Configure in `turbo.json` at root.
 
 ```typescript
 // Internal workspace packages
-import { games } from "@repo/db";
 import { INITIAL_FEN } from "@repo/chess";
 
 // App-specific (path aliases)
