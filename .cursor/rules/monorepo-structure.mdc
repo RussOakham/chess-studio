@@ -26,7 +26,7 @@ chess-studio/
 ## Package Naming
 
 - **Apps**: `@repo/web` (e.g., `apps/web`)
-- **Packages**: `@repo/chess`, `@repo/types`
+- **Packages**: `@repo/chess`, `@repo/types`, `@repo/typescript-config` (shared TS configs under `packages/config/typescript/`)
 
 ## Dependencies
 
