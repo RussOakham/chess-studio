@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// Script to enable pg_uuidv7 extension and update UUID defaults
+// Enable pg_uuidv7 extension (optional legacy helper). Chess data lives in Convex, not Postgres.
 import postgres from "postgres";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -15,8 +15,6 @@ async function migrate() {
     await sql`CREATE EXTENSION IF NOT EXISTS "pg_uuidv7"`;
     console.log("✓ Extension enabled");
 
-    // According to pg_uuidv7 extension, the function is uuid_generate_v7()
-    // Let's check what functions are available
     const functions = await sql`
       SELECT proname 
       FROM pg_proc 
@@ -25,32 +23,9 @@ async function migrate() {
     `;
     console.log("Available UUID v7 functions:", functions);
 
-    // Use uuid_generate_v7() which is the standard function name for pg_uuidv7
-    const functionName: string =
-      functions.length > 0 && functions[0]?.proname
-        ? String(functions[0].proname)
-        : "uuid_generate_v7";
-    console.log(`Using function: ${functionName}`);
-
-    console.log("Updating games table...");
-    await sql.unsafe(
-      `ALTER TABLE "games" ALTER COLUMN "id" SET DEFAULT ${functionName}()`
+    console.log(
+      "\n✅ Extension check completed (no chess tables in Postgres — games are in Convex)."
     );
-    console.log("✓ Games table updated");
-
-    console.log("Updating moves table...");
-    await sql.unsafe(
-      `ALTER TABLE "moves" ALTER COLUMN "id" SET DEFAULT ${functionName}()`
-    );
-    console.log("✓ Moves table updated");
-
-    console.log("Updating game_reviews table...");
-    await sql.unsafe(
-      `ALTER TABLE "game_reviews" ALTER COLUMN "id" SET DEFAULT ${functionName}()`
-    );
-    console.log("✓ Game reviews table updated");
-
-    console.log("\n✅ Migration completed successfully!");
   } catch (error) {
     console.error("❌ Migration failed:", error);
     throw error;

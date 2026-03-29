@@ -36,6 +36,13 @@
       "when": 1774795123495,
       "tag": "0004_engine_difficulty_presets",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774795491001,
+      "tag": "0005_retire_games_from_postgres",
+      "breakpoints": true
     }
   ]
 }

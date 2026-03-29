@@ -1,15 +1,4 @@
-// Drizzle ORM schema definitions
-
-import { sql } from "drizzle-orm";
-import {
-  integer,
-  pgEnum,
-  pgTable,
-  real,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+// Drizzle ORM schema definitions — Better Auth tables only (games/moves live in Convex).
 
 // Import Better Auth tables for use in schema object and foreign key references
 import {
@@ -22,101 +11,12 @@ import {
   accountRelations,
 } from "./auth";
 
-// Game status enum
-const gameStatusEnum = pgEnum("game_status", [
-  "waiting",
-  "in_progress",
-  "completed",
-  "abandoned",
-]);
-
-// Game result enum
-const gameResultEnum = pgEnum("game_result", [
-  "white_wins",
-  "black_wins",
-  "draw",
-]);
-
-// Game difficulty enum (mirrors Convex `gameDifficultyValidator`; legacy values retained)
-const gameDifficultyEnum = pgEnum("game_difficulty", [
-  "beginner",
-  "casual",
-  "club",
-  "intermediate",
-  "strong",
-  "advanced",
-  "expert",
-  "maximum",
-  "easy",
-  "medium",
-  "hard",
-]);
-
-// Game color enum
-const gameColorEnum = pgEnum("game_color", ["white", "black", "random"]);
-
-// Games table
-// References Better Auth's "user" table
-const games = pgTable("games", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`uuid_generate_v7()`),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  status: gameStatusEnum("status").notNull().default("waiting"),
-  result: gameResultEnum("result"),
-  difficulty: gameDifficultyEnum("difficulty").notNull().default("strong"), // Engine difficulty level
-  color: gameColorEnum("color").notNull().default("random"), // User's color preference
-  fen: text("fen").notNull(), // Current position in FEN notation
-  pgn: text("pgn"), // Game notation in PGN format
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// Moves table
-const moves = pgTable("moves", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`uuid_generate_v7()`),
-  gameId: uuid("game_id")
-    .notNull()
-    .references(() => games.id, { onDelete: "cascade" }),
-  moveNumber: integer("move_number").notNull(),
-  moveSan: text("move_san").notNull(), // Standard Algebraic Notation
-  moveUci: text("move_uci").notNull(), // Universal Chess Interface notation
-  fenBefore: text("fen_before").notNull(), // Position before move
-  fenAfter: text("fen_after").notNull(), // Position after move
-  evaluation: real("evaluation"), // Engine evaluation in centipawns
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Game reviews table (for AI-generated summaries)
-const gameReviews = pgTable("game_reviews", {
-  id: uuid("id")
-    .primaryKey()
-    .default(sql`uuid_generate_v7()`),
-  gameId: uuid("game_id")
-    .notNull()
-    .references(() => games.id, { onDelete: "cascade" })
-    .unique(), // One review per game
-  summary: text("summary").notNull(), // AI-generated game summary
-  keyMoments: text("key_moments").array(), // Array of key moment descriptions
-  suggestions: text("suggestions").array(), // Array of improvement suggestions
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Export schema object for Drizzle (includes all tables)
+/** Drizzle schema object passed to `drizzle()` and Better Auth's drizzle adapter. */
 const schema = {
-  // Better Auth tables
   user,
   session,
   account,
   verification,
-  // Custom tables
-  games,
-  moves,
-  gameReviews,
 };
 
 export {
@@ -130,14 +30,5 @@ export {
   accountRelations,
   // Legacy export name for backward compatibility
   user as betterAuthUser,
-  // Game enums
-  gameStatusEnum,
-  gameResultEnum,
-  gameDifficultyEnum,
-  gameColorEnum,
-  // Custom tables
-  games,
-  moves,
-  gameReviews,
   schema,
 };

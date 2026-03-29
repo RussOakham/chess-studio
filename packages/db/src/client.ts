@@ -15,6 +15,5 @@ const connectionString = process.env.DATABASE_URL;
 // Disable prefetch as it's not supported in serverless environments
 const client = postgres(connectionString, { prepare: false });
 
-// Create Drizzle client instance
-// The schema includes all tables (Better Auth + custom tables)
+// Drizzle client — schema is Better Auth tables only (chess data is in Convex)
 export const db = drizzle(client, { schema });

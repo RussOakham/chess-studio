@@ -5,7 +5,7 @@ import { gameDifficultyValidator } from "./gameDifficulty";
 
 /**
  * Convex schema for chess-studio games, moves, and game reviews.
- * Mirrors the Drizzle/Postgres semantics (see packages/db). `difficulty` includes
+ * Postgres/Drizzle holds Better Auth tables only (`packages/db`). `difficulty` includes
  * legacy `easy` / `medium` / `hard` for existing documents; new games use eight presets.
  */
 

@@ -27,8 +27,7 @@ function getAuth() {
     authInstance = betterAuth({
       database: drizzleAdapter(db, {
         provider: "pg",
-        // Use the exported schema object which includes all tables
-        // Relations are already included in the db client's schema
+        // Schema is Better Auth tables only (games/moves are in Convex)
         schema,
       }),
       emailAndPassword: {
