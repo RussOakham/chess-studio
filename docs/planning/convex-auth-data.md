@@ -6,7 +6,7 @@ Canonical reference for how the app uses Convex and authentication.
 
 - **Convex** is the database and backend for games, moves, reviews, Lichess explorer cache, and related tables. Real-time queries use Convex subscriptions.
 - **Better Auth** is integrated via the Convex Better Auth component. User/session data lives in Convex; protected Convex functions use `ctx.auth.getUserIdentity()`.
-- **Neon / Drizzle** in `packages/db` are not used for the live game/auth flow in this app.
+- **No Postgres/Drizzle** — auth and app data are Convex-only.
 
 ## Environment
 

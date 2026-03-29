@@ -11,14 +11,14 @@ import type {
   GameForAnalysis,
 } from "@/lib/run-game-analysis";
 import { runGameAnalysis } from "@/lib/run-game-analysis";
-import type { PositionEvaluation } from "@repo/chess";
+import type { GameDifficulty, PositionEvaluation } from "@repo/chess";
 import { useAction, useMutation } from "convex/react";
 import { useCallback, useState } from "react";
 
 type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
 type GetBestMove = (
   fen: string,
-  difficulty: "easy" | "medium" | "hard"
+  difficulty: GameDifficulty
 ) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
 
 interface UseGameAnalysisOptions {

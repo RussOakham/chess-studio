@@ -6,6 +6,7 @@ import { v } from "convex/values";
  * Auth via custom wrappers in `./lib/authed_functions` (Better Auth JWT).
  */
 import type { Doc } from "./_generated/dataModel";
+import { createGameDifficultyValidator } from "./gameDifficulty";
 import {
   authedMutation,
   authedQuery,
@@ -120,11 +121,7 @@ const list = authedQuery({
 
 const create = authedMutation({
   args: {
-    difficulty: v.union(
-      v.literal("easy"),
-      v.literal("medium"),
-      v.literal("hard")
-    ),
+    difficulty: createGameDifficultyValidator,
     color: v.union(v.literal("white"), v.literal("black"), v.literal("random")),
   },
   returns: v.object({

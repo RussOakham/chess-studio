@@ -17,7 +17,7 @@ This document outlines the high-level implementation plan for building the core 
   - Game and move data use Convex (queries/mutations, real-time subscriptions)
   - Type-safe API via `useQuery(api.games.*)` and `useMutation(api.games.*)`
   - No polling; Convex subscriptions for live updates
-- **UUID v7** (packages/db only, if used): pg_uuidv7 in Neon for time-ordered IDs; Convex uses its own document IDs
+- **IDs**: Convex document IDs for games/moves; no Postgres
 - **Phase 1.1: Home/Dashboard Page Enhancement** ✅
   - "New Game" button (prominent CTA)
   - Active games list (displays in_progress/waiting games)

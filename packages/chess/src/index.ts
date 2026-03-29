@@ -70,10 +70,14 @@ export type { MoveAnnotation, MoveAnnotationType } from "./move-annotation";
 // Engine utilities
 export {
   type DifficultyLevel,
+  type EngineDifficultyId,
+  type GameDifficulty,
+  type LegacyEngineDifficulty,
   type PositionEvaluation,
   type PositionEvaluationCp,
   type PositionEvaluationMate,
   type StockfishInstance,
+  ENGINE_DIFFICULTY_IDS,
   DIFFICULTY_DEPTH,
   getEngineDepth,
   calculateBestMove,

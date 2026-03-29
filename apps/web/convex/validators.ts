@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 
+import { gameDifficultyValidator } from "./gameDifficulty";
+
 /** Validator for a game document (matches games table). */
 const gameValidator = v.object({
   _id: v.id("games"),
@@ -15,11 +17,7 @@ const gameValidator = v.object({
     v.union(v.literal("white_wins"), v.literal("black_wins"), v.literal("draw"))
   ),
   drawOfferedBy: v.optional(v.union(v.literal("white"), v.literal("black"))),
-  difficulty: v.union(
-    v.literal("easy"),
-    v.literal("medium"),
-    v.literal("hard")
-  ),
+  difficulty: gameDifficultyValidator,
   color: v.union(v.literal("white"), v.literal("black"), v.literal("random")),
   fen: v.string(),
   pgn: v.optional(v.string()),

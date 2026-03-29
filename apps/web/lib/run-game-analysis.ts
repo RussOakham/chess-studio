@@ -10,7 +10,7 @@ import {
 import { explorerMastersCacheKey } from "@/lib/lichess/fen-for-explorer-cache";
 import type { ExplorerMastersResponse } from "@/lib/lichess/types";
 import type {
-  DifficultyLevel,
+  GameDifficulty,
   MoveAnnotation,
   MoveAnnotationType,
   PositionEvaluation,
@@ -69,7 +69,7 @@ interface GameForAnalysis {
 type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
 type GetBestMove = (
   fen: string,
-  difficulty: DifficultyLevel
+  difficulty: GameDifficulty
 ) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
 
 /** Map key: `explorerMastersCacheKey(fen)` → masters explorer JSON or null if unavailable. */
@@ -95,7 +95,7 @@ function classifySuboptimalMove(drop: number): MoveAnnotationType | null {
 
 /**
  * Run Stockfish analysis over a completed game's moves.
- * Uses fixed "medium" depth for analysis. Calls onProgress(completed, total) each move.
+ * Uses fixed "strong" depth for analysis. Calls onProgress(completed, total) each move.
  * Runs sequentially to avoid overloading the Stockfish worker.
  */
 async function runGameAnalysisImpl(
@@ -111,7 +111,7 @@ async function runGameAnalysisImpl(
   const evaluations: number[] = [];
   const moveAnnotations: MoveAnnotation[] = [];
   const keyMoments: string[] = [];
-  const analysisDepth: DifficultyLevel = "medium";
+  const analysisDepth: GameDifficulty = "strong";
 
   let blunderCount = 0;
   let mistakeCount = 0;

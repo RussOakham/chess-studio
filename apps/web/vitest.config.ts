@@ -27,8 +27,6 @@ export default defineConfig({
         "../../packages/chess/src/index.ts"
       ),
       "@repo/chess/*": path.resolve(__dirname, "../../packages/chess/src/*"),
-      "@repo/db": path.resolve(__dirname, "../../packages/db/src/index.ts"),
-      "@repo/db/*": path.resolve(__dirname, "../../packages/db/src/*"),
     },
   },
 });

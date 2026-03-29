@@ -125,7 +125,7 @@ If you add a relational DB later for vector/AI features:
    ```
 
 3. **Version Control**
-   - Migrations in `packages/db/migrations/`
+   - Historical: Drizzle migrations lived under `packages/db` (removed; app data is Convex-only).
    - Tracked in Git
    - Applied via CI/CD or manually
 
