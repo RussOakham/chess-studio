@@ -73,6 +73,62 @@ The workflow runs the web app build with `doppler run --project chess-studio --c
 - **`DOPPLER_TOKEN`**: A Doppler service token for project **chess-studio**, config **dev** (read-only is enough).  
   Create in Doppler: Project → Access → Service tokens → Generate. Add the token value as a GitHub repo secret named `DOPPLER_TOKEN`.
 
+## Production (`prd`) — Vercel and Doppler
+
+Use the **`prd`** config as the source of truth for **Vercel Production** when the [Doppler Vercel integration](https://docs.doppler.com/docs/vercel) is connected: link **chess-studio** → **`prd`** to the Vercel project’s **Production** environment (and optionally **`stg`** to **Preview** if you use that config for PRs).
+
+### Required for a working production app
+
+These are read by `apps/web` at build or runtime (see `convex/auth.ts`, `lib/auth-server.ts`, `lib/auth-client.ts`, `app/convex-client-provider.tsx`):
+
+| Secret                        | Notes                                                                                                                                                                                                             |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`      | Convex **production** deployment `.convex.cloud` URL. Must match the deployment you `convex deploy` to.                                                                                                           |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Same project’s **`.convex.site`** URL (Better Auth + Convex).                                                                                                                                                     |
+| `NEXT_PUBLIC_SITE_URL`        | **Public site origin** (e.g. `https://your-app.vercel.app` or custom domain). Used by the auth client (`lib/auth-client.ts`). Set this in `prd`; without it, the client can fall back to `http://localhost:3000`. |
+| `SITE_URL`                    | Same canonical URL as above for server-side expectations; keep aligned with Convex env `SITE_URL` if you mirror values.                                                                                           |
+| `BETTER_AUTH_SECRET`          | Same value as on your **Convex production** deployment (`BETTER_AUTH_SECRET`).                                                                                                                                    |
+| `BETTER_AUTH_URL`             | Production app URL (e.g. `https://your-app.vercel.app`).                                                                                                                                                          |
+| `NODE_ENV`                    | Typically `production` for Production builds.                                                                                                                                                                     |
+
+### Strongly recommended (auth UX)
+
+| Secret                 | Notes                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GITHUB_CLIENT_ID`     | If you use GitHub OAuth; must match Convex env. Used by `lib/github-oauth-config.ts` for the Next.js server. |
+| `GITHUB_CLIENT_SECRET` | Same as Convex GitHub OAuth app.                                                                             |
+
+### Optional
+
+| Secret                            | Notes                                                                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `LICHESS_API_TOKEN`               | Opening Explorer from Convex actions; also set on Convex prod. Add to `prd` if `dev` has it and you want explorer in production. |
+| `NEXT_PUBLIC_GITHUB_AUTH_ENABLED` | Set to `true` only if you need to force-show the GitHub button without server env (edge cases).                                  |
+| `CONVEX_DEPLOYMENT`               | Informational / CLI convenience; not required by Next.js if `NEXT_PUBLIC_CONVEX_URL` is set.                                     |
+| `NEXT_PUBLIC_BETTER_AUTH_URL`     | Not referenced in application code; safe to omit or align with `BETTER_AUTH_URL` if your tooling expects it.                     |
+
+### Convex production (outside Doppler)
+
+Run **`npx convex env set`** (or the dashboard) on the **production** Convex deployment for: `SITE_URL`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `LICHESS_API_TOKEN`, etc. Doppler does not replace Convex’s own env; keep **values in sync** where both need the same secret.
+
+### Fill `prd` from the dashboard or CLI
+
+1. Open [Doppler](https://dashboard.doppler.com) → project **chess-studio** → config **`prd`**.
+2. Copy keys from **`dev`** where the value is **not** environment-specific (e.g. same Convex project during early deploys), then override URLs to **production** (`NEXT_PUBLIC_*_URL`, `SITE_URL`, `BETTER_AUTH_URL`).
+3. Or from the CLI (example — replace placeholders):
+
+   ```bash
+   doppler secrets set NEXT_PUBLIC_SITE_URL="https://YOUR_VERCEL_URL" SITE_URL="https://YOUR_VERCEL_URL" \
+     --project chess-studio --config prd
+   ```
+
+### Vercel integration checklist
+
+- [ ] Doppler **prd** contains all **Required** rows above.
+- [ ] Vercel project → Integrations → Doppler → Production environment mapped to **`prd`**.
+- [ ] Convex **production** env vars match Doppler for shared secrets (`BETTER_AUTH_SECRET`, OAuth, etc.).
+- [ ] GitHub OAuth app callback URLs include `https://YOUR_PRODUCTION_DOMAIN/api/auth/callback/github`.
+
 ## Secrets Managed
 
 ### Web Service (Next.js)

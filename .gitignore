@@ -68,3 +68,4 @@ logs/
 
 # Large binary files (copied from node_modules by postinstall via setup-stockfish)
 apps/web/public/engine/*.wasm
+.vercel

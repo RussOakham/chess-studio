@@ -57,6 +57,16 @@ Production needs at least:
 
 Never commit `.env*.local` or raw secrets to git.
 
+### Production hostname alignment (chess-studio)
+
+When the live site is **`https://chess-studio-steel.vercel.app`** (or another Vercel URL), keep these aligned:
+
+- **Vercel (Production and Preview):** `NEXT_PUBLIC_SITE_URL`, `SITE_URL`, `BETTER_AUTH_URL` — same origin as the deployment.
+- **Convex production:** `SITE_URL` — same origin; `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` if you use GitHub sign-in.
+- **GitHub OAuth app:** add **Authorization callback URL** `https://chess-studio-steel.vercel.app/api/auth/callback/github` (update if the hostname changes).
+
+After changing environment variables, trigger a **new production deployment** (push to the production branch, or **Deployments → Redeploy** in Vercel). Local `vercel --prod` from `apps/web` can fail with a doubled `apps/web/apps/web` path when the project **Root Directory** is also `apps/web`; Git-connected builds avoid that.
+
 ## Convex deploy cadence
 
 - **Application code** (Next.js) deploys when Vercel builds.

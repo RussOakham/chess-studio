@@ -6,6 +6,7 @@
     "dev": "turbo run dev",
     "dev:all": "concurrently --names \"next,convex\" \"pnpm run dev\" \"pnpm --filter @repo/web run convex:dev\"",
     "build": "turbo run build",
+    "vercel-build:web": "turbo run vercel-build --filter=@repo/web",
     "lint": "oxlint --type-aware --type-check . && eslint .",
     "lint:fix": "oxlint --type-aware --type-check --fix . && eslint --fix .",
     "lint:md": "markdownlint '**/*.md' --ignore .markdownlintignore",
