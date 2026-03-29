@@ -1,6 +1,6 @@
 "use client";
 
-import type { DifficultyLevel } from "@repo/chess";
+import type { GameDifficulty } from "@repo/chess";
 import { useEffect, useRef } from "react";
 
 /** Ref that is set true when the engine move is submitted, cleared after delay. */
@@ -33,7 +33,7 @@ export function useEngineMoveEffect({
   gameStatus: string | undefined;
   gameFen: string | undefined;
   gameId: string | undefined;
-  gameDifficulty: DifficultyLevel | undefined;
+  gameDifficulty: GameDifficulty | undefined;
   gameIdParam: string;
   isGameFetching: boolean;
   isStockfishReady: boolean;
@@ -44,7 +44,7 @@ export function useEngineMoveEffect({
   isDraw: boolean;
   getBestMove: (
     fen: string,
-    difficulty: DifficultyLevel
+    difficulty: GameDifficulty
   ) => Promise<{
     from: string;
     to: string;

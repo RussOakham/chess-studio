@@ -1,7 +1,7 @@
 "use client";
 
 import type {
-  DifficultyLevel,
+  GameDifficulty,
   PositionEvaluation,
   StockfishInstance,
 } from "@repo/chess";
@@ -98,7 +98,7 @@ export function useStockfish() {
    */
   const getBestMove = async (
     fen: string,
-    difficulty: DifficultyLevel
+    difficulty: GameDifficulty
   ): Promise<{
     from: string;
     to: string;

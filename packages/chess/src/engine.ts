@@ -17,15 +17,46 @@ interface StockfishInstance {
   terminate: () => void;
 }
 
-/**
- * Difficulty level configuration
- */
-type DifficultyLevel = "easy" | "medium" | "hard";
+/** Search-depth presets for new games (maps to UCI `go depth N`). */
+const ENGINE_DIFFICULTY_IDS = [
+  "beginner",
+  "casual",
+  "club",
+  "intermediate",
+  "strong",
+  "advanced",
+  "expert",
+  "maximum",
+] as const;
+
+type EngineDifficultyId = (typeof ENGINE_DIFFICULTY_IDS)[number];
+
+/** @deprecated Use {@link EngineDifficultyId} for new code. */
+type LegacyEngineDifficulty = "easy" | "medium" | "hard";
 
 /**
- * Engine depth configuration based on difficulty
+ * Difficulty stored on a game document: eight presets or legacy `easy` / `medium` / `hard`.
  */
-const DIFFICULTY_DEPTH: Record<DifficultyLevel, number> = {
+type GameDifficulty = EngineDifficultyId | LegacyEngineDifficulty;
+
+/** @deprecated Alias for {@link GameDifficulty}. */
+type DifficultyLevel = GameDifficulty;
+
+/**
+ * Engine depth configuration based on difficulty (non-linear spacing).
+ */
+const DIFFICULTY_DEPTH: Record<EngineDifficultyId, number> = {
+  beginner: 8,
+  casual: 10,
+  club: 12,
+  intermediate: 15,
+  strong: 18,
+  advanced: 22,
+  expert: 26,
+  maximum: 30,
+};
+
+const LEGACY_DEPTH: Record<LegacyEngineDifficulty, number> = {
   easy: 12,
   medium: 18,
   hard: 22,
@@ -34,7 +65,14 @@ const DIFFICULTY_DEPTH: Record<DifficultyLevel, number> = {
 /**
  * Get engine depth for a difficulty level
  */
-function getEngineDepth(difficulty: DifficultyLevel): number {
+function getEngineDepth(difficulty: GameDifficulty): number {
+  if (
+    difficulty === "easy" ||
+    difficulty === "medium" ||
+    difficulty === "hard"
+  ) {
+    return LEGACY_DEPTH[difficulty];
+  }
   return DIFFICULTY_DEPTH[difficulty];
 }
 
@@ -104,13 +142,12 @@ interface PositionEvaluationCp {
   value: number;
 }
 
-/** Mate in N moves (positive = White wins, negative = Black wins). */
+/** Mate distance (positive = White mates in N; negative = Black mates in |N|). */
 interface PositionEvaluationMate {
   type: "mate";
   value: number;
 }
 
-/** Position evaluation: centipawns or mate. */
 type PositionEvaluation = PositionEvaluationCp | PositionEvaluationMate;
 
 /**
@@ -182,10 +219,14 @@ async function getPositionEvaluation(
 
 export {
   type DifficultyLevel,
+  type EngineDifficultyId,
+  type GameDifficulty,
+  type LegacyEngineDifficulty,
   type PositionEvaluation,
   type PositionEvaluationCp,
   type PositionEvaluationMate,
   type StockfishInstance,
+  ENGINE_DIFFICULTY_IDS,
   DIFFICULTY_DEPTH,
   getEngineDepth,
   calculateBestMove,

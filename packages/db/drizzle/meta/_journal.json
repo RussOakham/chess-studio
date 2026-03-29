@@ -29,6 +29,13 @@
       "when": 1768595173912,
       "tag": "0003_rainy_omega_flight",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774795123495,
+      "tag": "0004_engine_difficulty_presets",
+      "breakpoints": true
     }
   ]
 }

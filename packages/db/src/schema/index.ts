@@ -37,8 +37,16 @@ const gameResultEnum = pgEnum("game_result", [
   "draw",
 ]);
 
-// Game difficulty enum
+// Game difficulty enum (mirrors Convex `gameDifficultyValidator`; legacy values retained)
 const gameDifficultyEnum = pgEnum("game_difficulty", [
+  "beginner",
+  "casual",
+  "club",
+  "intermediate",
+  "strong",
+  "advanced",
+  "expert",
+  "maximum",
   "easy",
   "medium",
   "hard",
@@ -58,7 +66,7 @@ const games = pgTable("games", {
     .references(() => user.id, { onDelete: "cascade" }),
   status: gameStatusEnum("status").notNull().default("waiting"),
   result: gameResultEnum("result"),
-  difficulty: gameDifficultyEnum("difficulty").notNull().default("medium"), // Engine difficulty level
+  difficulty: gameDifficultyEnum("difficulty").notNull().default("strong"), // Engine difficulty level
   color: gameColorEnum("color").notNull().default("random"), // User's color preference
   fen: text("fen").notNull(), // Current position in FEN notation
   pgn: text("pgn"), // Game notation in PGN format

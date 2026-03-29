@@ -6,6 +6,10 @@ export { a11y } from "./a11y";
 export { auth } from "./auth";
 export { brand } from "./brand";
 export { common } from "./common";
+export {
+  engineDifficultyOptions,
+  getEngineDifficultyShortTitle,
+} from "./difficulty-presets";
 export { loading } from "./loading";
 export { newGame } from "./new-game";
 export { review } from "./review";

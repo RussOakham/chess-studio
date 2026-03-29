@@ -1,3 +1,5 @@
+import { getEngineDifficultyShortTitle } from "./difficulty-presets";
+
 /**
  * Active game page copy (board, sidebar, dialogs, post-game).
  * Loading line uses {@link loading.game} from `./loading`.
@@ -8,7 +10,8 @@ export const game = {
     white: "White",
     black: "Black",
   },
-  opponent: (difficulty: string) => `Engine (${difficulty})`,
+  opponent: (difficulty: string) =>
+    `Engine (${getEngineDifficultyShortTitle(difficulty)})`,
   turn: {
     prefix: "Turn:",
     unknown: "Unknown",

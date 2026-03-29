@@ -7,11 +7,8 @@ export const newGame = {
     difficulty: "Difficulty",
     color: "Play As",
   },
-  difficulty: {
-    easy: "Easy (Engine depth: 5-8)",
-    medium: "Medium (Engine depth: 10-12)",
-    hard: "Hard (Engine depth: 15+)",
-  },
+  difficultyLegend:
+    "Higher settings search deeper. Engine strength and think time don't increase evenly — engine turns at higher settings take longer for smaller gains in playing strength.",
   color: {
     white: "White",
     black: "Black",

@@ -45,6 +45,7 @@ import {
 import { evaluationForReplayIndex } from "@/lib/review-evaluation";
 import { getOpeningLabelFromPgn } from "@repo/chess";
 import type {
+  GameDifficulty,
   MoveAnnotation,
   MoveAnnotationType,
   PositionEvaluation,
@@ -178,7 +179,7 @@ interface ReviewMidReviewProps {
   game: {
     fen: string;
     _id: string;
-    difficulty: "easy" | "medium" | "hard";
+    difficulty: GameDifficulty;
     color: "white" | "black" | "random";
   };
   moves: Doc<"moves">[];

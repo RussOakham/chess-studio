@@ -1,9 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+import { gameDifficultyValidator } from "./gameDifficulty";
+
 /**
  * Convex schema for chess-studio games, moves, and game reviews.
- * Mirrors the Drizzle/Postgres semantics (see packages/db); no historic data migration.
+ * Mirrors the Drizzle/Postgres semantics (see packages/db). `difficulty` includes
+ * legacy `easy` / `medium` / `hard` for existing documents; new games use eight presets.
  */
 
 export default defineSchema({
@@ -23,11 +26,7 @@ export default defineSchema({
       )
     ),
     drawOfferedBy: v.optional(v.union(v.literal("white"), v.literal("black"))),
-    difficulty: v.union(
-      v.literal("easy"),
-      v.literal("medium"),
-      v.literal("hard")
-    ),
+    difficulty: gameDifficultyValidator,
     color: v.union(v.literal("white"), v.literal("black"), v.literal("random")),
     fen: v.string(),
     pgn: v.optional(v.string()),

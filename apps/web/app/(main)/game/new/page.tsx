@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
-import { newGame } from "@/lib/copy";
+import { engineDifficultyOptions, newGame } from "@/lib/copy";
 import type { NewGameFormData } from "@/lib/validations/game";
 import { newGameSchema } from "@/lib/validations/game";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +40,7 @@ export default function NewGamePage() {
   } = useForm<NewGameFormData>({
     resolver: zodResolver(newGameSchema),
     defaultValues: {
-      difficulty: "medium",
+      difficulty: "strong",
       color: "random",
     },
   });
@@ -98,7 +98,9 @@ export default function NewGamePage() {
                 onValueChange={(value) => {
                   if (
                     value &&
-                    (value === "easy" || value === "medium" || value === "hard")
+                    engineDifficultyOptions.some(
+                      (option) => option.id === value
+                    )
                   ) {
                     setValue("difficulty", value, {
                       shouldValidate: true,
@@ -115,17 +117,20 @@ export default function NewGamePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="easy">
-                    {newGame.difficulty.easy}
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    {newGame.difficulty.medium}
-                  </SelectItem>
-                  <SelectItem value="hard">
-                    {newGame.difficulty.hard}
-                  </SelectItem>
+                  {engineDifficultyOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      <span className="font-medium">{option.title}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        — {option.subtitle}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs leading-snug text-muted-foreground">
+                {newGame.difficultyLegend}
+              </p>
               {errors.difficulty && (
                 <FieldError>{errors.difficulty.message}</FieldError>
               )}

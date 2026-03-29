@@ -1,6 +1,6 @@
 "use client";
 
-import type { DifficultyLevel } from "@repo/chess";
+import type { GameDifficulty } from "@repo/chess";
 import { useCallback, useEffect, useState, startTransition } from "react";
 
 interface HintMove {
@@ -11,12 +11,12 @@ interface HintMove {
 
 type GetBestMove = (
   fen: string,
-  difficulty: DifficultyLevel
+  difficulty: GameDifficulty
 ) => Promise<{ from: string; to: string; promotion?: string }>;
 
 function useHint(options: {
   fen: string | undefined;
-  difficulty: DifficultyLevel | undefined;
+  difficulty: GameDifficulty | undefined;
   getBestMove: GetBestMove;
   enabled: boolean;
 }) {
