@@ -74,6 +74,15 @@ export default defineSchema({
         })
       )
     ),
+    /** LLM-generated narrative; rule-based analysis stays in `summary`. */
+    aiSummary: v.optional(v.string()),
+    aiSummaryMeta: v.optional(
+      v.object({
+        model: v.string(),
+        generatedAt: v.number(),
+        promptVersion: v.optional(v.number()),
+      })
+    ),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 

@@ -6,6 +6,7 @@ import { v } from "convex/values";
  */
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { ownedGameMutation, ownedGameQuery } from "./lib/authed_functions";
 
 const MAX_KEY_MOMENTS = 20;
@@ -13,6 +14,14 @@ const MAX_SUGGESTIONS = 10;
 const MAX_MOVE_ANNOTATIONS = 500;
 const MAX_EVALUATIONS = 500;
 const MAX_SUMMARY_LENGTH = 10_000;
+/** LLM narrative cap (separate from rule-based `summary`). */
+const MAX_AI_SUMMARY_LENGTH = 12_000;
+
+const aiSummaryMetaValidator = v.object({
+  model: v.string(),
+  generatedAt: v.number(),
+  promptVersion: v.optional(v.number()),
+});
 
 const moveAnnotationValidator = v.object({
   moveNumber: v.number(),
@@ -43,6 +52,8 @@ const getByGameId = ownedGameQuery({
       suggestions: v.optional(v.array(v.string())),
       openingNameLichess: v.optional(v.string()),
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
+      aiSummary: v.optional(v.string()),
+      aiSummaryMeta: v.optional(aiSummaryMetaValidator),
       createdAt: v.number(),
     }),
     v.null()
@@ -171,4 +182,44 @@ const save = ownedGameMutation({
   },
 });
 
-export { getByGameId, save };
+/**
+ * Server-only: called from Convex actions after LLM generation. Do not expose to clients.
+ */
+const patchAiSummary = internalMutation({
+  args: {
+    gameId: v.id("games"),
+    aiSummary: v.string(),
+    aiSummaryMeta: aiSummaryMetaValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const trimmed = args.aiSummary.trim();
+    if (trimmed.length === 0) {
+      throw new Error("aiSummary is required");
+    }
+    if (trimmed.length > MAX_AI_SUMMARY_LENGTH) {
+      throw new Error(
+        `AI summary must be ${String(MAX_AI_SUMMARY_LENGTH)} characters or less`
+      );
+    }
+
+    const existing = await ctx.db
+      .query("game_reviews")
+      .withIndex("by_gameId", (indexQuery) =>
+        indexQuery.eq("gameId", args.gameId)
+      )
+      .unique();
+
+    if (existing === null) {
+      throw new Error("No review for this game; run analysis first");
+    }
+
+    await ctx.db.patch(existing._id, {
+      aiSummary: trimmed,
+      aiSummaryMeta: args.aiSummaryMeta,
+    });
+    return null;
+  },
+});
+
+export { getByGameId, patchAiSummary, save };

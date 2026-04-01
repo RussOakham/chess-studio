@@ -241,4 +241,4 @@ const resign = ownedGameMutation({
   },
 });
 
-export { getById, getMoves, list, create, makeMove, resign };
+export { create, getById, getMoves, list, makeMove, resign };
