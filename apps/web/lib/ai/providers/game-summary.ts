@@ -1,11 +1,4 @@
 import {
-  AI_GENERATE_TIMEOUT_MS,
-  AI_SUMMARY_MAX_OUTPUT_TOKENS,
-  getAiSummaryModelId,
-} from "@/lib/ai/config";
-import { buildGameSummaryMessages } from "@/lib/ai/prompts/game-summary";
-import type { GameSummaryInput } from "@/lib/ai/schemas/game-summary-input";
-import {
   createGateway,
   GatewayAuthenticationError,
   GatewayError,
@@ -13,6 +6,14 @@ import {
 } from "@ai-sdk/gateway";
 import { generateText } from "ai";
 import type { LanguageModelUsage } from "ai";
+
+import {
+  AI_GENERATE_TIMEOUT_MS,
+  AI_SUMMARY_MAX_OUTPUT_TOKENS,
+  getAiSummaryModelId,
+} from "../config";
+import { buildGameSummaryMessages } from "../prompts/game-summary";
+import type { GameSummaryInput } from "../schemas/game-summary-input";
 
 function getGatewayOrThrow() {
   const apiKey = process.env.AI_GATEWAY_API_KEY;
@@ -26,20 +27,21 @@ function getGatewayOrThrow() {
 
 function mapGatewayGenerateError(error: unknown): never {
   if (GatewayAuthenticationError.isInstance(error)) {
-    throw new Error(
-      "AI Gateway authentication failed. Check AI_GATEWAY_API_KEY.",
-      { cause: error }
+    const err = new Error(
+      "AI Gateway authentication failed. Check AI_GATEWAY_API_KEY."
     );
+    Object.assign(err, { cause: error });
+    throw err;
   }
   if (GatewayRateLimitError.isInstance(error)) {
-    throw new Error("AI summary rate limit reached. Try again later.", {
-      cause: error,
-    });
+    const err = new Error("AI summary rate limit reached. Try again later.");
+    Object.assign(err, { cause: error });
+    throw err;
   }
   if (GatewayError.isInstance(error) && error.type === "timeout_error") {
-    throw new Error("AI summary request timed out. Try again.", {
-      cause: error,
-    });
+    const err = new Error("AI summary request timed out. Try again.");
+    Object.assign(err, { cause: error });
+    throw err;
   }
   throw error;
 }

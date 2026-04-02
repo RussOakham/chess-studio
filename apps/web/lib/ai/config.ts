@@ -18,10 +18,14 @@ const AI_GENERATE_TIMEOUT_MS = 60_000;
 /** Max completion tokens for narrative summaries (tune per model). */
 const AI_SUMMARY_MAX_OUTPUT_TOKENS = 2048;
 
-export { GAME_SUMMARY_PROMPT_VERSION } from "@/lib/ai/prompts/game-summary";
+/** Minimum milliseconds between AI summary generations per game (after a prior success). */
+const AI_SUMMARY_COOLDOWN_MS = 5 * 60 * 1000;
+
+export { GAME_SUMMARY_PROMPT_VERSION } from "./prompts/game-summary";
 
 export {
   AI_GENERATE_TIMEOUT_MS,
+  AI_SUMMARY_COOLDOWN_MS,
   AI_SUMMARY_MAX_OUTPUT_TOKENS,
   DEFAULT_AI_SUMMARY_MODEL,
   getAiSummaryModelId,

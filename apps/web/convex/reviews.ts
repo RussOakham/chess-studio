@@ -188,11 +188,21 @@ const save = ownedGameMutation({
 const patchAiSummary = internalMutation({
   args: {
     gameId: v.id("games"),
+    /** Must match the owning user; internal callers must pass the authenticated subject. */
+    callerUserId: v.string(),
     aiSummary: v.string(),
     aiSummaryMeta: aiSummaryMetaValidator,
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (game === null) {
+      throw new Error("Game not found");
+    }
+    if (game.userId !== args.callerUserId) {
+      throw new Error("You do not have access to this game");
+    }
+
     const trimmed = args.aiSummary.trim();
     if (trimmed.length === 0) {
       throw new Error("aiSummary is required");

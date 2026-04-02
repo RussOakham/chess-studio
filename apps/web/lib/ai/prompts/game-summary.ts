@@ -1,5 +1,6 @@
-import type { GameSummaryInput } from "@/lib/ai/schemas/game-summary-input";
 import type { ModelMessage } from "ai";
+
+import type { GameSummaryInput } from "../schemas/game-summary-input";
 
 /**
  * Bump when the Zod DTO shape or prompt instructions change materially
