@@ -2,7 +2,7 @@
 
 This document defines the **product requirements** and a **phased implementation plan** for showing **multiple engine principal variations** (“best N lines”) on the game review experience, and sets the foundation for **future AI-assisted position commentary** grounded in those lines.
 
-**Related:** [Learning and feedback enhancements](./learning-and-feedback-enhancements.md) (§2 hints, §3 position review), [Game implementation plan](../implementation/game-implementation-plan.md) (Phase 4.x analysis), [AI game summary temp plan](../temp/ai-game-summary-implementation-plan.temp.md) (full-game LLM summary — separate feature).
+**Related:** [Learning and feedback enhancements](./learning-and-feedback-enhancements.md) (§2 hints, §3 position review), [Game implementation plan](../implementation/game-implementation-plan.md) (Phase 4.x analysis). The shipped **AI game summary** (full-game LLM narrative) is a separate feature in `apps/web/convex/ai_game_summary.ts` and the game review UI.
 
 **Status:** Planning — not committed to a release date.
 

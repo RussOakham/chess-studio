@@ -4,6 +4,10 @@ import { v } from "convex/values";
  * Convex queries and mutations for game reviews (post-game analysis).
  * Auth: caller must own the game (ownedGame* wrappers). Only completed games can have reviews saved.
  */
+import {
+  AI_SUMMARY_COOLDOWN_MS,
+  AI_SUMMARY_GENERATION_LOCK_MS,
+} from "../lib/ai/config";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation } from "./_generated/server";
@@ -54,6 +58,7 @@ const getByGameId = ownedGameQuery({
       moveAnnotations: v.optional(v.array(moveAnnotationValidator)),
       aiSummary: v.optional(v.string()),
       aiSummaryMeta: v.optional(aiSummaryMetaValidator),
+      aiSummaryGenerationStartedAt: v.optional(v.number()),
       createdAt: v.number(),
     }),
     v.null()
@@ -183,6 +188,94 @@ const save = ownedGameMutation({
 });
 
 /**
+ * Atomically claims the right to run LLM generation (cooldown + in-flight lock).
+ * Called from `ai_game_summary` action before `generateGameSummary`.
+ */
+const claimAiSummaryGeneration = internalMutation({
+  args: {
+    gameId: v.id("games"),
+    callerUserId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (game === null) {
+      throw new Error("Game not found");
+    }
+    if (game.userId !== args.callerUserId) {
+      throw new Error("You do not have access to this game");
+    }
+
+    const existing = await ctx.db
+      .query("game_reviews")
+      .withIndex("by_gameId", (indexQuery) =>
+        indexQuery.eq("gameId", args.gameId)
+      )
+      .unique();
+
+    if (existing === null) {
+      throw new Error("No review for this game; run analysis first");
+    }
+
+    const generatedAt = existing.aiSummaryMeta?.generatedAt;
+    if (generatedAt !== undefined) {
+      const elapsed = Date.now() - generatedAt;
+      if (elapsed < AI_SUMMARY_COOLDOWN_MS) {
+        throw new Error(
+          "AI summary was generated recently. Try again in a few minutes."
+        );
+      }
+    }
+
+    const startedAt = existing.aiSummaryGenerationStartedAt;
+    if (startedAt !== undefined) {
+      const lockAge = Date.now() - startedAt;
+      if (lockAge < AI_SUMMARY_GENERATION_LOCK_MS) {
+        throw new Error(
+          "A summary is already being generated. Please wait a moment."
+        );
+      }
+    }
+
+    await ctx.db.patch(existing._id, {
+      aiSummaryGenerationStartedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+/** Clears in-flight lock after a failed generation (action error before patch). */
+const releaseAiSummaryGeneration = internalMutation({
+  args: {
+    gameId: v.id("games"),
+    callerUserId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (game === null) {
+      return null;
+    }
+    if (game.userId !== args.callerUserId) {
+      return null;
+    }
+    const existing = await ctx.db
+      .query("game_reviews")
+      .withIndex("by_gameId", (indexQuery) =>
+        indexQuery.eq("gameId", args.gameId)
+      )
+      .unique();
+    if (existing === null) {
+      return null;
+    }
+    await ctx.db.patch(existing._id, {
+      aiSummaryGenerationStartedAt: undefined,
+    });
+    return null;
+  },
+});
+
+/**
  * Server-only: called from Convex actions after LLM generation. Do not expose to clients.
  */
 const patchAiSummary = internalMutation({
@@ -227,9 +320,16 @@ const patchAiSummary = internalMutation({
     await ctx.db.patch(existing._id, {
       aiSummary: trimmed,
       aiSummaryMeta: args.aiSummaryMeta,
+      aiSummaryGenerationStartedAt: undefined,
     });
     return null;
   },
 });
 
-export { getByGameId, patchAiSummary, save };
+export {
+  claimAiSummaryGeneration,
+  getByGameId,
+  patchAiSummary,
+  releaseAiSummaryGeneration,
+  save,
+};

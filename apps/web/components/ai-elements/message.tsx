@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { mergeProps } from "@base-ui/react/merge-props";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
@@ -23,6 +24,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
@@ -87,18 +89,29 @@ export const MessageAction = ({
   size = "icon-sm",
   ...props
 }: MessageActionProps) => {
-  const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
+  const content = (
+    <>
       {children}
       <span className="sr-only">{label || tooltip}</span>
-    </Button>
+    </>
   );
 
   if (tooltip) {
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>{button}</TooltipTrigger>
+          <TooltipTrigger
+            render={(triggerProps) => (
+              <Button
+                {...mergeProps(props, triggerProps)}
+                size={size}
+                type="button"
+                variant={variant}
+              >
+                {content}
+              </Button>
+            )}
+          />
           <TooltipContent>
             <p>{tooltip}</p>
           </TooltipContent>
@@ -107,7 +120,11 @@ export const MessageAction = ({
     );
   }
 
-  return button;
+  return (
+    <Button size={size} type="button" variant={variant} {...props}>
+      {content}
+    </Button>
+  );
 };
 
 interface MessageBranchContextType {
@@ -148,6 +165,8 @@ export const MessageBranch = ({
 }: MessageBranchProps) => {
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
   const [branches, setBranches] = useState<ReactElement[]>([]);
+  const onBranchChangeRef = useRef(onBranchChange);
+  onBranchChangeRef.current = onBranchChange;
 
   const handleBranchChange = useCallback(
     (newBranch: number) => {
@@ -168,6 +187,18 @@ export const MessageBranch = ({
       currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
     handleBranchChange(newBranch);
   }, [currentBranch, branches.length, handleBranchChange]);
+
+  useEffect(() => {
+    const max = Math.max(0, branches.length - 1);
+    setCurrentBranch((prev) => {
+      const raw = branches.length === 0 ? defaultBranch : prev;
+      const next = Math.min(Math.max(raw, 0), max);
+      if (next !== prev) {
+        onBranchChangeRef.current?.(next);
+      }
+      return next;
+    });
+  }, [branches.length, defaultBranch]);
 
   const contextValue = useMemo<MessageBranchContextType>(
     () => ({
@@ -338,10 +369,7 @@ export const MessageResponse = memo(
     >
       {children}
     </Streamdown>
-  ),
-  (prevProps, nextProps) =>
-    prevProps.children === nextProps.children &&
-    nextProps.isAnimating === prevProps.isAnimating
+  )
 );
 
 MessageResponse.displayName = "MessageResponse";

@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 
-import { AI_SUMMARY_COOLDOWN_MS, getAiSummaryModelId } from "../lib/ai/config";
+import { getAiSummaryModelId } from "../lib/ai/config";
 import { GAME_SUMMARY_PROMPT_VERSION } from "../lib/ai/prompts/game-summary";
 import { generateGameSummary } from "../lib/ai/providers/game-summary";
 import { buildGameSummaryInput } from "../lib/ai/schemas/game-summary-input";
@@ -45,15 +45,10 @@ const generate = authedAction({
       return { status: "unchanged" as const };
     }
 
-    const generatedAt = review.aiSummaryMeta?.generatedAt;
-    if (generatedAt !== undefined) {
-      const elapsed = Date.now() - generatedAt;
-      if (elapsed < AI_SUMMARY_COOLDOWN_MS) {
-        throw new Error(
-          "AI summary was generated recently. Try again in a few minutes."
-        );
-      }
-    }
+    await ctx.runMutation(internal.reviews.claimAiSummaryGeneration, {
+      gameId: args.gameId,
+      callerUserId: ctx.userId,
+    });
 
     const dto = buildGameSummaryInput({
       review: {
@@ -73,19 +68,27 @@ const generate = authedAction({
       },
     });
 
-    const { text } = await generateGameSummary(dto);
     const modelId = getAiSummaryModelId();
 
-    await ctx.runMutation(internal.reviews.patchAiSummary, {
-      gameId: args.gameId,
-      callerUserId: ctx.userId,
-      aiSummary: text,
-      aiSummaryMeta: {
-        model: modelId,
-        generatedAt: Date.now(),
-        promptVersion: GAME_SUMMARY_PROMPT_VERSION,
-      },
-    });
+    try {
+      const { text } = await generateGameSummary(dto);
+      await ctx.runMutation(internal.reviews.patchAiSummary, {
+        gameId: args.gameId,
+        callerUserId: ctx.userId,
+        aiSummary: text,
+        aiSummaryMeta: {
+          model: modelId,
+          generatedAt: Date.now(),
+          promptVersion: GAME_SUMMARY_PROMPT_VERSION,
+        },
+      });
+    } catch (error) {
+      await ctx.runMutation(internal.reviews.releaseAiSummaryGeneration, {
+        gameId: args.gameId,
+        callerUserId: ctx.userId,
+      });
+      throw error;
+    }
 
     return { status: "generated" as const, model: modelId };
   },

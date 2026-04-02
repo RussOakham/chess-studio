@@ -83,6 +83,8 @@ export default defineSchema({
         promptVersion: v.optional(v.number()),
       })
     ),
+    /** Set while `ai_game_summary.generate` is running; prevents concurrent LLM calls. */
+    aiSummaryGenerationStartedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 
