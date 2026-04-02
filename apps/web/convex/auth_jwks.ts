@@ -1,11 +1,13 @@
+import { v } from "convex/values";
+
 import { components } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 
-type DeleteManyJwksResult = {
+interface DeleteManyJwksResult {
   count: number;
   isDone: boolean;
   continueCursor: string | null;
-};
+}
 
 /**
  * Deletes all JWKS rows in the Better Auth component. Those keys are encrypted
@@ -18,6 +20,7 @@ type DeleteManyJwksResult = {
  */
 export const clearJwks = internalMutation({
   args: {},
+  returns: v.object({ deleted: v.number() }),
   handler: async (ctx) => {
     let cursor: string | null = null;
     let totalDeleted = 0;
