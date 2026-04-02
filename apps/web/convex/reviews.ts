@@ -21,6 +21,10 @@ const MAX_SUMMARY_LENGTH = 10_000;
 /** LLM narrative cap (separate from rule-based `summary`). */
 const MAX_AI_SUMMARY_LENGTH = 12_000;
 
+function newAiSummaryClaimToken(): string {
+  return globalThis.crypto.randomUUID();
+}
+
 const aiSummaryMetaValidator = v.object({
   model: v.string(),
   generatedAt: v.number(),
@@ -59,6 +63,7 @@ const getByGameId = ownedGameQuery({
       aiSummary: v.optional(v.string()),
       aiSummaryMeta: v.optional(aiSummaryMetaValidator),
       aiSummaryGenerationStartedAt: v.optional(v.number()),
+      aiSummaryGenerationClaim: v.optional(v.string()),
       createdAt: v.number(),
     }),
     v.null()
@@ -196,7 +201,7 @@ const claimAiSummaryGeneration = internalMutation({
     gameId: v.id("games"),
     callerUserId: v.string(),
   },
-  returns: v.null(),
+  returns: v.object({ claim: v.string() }),
   handler: async (ctx, args) => {
     const game = await ctx.db.get(args.gameId);
     if (game === null) {
@@ -237,10 +242,12 @@ const claimAiSummaryGeneration = internalMutation({
       }
     }
 
+    const claim = newAiSummaryClaimToken();
     await ctx.db.patch(existing._id, {
       aiSummaryGenerationStartedAt: Date.now(),
+      aiSummaryGenerationClaim: claim,
     });
-    return null;
+    return { claim };
   },
 });
 
@@ -249,6 +256,7 @@ const releaseAiSummaryGeneration = internalMutation({
   args: {
     gameId: v.id("games"),
     callerUserId: v.string(),
+    claim: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -268,8 +276,12 @@ const releaseAiSummaryGeneration = internalMutation({
     if (existing === null) {
       return null;
     }
+    if (existing.aiSummaryGenerationClaim !== args.claim) {
+      return null;
+    }
     await ctx.db.patch(existing._id, {
       aiSummaryGenerationStartedAt: undefined,
+      aiSummaryGenerationClaim: undefined,
     });
     return null;
   },
@@ -283,6 +295,8 @@ const patchAiSummary = internalMutation({
     gameId: v.id("games"),
     /** Must match the owning user; internal callers must pass the authenticated subject. */
     callerUserId: v.string(),
+    /** Must match `aiSummaryGenerationClaim` from the active `claimAiSummaryGeneration` call. */
+    claim: v.string(),
     aiSummary: v.string(),
     aiSummaryMeta: aiSummaryMetaValidator,
   },
@@ -317,10 +331,17 @@ const patchAiSummary = internalMutation({
       throw new Error("No review for this game; run analysis first");
     }
 
+    if (existing.aiSummaryGenerationClaim !== args.claim) {
+      throw new Error(
+        "AI summary generation lock is no longer valid; a newer run may have started."
+      );
+    }
+
     await ctx.db.patch(existing._id, {
       aiSummary: trimmed,
       aiSummaryMeta: args.aiSummaryMeta,
       aiSummaryGenerationStartedAt: undefined,
+      aiSummaryGenerationClaim: undefined,
     });
     return null;
   },

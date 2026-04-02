@@ -45,36 +45,39 @@ const generate = authedAction({
       return { status: "unchanged" as const };
     }
 
-    await ctx.runMutation(internal.reviews.claimAiSummaryGeneration, {
-      gameId: args.gameId,
-      callerUserId: ctx.userId,
-    });
-
-    const dto = buildGameSummaryInput({
-      review: {
-        summary: review.summary,
-        evaluations: review.evaluations,
-        keyMoments: review.keyMoments,
-        suggestions: review.suggestions,
-        openingNameLichess: review.openingNameLichess,
-        moveAnnotations: review.moveAnnotations,
-      },
-      game: {
-        result: game.result,
-        difficulty: game.difficulty,
-        color: game.color,
-        pgn: game.pgn,
-        fen: game.fen,
-      },
-    });
-
-    const modelId = getAiSummaryModelId();
+    const { claim } = await ctx.runMutation(
+      internal.reviews.claimAiSummaryGeneration,
+      {
+        gameId: args.gameId,
+        callerUserId: ctx.userId,
+      }
+    );
 
     try {
+      const dto = buildGameSummaryInput({
+        review: {
+          summary: review.summary,
+          evaluations: review.evaluations,
+          keyMoments: review.keyMoments,
+          suggestions: review.suggestions,
+          openingNameLichess: review.openingNameLichess,
+          moveAnnotations: review.moveAnnotations,
+        },
+        game: {
+          result: game.result,
+          difficulty: game.difficulty,
+          color: game.color,
+          pgn: game.pgn,
+          fen: game.fen,
+        },
+      });
+
+      const modelId = getAiSummaryModelId();
       const { text } = await generateGameSummary(dto);
       await ctx.runMutation(internal.reviews.patchAiSummary, {
         gameId: args.gameId,
         callerUserId: ctx.userId,
+        claim,
         aiSummary: text,
         aiSummaryMeta: {
           model: modelId,
@@ -82,15 +85,16 @@ const generate = authedAction({
           promptVersion: GAME_SUMMARY_PROMPT_VERSION,
         },
       });
+
+      return { status: "generated" as const, model: modelId };
     } catch (error) {
       await ctx.runMutation(internal.reviews.releaseAiSummaryGeneration, {
         gameId: args.gameId,
         callerUserId: ctx.userId,
+        claim,
       });
       throw error;
     }
-
-    return { status: "generated" as const, model: modelId };
   },
 });
 

@@ -85,6 +85,8 @@ export default defineSchema({
     ),
     /** Set while `ai_game_summary.generate` is running; prevents concurrent LLM calls. */
     aiSummaryGenerationStartedAt: v.optional(v.number()),
+    /** Opaque token issued with the lock; release/patch must match to avoid stale writers. */
+    aiSummaryGenerationClaim: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 
