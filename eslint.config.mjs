@@ -60,6 +60,24 @@ const config = [
   // Type-aware linting is now handled by oxlint --type-aware
   ...oxlint.configs["flat/recommended"],
 
+  // AI Elements (shadcn registry): upstream export layout; TSX needs tsParser
+  {
+    files: ["apps/web/components/ai-elements/**/*.tsx"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    rules: {
+      "import/exports-last": "off",
+      "import/group-exports": "off",
+      "react/no-array-index-key": "off",
+    },
+  },
+
   // Convex app code (last so it overrides): parse as TypeScript; allow Convex-style exports and .sort() on copies
   {
     files: ["apps/web/convex/**/*.ts"],
