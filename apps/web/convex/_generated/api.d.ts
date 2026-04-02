@@ -10,6 +10,7 @@
 
 import type * as ai_game_summary from "../ai_game_summary.js";
 import type * as auth from "../auth.js";
+import type * as auth_jwks from "../auth_jwks.js";
 import type * as gameDifficulty from "../gameDifficulty.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai_game_summary: typeof ai_game_summary;
   auth: typeof auth;
+  auth_jwks: typeof auth_jwks;
   gameDifficulty: typeof gameDifficulty;
   games: typeof games;
   http: typeof http;

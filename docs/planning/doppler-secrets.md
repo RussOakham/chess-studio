@@ -76,6 +76,8 @@ The workflow runs the web app build with `doppler run --project chess-studio --c
 
 ## Production (`prd`) — Vercel and Doppler
 
+**Convex deployment:** Configure **Preview** and **Production** Vercel environments to use the **same Convex production deployment** (`NEXT_PUBLIC_CONVEX_URL` / `NEXT_PUBLIC_CONVEX_SITE_URL` from the prod Convex project). Preview and prod builds should not point at the team’s Convex **dev** deployment—that deployment is for local development (`npx convex dev`) and has `SITE_URL=http://localhost:3000` for OAuth. Vercel preview URLs change per branch; use the **production** GitHub OAuth app and Convex `SITE_URL` aligned with your canonical Vercel hostname (see `convex/auth.ts`).
+
 Use the **`prd`** config as the source of truth for **Vercel Production** when the [Doppler Vercel integration](https://docs.doppler.com/docs/vercel) is connected: link **chess-studio** → **`prd`** to the Vercel project’s **Production** environment (and optionally **`stg`** to **Preview** if you use that config for PRs).
 
 ### Required for a working production app
