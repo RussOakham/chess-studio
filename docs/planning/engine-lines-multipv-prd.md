@@ -4,7 +4,7 @@ This document defines the **product requirements** and a **phased implementation
 
 **Related:** [Learning and feedback enhancements](./learning-and-feedback-enhancements.md) (hints and position review sections), [Game implementation plan](../implementation/game-implementation-plan.md) (Phase 4.x analysis). The shipped **AI game summary** (full-game **Large Language Model (LLM)** narrative) is a separate feature in `apps/web/convex/ai_game_summary.ts` and the game review UI.
 
-**Status:** Planning — not committed to a release date.
+**Status:** Shipped in app (MultiPV analysis panel in review and optional live game toggle); Convex persistence for lines remains out of scope for v1.
 
 ---
 

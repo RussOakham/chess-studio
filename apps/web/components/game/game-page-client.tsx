@@ -1,5 +1,6 @@
 "use client";
 
+import { EngineLinesPanel } from "@/components/chess/engine-lines-panel";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { GameChessboard } from "@/components/chess/game-chessboard";
 import {
@@ -54,6 +55,8 @@ import { Bot, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const LIVE_ENGINE_LINES_STORAGE_KEY = "chess-studio:live-engine-lines-enabled";
 
 interface GamePageClientProps {
   gameId: string;
@@ -187,9 +190,12 @@ function GamePageContent({
   // Stockfish engine hook (client-side only)
   const {
     isReady: isStockfishReady,
+    isAnalysisEngineReady,
     isCalculating,
     getBestMove,
     getEvaluation,
+    getEngineLines,
+    abortEngineLines,
   } = useStockfish();
 
   const resignMutation = useMutation(api.games.resign);
@@ -201,6 +207,30 @@ function GamePageContent({
   const [resignDialogOpen, setResignDialogOpen] = useState(false);
   const [resignError, setResignError] = useState<string | null>(null);
   const [pgnCopied, setPgnCopied] = useState(false);
+  const [liveEngineLinesEnabled, setLiveEngineLinesEnabled] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = globalThis.localStorage?.getItem(
+        LIVE_ENGINE_LINES_STORAGE_KEY
+      );
+      setLiveEngineLinesEnabled(stored === "true");
+    } catch {
+      /* Ignore */
+    }
+  }, []);
+
+  const persistLiveEngineLines = useCallback((enabled: boolean) => {
+    setLiveEngineLinesEnabled(enabled);
+    try {
+      globalThis.localStorage?.setItem(
+        LIVE_ENGINE_LINES_STORAGE_KEY,
+        enabled ? "true" : "false"
+      );
+    } catch {
+      /* Ignore */
+    }
+  }, []);
 
   useEffect(() => {
     setCompletionModalOpen(false);
@@ -589,6 +619,19 @@ function GamePageContent({
               </div>
             </CardContent>
           </Card>
+
+          {game.status === "in_progress" ? (
+            <EngineLinesPanel
+              fen={viewingFen}
+              isStockfishReady={isStockfishReady && isAnalysisEngineReady}
+              blockAnalysis={isCalculating}
+              getEngineLines={getEngineLines}
+              abortEngineLines={abortEngineLines}
+              variant="live"
+              liveEnabled={liveEngineLinesEnabled}
+              onLiveEnabledChange={persistLiveEngineLines}
+            />
+          ) : null}
 
           {/* Move History: grows to fill space */}
           <MoveHistoryCard

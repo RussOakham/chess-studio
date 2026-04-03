@@ -6,6 +6,7 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import type { BoardArrow } from "@/components/chess/chessboard";
+import { EngineLinesPanel } from "@/components/chess/engine-lines-panel";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
 import { GameChessboard } from "@/components/chess/game-chessboard";
@@ -50,6 +51,7 @@ import {
 import { evaluationForReplayIndex } from "@/lib/review-evaluation";
 import { getOpeningLabelFromPgn } from "@repo/chess";
 import type {
+  EngineLine,
   GameDifficulty,
   MoveAnnotation,
   MoveAnnotationType,
@@ -180,7 +182,14 @@ interface ReviewMidReviewProps {
   gameId: string;
   userDisplayName: string;
   isStockfishReady: boolean;
+  /** Second WASM worker for MultiPV; eval bar uses main worker only. */
+  isAnalysisEngineReady: boolean;
   getEvaluation: (fen: string) => Promise<PositionEvaluation>;
+  getEngineLines: (
+    fen: string,
+    opts?: { depth?: number; multipv?: number }
+  ) => Promise<EngineLine[] | null>;
+  abortEngineLines: () => void;
   game: {
     fen: string;
     _id: string;
@@ -200,7 +209,10 @@ function ReviewMidReview({
   gameId,
   userDisplayName,
   isStockfishReady,
+  isAnalysisEngineReady,
   getEvaluation,
+  getEngineLines,
+  abortEngineLines,
   game,
   moves,
   review,
@@ -536,6 +548,14 @@ function ReviewMidReview({
               )}
             </CardContent>
           </Card>
+          <EngineLinesPanel
+            fen={viewingFen}
+            isStockfishReady={isStockfishReady && isAnalysisEngineReady}
+            blockAnalysis={false}
+            getEngineLines={getEngineLines}
+            abortEngineLines={abortEngineLines}
+            variant="review"
+          />
           <MoveHistoryCard
             className="flex min-h-0 flex-1 flex-col"
             sortedMovesLength={sortedMoves.length}
@@ -566,8 +586,11 @@ export function ReviewPageClient({
   );
   const {
     isReady: isStockfishReady,
+    isAnalysisEngineReady,
     getBestMove,
     getEvaluation,
+    getEngineLines,
+    abortEngineLines,
   } = useStockfish();
   const {
     runAnalysis,
@@ -795,7 +818,10 @@ export function ReviewPageClient({
         gameId={gameId}
         userDisplayName={userDisplayName}
         isStockfishReady={isStockfishReady}
+        isAnalysisEngineReady={isAnalysisEngineReady}
         getEvaluation={getEvaluation}
+        getEngineLines={getEngineLines}
+        abortEngineLines={abortEngineLines}
         game={game}
         moves={moves ?? EMPTY_GAME_MOVES}
         review={review}
