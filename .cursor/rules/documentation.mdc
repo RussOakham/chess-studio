@@ -77,7 +77,7 @@ These are "diminutive" words. If the user is struggling, these words make them f
 Even if it feels obvious, define it the first time.
 
 - ✅ "FEN (Forsyth-Edwards Notation)"
-- ✅ "tRPC (TypeScript Remote Procedure Call)"
+- ✅ "Convex (backend with queries, mutations, and real-time subscriptions)"
 
 ## Structure Requirements
 
@@ -92,7 +92,7 @@ Even if it feels obvious, define it the first time.
 
 Reference official documentation and best practices:
 
-- Link to library documentation (e.g., Next.js, tRPC, Drizzle)
+- Link to library documentation (e.g., Next.js, Convex, AI SDK)
 - Link to standards (e.g., Conventional Commits, REST API best practices)
 - Link to relevant blog posts or guides
 
@@ -106,7 +106,7 @@ For more information, see the [Next.js App Router documentation](https://nextjs.
 
 Always include relevant code examples from the repository:
 
-- Use file references: `@apps/web/lib/trpc/routers/games.router.ts`
+- Use file references: `@apps/web/convex/games.ts`
 - Show complete, working examples
 - Explain what the code does
 - Link to the actual file in the repo
@@ -114,9 +114,9 @@ Always include relevant code examples from the repository:
 **Example:**
 
 ```markdown
-The tRPC router uses the service layer pattern:
+Convex mutations and queries own game persistence; keep handlers thin:
 
-@apps/web/lib/trpc/routers/games.router.ts
+@apps/web/convex/games.ts
 ```
 
 ### 4. Source of Truth
@@ -131,8 +131,8 @@ Documentation must reflect the **current state** of the codebase:
 
 **Examples:**
 
-- ❌ "Previously, we used axios, but now we use tRPC..."
-- ✅ "Use tRPC for type-safe API calls..."
+- ❌ "Previously, we used a REST layer, but now we use Convex..."
+- ✅ "Use Convex queries and mutations for type-safe game data..."
 
 - ❌ "After migrating from UUID v4 to UUID v7..."
 - ✅ "All IDs use UUID v7 (time-ordered UUIDs)..."

@@ -20,7 +20,7 @@ This project uses **Convex** for game and move data, with an optional service la
 - Add new game/move behaviour as Convex queries or mutations
 - Use Convex validators (`v.id("games")`, etc.) for args
 - Enforce ownership in handlers (e.g. `getUserId(ctx)` then check `game.userId === userId`)
-- No Drizzle or repository layer for games/moves; they live only in Convex
+- No separate SQL repository layer for games/moves; they live only in Convex
 
 ## Client usage
 
@@ -38,7 +38,7 @@ This project uses **Convex** for game and move data, with an optional service la
 ## Auth (Convex + Better Auth)
 
 - **Location**: Convex Better Auth component (`convex/auth.ts`, `@convex-dev/better-auth`); Next.js `/api/auth/*` proxies to Convex
-- **Usage**: Auth data (user, session, account) is stored in Convex. Neon and Drizzle are not used.
+- **Usage**: Auth data (user, session, account) is stored in Convex.
 
 ## References
 

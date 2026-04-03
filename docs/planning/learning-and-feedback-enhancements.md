@@ -26,7 +26,8 @@ It is a planning note, not a committed roadmap. Implementation details may chang
 
 ### AI in the codebase
 
-- No production **LLM integration** for chess narration was assumed at the time this note was written; any AI feature would be **new** surface area (API routes, Convex actions, env keys, rate limits).
+- **Shipped:** Optional **post-game AI summary** — Convex action `ai_game_summary.generate` calls **Vercel AI Gateway** + AI SDK (`generateText`) with a structured DTO built from the rule-based review (`apps/web/lib/ai/`, `apps/web/convex/ai_game_summary.ts`). Requires `AI_GATEWAY_API_KEY`; stored on `game_reviews.aiSummary`.
+- **Not shipped yet:** Natural-language **per-position** or **MultiPV-line** commentary beyond the summary flow; those are the enhancement ideas below.
 
 ---
 

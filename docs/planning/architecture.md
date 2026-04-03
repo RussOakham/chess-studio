@@ -4,16 +4,14 @@
 
 **chess-studio** is a Turborepo monorepo: a **Next.js** app (`apps/web`) for the UI and auth routes, **Convex** for persistence, real-time subscriptions, and server functions, and **Better Auth** integrated with Convex. The chess **Stockfish** engine runs **in the browser** (Web Worker) for evaluation, hints, and opponent moves—not on a separate game API.
 
-**Deployment:** The **current plan** is to host the Next.js app on **[Vercel](https://vercel.com)** (see [`vercel-deployment-plan.md`](./vercel-deployment-plan.md)). **[Convex](https://www.convex.dev/)** stays on Convex Cloud (`npx convex deploy`). An **alternate** self-hosted stack (VPS, Docker, Dokploy) is documented for possible future use in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md); see the index at [`deployment.md`](./deployment.md).
+**Deployment:** The Next.js app runs on **[Vercel](https://vercel.com)**; **[Convex](https://www.convex.dev/)** runs on Convex Cloud (`npx convex deploy`). See [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) and the index at [`deployment.md`](./deployment.md).
 
-**Historical note:** Older sections of this file described a separate **Express/Go API** and **Postgres**; the codebase today uses **Convex only** for game and auth data (no Neon/Drizzle in the live app path). Diagrams labeled **alternate** or **legacy** illustrate that earlier direction.
+## Deployment (summary)
 
-## Deployment strategies (summary)
-
-| Strategy      | Where                               | Document                                                                       |
-| ------------- | ----------------------------------- | ------------------------------------------------------------------------------ |
-| **Primary**   | Next.js on Vercel; Convex Cloud     | [`vercel-deployment-plan.md`](./vercel-deployment-plan.md)                     |
-| **Alternate** | Private VPS, Docker, Dokploy, Nginx | [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md) |
+| Piece       | Where        | Document                                                   |
+| ----------- | ------------ | ---------------------------------------------------------- |
+| **Web**     | Vercel       | [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) |
+| **Backend** | Convex Cloud | Same + [`convex-auth-data.md`](./convex-auth-data.md)      |
 
 ## Monorepo structure (current)
 
@@ -89,7 +87,7 @@ There is **no** separate REST API document for game CRUD in production; clients 
 
 - **Lichess** — Opening explorer (masters) for book metadata and explorer-backed UI; implemented with caching in Convex (`lichess_explorer.ts`, related libs under `apps/web/lib/lichess/`).
 - **OAuth** — GitHub (and any others configured) via Better Auth.
-- **Future AI** — Not wired in production at the time of this writing; see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) for product direction.
+- **AI summaries** — Optional **LLM-generated post-game narrative** via Convex action `ai_game_summary` (`apps/web/convex/ai_game_summary.ts`), using **Vercel AI Gateway** and the AI SDK (`apps/web/lib/ai/`). Requires `AI_GATEWAY_API_KEY`; rule-based engine analysis remains authoritative. Broader AI-assisted commentary (MultiPV lines, position explain) is roadmap work — see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) and [`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md).
 
 ## Security considerations
 
@@ -101,70 +99,3 @@ There is **no** separate REST API document for game CRUD in production; clients 
 
 - Client Stockfish: cap depth for UI responsiveness; sequential analysis for full-game review to avoid overloading the worker.
 - Convex: indexes and pagination for large lists (follow Convex best practices in `convex/`).
-
----
-
-## Alternate deployment architecture (reference only)
-
-The following reflects a **self-hosted** layout **not** in use as the primary plan. It matches the narrative in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md) (Nginx, multiple containers). A future migration might still keep **Convex Cloud** and only move the Next.js workload to a VPS.
-
-```text
-┌─────────────────────────────────────────┐
-│         Nginx (Reverse Proxy)           │
-│         (e.g. via Dokploy)              │
-└───────────────┬─────────────────────────┘
-                │
-    ┌───────────┼───────────┐
-    │           │           │
-┌───▼───┐  ┌────▼────┐  ┌───▼────┐
-│  Web  │  │   API   │  │ (opt)  │
-│(Next.js)│ │(legacy  │  │ extras │
-│ Docker │  │ design) │  │        │
-└────────┘  └─────────┘  └────────┘
-```
-
----
-
-## Legacy reference: earlier hybrid API + Postgres sketch
-
-The block below is **retained for historical context** only. It does **not** describe the current chess-studio implementation.
-
-### Earlier monorepo sketch (outdated)
-
-```text
-chess-game/                    # illustrative only
-├── apps/
-│   ├── web/
-│   └── api/                   # not present in chess-studio today
-├── packages/
-└── docker/
-```
-
-### Earlier “hybrid” diagram (outdated)
-
-```text
-┌─────────────────┐
-│   Next.js Web   │
-│  Auth API       │
-└────────┬────────┘
-         │
-    ┌────▼──────────────────┐
-    │   Express/Go API      │  ← superseded by Convex
-    └────┬──────────┬───────┘
-         │          │
-    ┌────▼───┐  ┌───▼────┐
-    │Postgres│  │Stockfish│
-    └────────┘  └────────┘
-```
-
-### Earlier data model sketch (SQL, outdated)
-
-Convex schema replaces direct SQL tables for app data; the conceptual entities (users, games, moves, reviews) remain similar at a high level.
-
-```sql
--- Illustrative only — actual storage is Convex documents
-users (id, email, ...)
-games (id, user_id, ...)
-moves (id, game_id, ...)
-game_reviews (id, game_id, summary, key_moments, ...)
-```

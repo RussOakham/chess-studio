@@ -1,399 +1,113 @@
-# Doppler Secrets Management
+# Doppler secrets management
 
 ## Overview
 
-This document outlines how Doppler is used for secrets management in the chess game application.
+[Doppler](https://www.doppler.com/) centralizes secrets for **local development**, **CI**, and syncing with **Vercel**. Examples use project name **`chess-studio`**; older names may exist in existing accounts.
 
 ## Why Doppler?
 
-- **Centralized Management**: All secrets in one place
-- **Environment Separation**: Dev, staging, and prod configs
-- **Docker Integration**: Seamless integration with Docker Compose
-- **Version Control**: Secret references (not secrets) in code
-- **Access Control**: Fine-grained permissions per service
-- **Audit Logs**: Track who accessed what secrets
+- Centralized secrets with dev / staging / prod configs
+- Service tokens for CI (e.g. GitHub Actions) without committing values
+- Optional [Vercel integration](https://docs.doppler.com/docs/vercel) to map configs to Vercel environments
+- Audit logs and access control in the Doppler dashboard
 
-## Doppler Setup
-
-### Project Structure
+## Project layout (example)
 
 ```text
-Doppler Project: chess-game
-├── dev
-│   ├── web (service)
-│   ├── api (service)
-│   └── db (service)
-├── staging
-│   ├── web (service)
-│   ├── api (service)
-│   └── db (service)
-└── prod
-    ├── web (service)
-    ├── api (service)
-    └── db (service)
+Doppler project: chess-studio
+├── dev          # local + CI build (see ci.yml)
+├── dev_personal # optional per-developer (if used)
+├── stg          # optional
+└── prd          # production-aligned values for Vercel Production
 ```
 
-### Service Configuration
+Only the **web app** (`apps/web`) needs these for Next.js builds. **Convex** has its own environment variables (`npx convex env set` or dashboard); keep shared secrets (e.g. `BETTER_AUTH_SECRET`) aligned between Doppler and Convex where both need the same value.
 
-Each service (web, api, db) has its own Doppler service token for isolation.
+### Service tokens
+
+Use a **read-only** service token for the **`dev`** config in GitHub as **`DOPPLER_TOKEN`** so CI can run `doppler run` for `next build`. Production may use Doppler’s Vercel integration or manual env copy.
 
 ## CI (GitHub Actions)
 
-The workflow runs the web app build with `doppler run --project chess-studio --config dev`, so the **dev** config in Doppler must contain all env vars the Next.js build needs.
+[`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs the web build with Doppler (e.g. `doppler run --project chess-studio --config dev`). The **`dev`** config must include every variable required for a production Next.js build of `apps/web`.
 
-### Required secrets in Doppler `dev` config
+### Required secrets in Doppler `dev` (typical)
 
-| Secret                        | Where to get it                                                                                    | Notes                                                                                                                                                                                                                                                                                                                               |
-| ----------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CONVEX_URL`      | Convex dashboard → your project → Settings → URL, or after `npx convex dev --once --configure=new` | e.g. `https://your-deployment.convex.cloud`                                                                                                                                                                                                                                                                                         |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex dashboard (same project) → site URL for Better Auth                                         | e.g. `https://your-deployment.convex.site`                                                                                                                                                                                                                                                                                          |
-| `BETTER_AUTH_SECRET`          | Generate: `openssl rand -base64 32`                                                                | Use the same value in Convex env and Doppler                                                                                                                                                                                                                                                                                        |
-| `BETTER_AUTH_URL`             | Your app URL (for CI build, a placeholder is fine, e.g. `https://example.com`)                     | Required by Better Auth at build time                                                                                                                                                                                                                                                                                               |
-| `LICHESS_API_TOKEN`           | [Lichess](https://lichess.org/account/oauth/token/create) personal access token                    | Name-only here; also set the same key on Convex (`npx convex env set LICHESS_API_TOKEN …`) for server actions. Optional if you do not use Lichess Opening Explorer                                                                                                                                                                  |
-| `AI_GATEWAY_API_KEY`          | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway/authentication) → dashboard → API keys      | Required for LLM calls from **Convex** actions; OIDC from `vercel env pull` does not apply to Convex. Set on Convex with `npx convex env set AI_GATEWAY_API_KEY …`; optional in Doppler/Vercel for Next.js routes that call the gateway. See [`convex-auth-data.md`](./convex-auth-data.md#ai-gateway-and-llm-calls-vercel-ai-sdk). |
+| Secret                        | Notes                                                                                                                                                           |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`      | From Convex dashboard or `npx convex dev`                                                                                                                       |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex `.convex.site` URL for Better Auth                                                                                                                       |
+| `BETTER_AUTH_SECRET`          | Same value as on Convex when shared                                                                                                                             |
+| `BETTER_AUTH_URL`             | Placeholder acceptable for CI if the build only needs it to exist                                                                                               |
+| `LICHESS_API_TOKEN`           | Optional; also set on Convex for explorer actions                                                                                                               |
+| `AI_GATEWAY_API_KEY`          | For Convex actions that call the gateway; set on Convex for runtime. See [`convex-auth-data.md`](./convex-auth-data.md#ai-gateway-and-llm-calls-vercel-ai-sdk). |
 
-### How to add them
+### Populate from `.env.local`
 
-1. **From your existing `.env.local` (recommended)**  
-   Ensure `apps/web/.env.local` (or root `.env.local` if you use it for Convex) contains:
-   - `NEXT_PUBLIC_CONVEX_URL`
-   - `NEXT_PUBLIC_CONVEX_SITE_URL`  
-     Then from repo root, after `doppler login`:
+From repo root, after `doppler login`:
 
-   ```bash
-   ./scripts/sync-env-to-doppler.sh
-   ```
+```bash
+./scripts/sync-env-to-doppler.sh
+```
 
-   This syncs those variables into Doppler configs **dev** and **dev_personal**.
-
-2. **Manually in Doppler**  
-   In [Doppler](https://dashboard.doppler.com): Project **chess-studio** → Config **dev** → add each key/value above.
+This syncs variables into **`dev`** and **`dev_personal`** from your local env (see script for behavior).
 
 ### GitHub repository secret
 
-- **`DOPPLER_TOKEN`**: A Doppler service token for project **chess-studio**, config **dev** (read-only is enough).  
-  Create in Doppler: Project → Access → Service tokens → Generate. Add the token value as a GitHub repo secret named `DOPPLER_TOKEN`.
+- **`DOPPLER_TOKEN`** — service token with access to project **chess-studio**, config **dev** (read-only is enough).
 
-## Production (`prd`) — Vercel and Doppler
+## Production (`prd`) and Vercel
 
-**Convex deployment:** Configure **Preview** and **Production** Vercel environments to use the **same Convex production deployment** (`NEXT_PUBLIC_CONVEX_URL` / `NEXT_PUBLIC_CONVEX_SITE_URL` from the prod Convex project). Preview and prod builds should not point at the team’s Convex **dev** deployment—that deployment is for local development (`npx convex dev`) and has `SITE_URL=http://localhost:3000` for OAuth. Vercel preview URLs change per branch; use the **production** GitHub OAuth app and Convex `SITE_URL` aligned with your canonical Vercel hostname (see `convex/auth.ts`).
-
-Use the **`prd`** config as the source of truth for **Vercel Production** when the [Doppler Vercel integration](https://docs.doppler.com/docs/vercel) is connected: link **chess-studio** → **`prd`** to the Vercel project’s **Production** environment (and optionally **`stg`** to **Preview** if you use that config for PRs).
+Use **`prd`** as the source of truth for **Vercel Production** when using [Doppler’s Vercel integration](https://docs.doppler.com/docs/vercel): link project **chess-studio** → **`prd`** → Vercel **Production** (and optionally **`stg`** → **Preview**).
 
 ### Required for a working production app
 
-These are read by `apps/web` at build or runtime (see `convex/auth.ts`, `lib/auth-server.ts`, `lib/auth-client.ts`, `app/convex-client-provider.tsx`):
+Align **Vercel**, **Doppler `prd`**, and **Convex production** for:
 
-| Secret                        | Notes                                                                                                                                                                                                             |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CONVEX_URL`      | Convex **production** deployment `.convex.cloud` URL. Must match the deployment you `convex deploy` to.                                                                                                           |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | Same project’s **`.convex.site`** URL (Better Auth + Convex).                                                                                                                                                     |
-| `NEXT_PUBLIC_SITE_URL`        | **Public site origin** (e.g. `https://your-app.vercel.app` or custom domain). Used by the auth client (`lib/auth-client.ts`). Set this in `prd`; without it, the client can fall back to `http://localhost:3000`. |
-| `SITE_URL`                    | Same canonical URL as above for server-side expectations; keep aligned with Convex env `SITE_URL` if you mirror values.                                                                                           |
-| `BETTER_AUTH_SECRET`          | Same value as on your **Convex production** deployment (`BETTER_AUTH_SECRET`).                                                                                                                                    |
-| `BETTER_AUTH_URL`             | Production app URL (e.g. `https://your-app.vercel.app`).                                                                                                                                                          |
-| `NODE_ENV`                    | Typically `production` for Production builds.                                                                                                                                                                     |
+- `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`
+- `NEXT_PUBLIC_SITE_URL`, `SITE_URL`, `BETTER_AUTH_URL` (canonical origin)
+- `BETTER_AUTH_SECRET` (match Convex)
+- OAuth client IDs/secrets if used (`GITHUB_*`, etc.)
 
-### Strongly recommended (auth UX)
+Convex **does not** read Vercel env automatically for `"use node"` actions — set `AI_GATEWAY_API_KEY`, `LICHESS_API_TOKEN`, etc. on the Convex deployment as needed.
 
-| Secret                 | Notes                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `GITHUB_CLIENT_ID`     | If you use GitHub OAuth; must match Convex env. Used by `lib/github-oauth-config.ts` for the Next.js server. |
-| `GITHUB_CLIENT_SECRET` | Same as Convex GitHub OAuth app.                                                                             |
+### Checklist
 
-### Optional
+- [ ] Doppler **`prd`** contains all required web vars.
+- [ ] Vercel ↔ Doppler integration maps **`prd`** to Production (if used).
+- [ ] Convex **production** env matches for shared secrets and server-side keys.
 
-| Secret                            | Notes                                                                                                                            |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `LICHESS_API_TOKEN`               | Opening Explorer from Convex actions; also set on Convex prod. Add to `prd` if `dev` has it and you want explorer in production. |
-| `NEXT_PUBLIC_GITHUB_AUTH_ENABLED` | Set to `true` only if you need to force-show the GitHub button without server env (edge cases).                                  |
-| `CONVEX_DEPLOYMENT`               | Informational / CLI convenience; not required by Next.js if `NEXT_PUBLIC_CONVEX_URL` is set.                                     |
-| `NEXT_PUBLIC_BETTER_AUTH_URL`     | Not referenced in application code; safe to omit or align with `BETTER_AUTH_URL` if your tooling expects it.                     |
-
-### Convex production (outside Doppler)
-
-Run **`npx convex env set`** (or the dashboard) on the **production** Convex deployment for: `SITE_URL`, `BETTER_AUTH_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `LICHESS_API_TOKEN`, etc. Doppler does not replace Convex’s own env; keep **values in sync** where both need the same secret.
-
-### Fill `prd` from the dashboard or CLI
-
-1. Open [Doppler](https://dashboard.doppler.com) → project **chess-studio** → config **`prd`**.
-2. Copy keys from **`dev`** where the value is **not** environment-specific (e.g. same Convex project during early deploys), then override URLs to **production** (`NEXT_PUBLIC_*_URL`, `SITE_URL`, `BETTER_AUTH_URL`).
-3. Or from the CLI (example — replace placeholders):
-
-   ```bash
-   doppler secrets set NEXT_PUBLIC_SITE_URL="https://YOUR_VERCEL_URL" SITE_URL="https://YOUR_VERCEL_URL" \
-     --project chess-studio --config prd
-   ```
-
-### Vercel integration checklist
-
-- [ ] Doppler **prd** contains all **Required** rows above.
-- [ ] Vercel project → Integrations → Doppler → Production environment mapped to **`prd`**.
-- [ ] Convex **production** env vars match Doppler for shared secrets (`BETTER_AUTH_SECRET`, OAuth, etc.).
-- [ ] GitHub OAuth app callback URLs include `https://YOUR_PRODUCTION_DOMAIN/api/auth/callback/github`.
-
-## Secrets Managed
-
-### Web Service (Next.js)
-
-Auth and data (games, moves) are in **Convex**; no Neon or Drizzle. Doppler secrets:
+### Example `prd` snippet (web)
 
 ```env
-# Public (can be in .env.local for dev)
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-NEXT_PUBLIC_CONVEX_SITE_URL=https://yourdomain.com
-
-# Secrets (from Doppler)
-BETTER_AUTH_SECRET=your-secret-key-here
-BETTER_AUTH_URL=https://yourdomain.com
-
-# Optional: Lichess Opening Explorer — define LICHESS_API_TOKEN in Doppler and Convex env (never commit the value)
+NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
+NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
+SITE_URL=https://your-app.vercel.app
+BETTER_AUTH_URL=https://your-app.vercel.app
+BETTER_AUTH_SECRET=...
 ```
 
-### API Service (Express.js/Go, if used)
+## Local development
 
-```env
-# Configuration
-PORT=3001
-STOCKFISH_PATH=/usr/bin/stockfish
-
-# Secrets (from Doppler)
-OPENAI_API_KEY=sk-...
-JWT_SECRET=your-jwt-secret-here
-```
-
-### Database Service
-
-```env
-# Secrets (from Doppler)
-POSTGRES_DB=chess_game
-POSTGRES_USER=chess_user
-POSTGRES_PASSWORD=secure-password-here
-```
-
-## Docker Integration
-
-### Docker Compose with Doppler
-
-```yaml
-services:
-  web:
-    build: ./apps/web
-    environment:
-      # Doppler injects secrets as environment variables
-    # Use Doppler CLI to inject secrets
-    command: doppler run -- npm start
-
-  api:
-    build: ./apps/api
-    environment:
-      # Doppler injects secrets
-    command: doppler run -- node server.js
-
-  db:
-    image: postgres:16
-    environment:
-      # Doppler injects secrets
-    command: doppler run -- docker-entrypoint.sh postgres
-```
-
-### Alternative: Doppler Secrets Sync
-
-```yaml
-services:
-  web:
-    build: ./apps/web
-    environment:
-      # Use Doppler secrets sync
-      DOPPLER_TOKEN: ${DOPPLER_WEB_TOKEN}
-    command: doppler run -- npm start
-```
-
-## Development Setup
-
-### Local Development
-
-1. **Install Doppler CLI**
+1. Install the [Doppler CLI](https://docs.doppler.com/docs/install-cli).
+2. `doppler login` then `doppler setup --project chess-studio --config dev`.
+3. Run the app, for example:
 
    ```bash
-   # macOS
-   brew install doppler
-
-   # Linux
-   curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A3C913B8.key' | sudo apt-key add -
-   echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list
-   sudo apt-get update && sudo apt-get install doppler
+   cd apps/web
+   doppler run -- pnpm dev
    ```
-
-2. **Authenticate**
-
-   ```bash
-   doppler login
-   ```
-
-3. **Setup Project**
-
-   ```bash
-   doppler setup --project chess-studio --config dev
-   ```
-
-4. **Sync .env.local to Doppler (dev and dev_personal)**
-
-   From repo root, after `doppler login`:
-
-   ```bash
-   ./scripts/sync-env-to-doppler.sh
-   ```
-
-   This sets each variable from `.env.local` (except comments and `DOPPLER_TOKEN`) into Doppler configs `dev` and `dev_personal`. Add any vars from `.env.example` (e.g. `SITE_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL`) to `.env.local` first if you want them in Doppler.
-
-5. **Run with Doppler**
-
-   ```bash
-   # In apps/web
-   doppler run -- npm run dev
-
-   # In apps/api
-   doppler run -- npm run dev
-   ```
-
-## Production Deployment
-
-### Dokploy Integration
-
-1. **Create Service Tokens in Doppler**
-   - Generate service tokens for each service (web, api, db)
-   - Store tokens securely in Dokploy environment variables
-
-2. **Docker Compose Configuration**
-
-   ```yaml
-   services:
-     web:
-       image: chess-game-web:latest
-       environment:
-         DOPPLER_TOKEN: ${DOPPLER_WEB_TOKEN} # From Dokploy env vars
-       command: doppler run -- npm start
-   ```
-
-3. **Deployment Script**
-
-   ```bash
-   # Install Doppler CLI in container or use Doppler's Docker image
-   docker run -it --rm \
-     -e DOPPLER_TOKEN="${DOPPLER_WEB_TOKEN}" \
-     dopplerhq/cli:latest \
-     doppler secrets download --no-file --format env > .env
-   ```
-
-### Alternative: Doppler Secrets Download
-
-For containers without Doppler CLI:
-
-```yaml
-services:
-  web:
-    build: ./apps/web
-    environment:
-      DOPPLER_TOKEN: ${DOPPLER_WEB_TOKEN}
-    # Use init container or entrypoint script to download secrets
-    entrypoint: /bin/sh -c "doppler secrets download --no-file --format env > .env && npm start"
-```
-
-## Best Practices
-
-### Secret Organization
-
-- **Group related secrets**: Database credentials together
-- **Use consistent naming**: `DATABASE_URL`, `API_KEY`, etc.
-- **Document secrets**: Add descriptions in Doppler UI
-- **Use references**: Reference shared secrets across services
-
-### Access Control
-
-- **Service-specific tokens**: Each service has its own token
-- **Read-only tokens**: Use read-only tokens in production
-- **Rotate regularly**: Rotate service tokens periodically
-- **Monitor access**: Review Doppler audit logs
-
-### Environment Management
-
-- **Separate configs**: Dev, staging, prod in separate Doppler configs
-- **Sync strategy**: Use Doppler sync to keep configs in sync (with overrides)
-- **Fallback values**: Use `.env.example` files for public configs
-
-### Security
-
-- **Never commit tokens**: Service tokens never in Git
-- **Rotate secrets**: Regularly rotate API keys, passwords
-- **Least privilege**: Tokens only have access to needed secrets
-- **Audit access**: Review who accessed secrets and when
-
-## Migration from Manual Secrets
-
-### Step 1: Create Doppler Project
-
-1. Create project in Doppler dashboard
-2. Create configs: dev, staging, prod
-3. Create services: web, api, db
-
-### Step 2: Import Secrets
-
-1. Add all existing secrets to Doppler
-2. Verify secrets are correct
-3. Test with Doppler CLI locally
-
-### Step 3: Update Docker Compose
-
-1. Add Doppler CLI to containers (or use Doppler image)
-2. Update service commands to use `doppler run`
-3. Remove hardcoded secrets from compose file
-
-### Step 4: Deploy
-
-1. Generate service tokens
-2. Add tokens to Dokploy environment variables
-3. Deploy and verify secrets are injected correctly
 
 ## Troubleshooting
 
-### Common Issues
-
-**Secrets not loading**
-
-- Verify Doppler token is set correctly
-- Check service token has access to correct config
-- Ensure Doppler CLI is installed in container
-
-**Wrong environment**
-
-- Verify `DOPPLER_CONFIG` is set correctly
-- Check service token is for correct config
-
-**Permission denied**
-
-- Verify service token has read access
-- Check token hasn't expired
-- Review Doppler access logs
-
-### Debug Commands
-
 ```bash
-# Test Doppler connection
 doppler secrets
-
-# Verify specific secret (e.g. web app auth)
 doppler secrets get BETTER_AUTH_SECRET
-
-# Check current config
 doppler configure get
-
-# List all secrets (be careful!)
-doppler secrets
 ```
 
 ## Resources
 
-- [Doppler Documentation](https://docs.doppler.com/)
-- [Doppler Docker Integration](https://docs.doppler.com/docs/docker)
-- [Doppler CLI Reference](https://docs.doppler.com/docs/cli)
+- [Doppler documentation](https://docs.doppler.com/)
+- [Doppler CLI](https://docs.doppler.com/docs/cli)

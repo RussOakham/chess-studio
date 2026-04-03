@@ -154,9 +154,9 @@ This document outlines the high-level implementation plan for building the core 
     - Play as Black
     - Random (default)
   - **Start Game** button ✅
-- [x] Create API endpoint: `POST /api/games` ✅
-  - Validate user session ✅
-  - Create game record in database ✅
+- [x] Create game via **Convex** `api.games.create` mutation ✅
+  - Authenticated user required ✅
+  - Create game record in Convex ✅
   - Initialize with starting FEN position ✅
   - Return game ID ✅
 - [x] Handle game creation: ✅
