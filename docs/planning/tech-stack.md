@@ -8,27 +8,24 @@ This document outlines the technology stack for the chess game project.
 
 ### Monorepo Structure
 
-**Turbo Repo** ✅
+**Turborepo** ✅
 
-- Excellent for managing multiple services (frontend, API, chess engine service)
-- Enables code sharing and consistent tooling
-- Great for development experience with hot reloading across services
-- Recommended structure:
+- Builds and caches `apps/web` plus shared packages (`chess`, `types`, TS configs)
+- **Current layout** — single web app; **no** `apps/api` or separate engine service (Stockfish runs **in the browser**)
 
   ```text
-  apps/
-    ├── web/          # Frontend application
-    ├── api/          # Main API backend
-    └── engine/       # Chess engine service (optional separate service)
-  packages/
-    ├── ui/           # Shared UI components
-    ├── types/        # Shared TypeScript types
-    └── chess/        # Shared chess logic/utilities
+  chess-studio/
+    apps/
+      web/            # Next.js + Convex (convex/ under web)
+    packages/
+      chess/          # Shared chess logic
+      types/          # Shared types
+      config/         # Shared TypeScript configs
   ```
 
 ### Frontend
 
-**Next.js 14+ (App Router)** ✅ **Recommended**
+**Next.js 16 (App Router)** ✅ **In use**
 
 - **Why Next.js over React**:
   - Built-in API routes for backend integration
@@ -49,29 +46,13 @@ This document outlines the technology stack for the chess game project.
 - Good developer experience
 - Alternative: NextAuth.js (Auth.js) - also solid, more established
 
-### Backend Architecture
+### Backend architecture
 
-#### Hybrid Approach ✅ **Selected**
+#### Convex + Next.js route handlers ✅ **Selected**
 
-- **Next.js API Routes** (`apps/web/api`): Handles authentication (Better Auth integration)
-  - Simple, lightweight auth endpoints
-  - Leverages Next.js middleware for session management
-  - Good for auth-related operations
-- **Separate Backend Service** (`apps/api`): Express.js or Go
-  - **Express.js Option**: TypeScript, shared codebase, easier to start
-  - **Go Option**: Higher performance, better for CPU-intensive operations (engine coordination)
-  - Handles: Game logic, database operations, chess engine coordination, AI integration
-  - Performance-critical operations (move validation, engine communication)
-
-**Rationale for Hybrid**:
-
-- Auth is simple and benefits from Next.js integration
-- Game engine operations are performance-critical (Go excels here)
-- Docker deployment makes service separation natural
-- Can scale backend independently
-- Learning opportunity with Go
-
-**Recommendation**: Start with Express.js for faster development, migrate engine-heavy operations to Go later if needed.
+- **Convex** (`apps/web/convex/`): Games, moves, game reviews, Lichess explorer cache, auth-linked data; queries, mutations, **actions** (e.g. AI summary, external HTTP).
+- **Next.js App Router**: UI, Server Components, and **Better Auth** HTTP handler under `app/api/auth/*` (proxies to Convex). No separate Express/Go game service.
+- **Chess engine**: **Client-side Stockfish** (worker); not a dedicated server engine microservice.
 
 ### Game data & real-time backend
 
@@ -91,8 +72,7 @@ This document outlines the technology stack for the chess game project.
 
 - **Better Auth** handles sign-in, sessions, and user identity
 - **Auth data** (user, session, account, etc.) is stored in **Convex** via the `@convex-dev/better-auth` component
-- Next.js `/api/auth/*` routes proxy to Convex; no separate auth database
-- **Neon and Drizzle are retired** – not used for auth or games
+- Next.js `/api/auth/*` routes proxy to Convex
 
 ### Chess Engine
 
@@ -106,15 +86,13 @@ This document outlines the technology stack for the chess game project.
 - Can run at different skill levels
 - Provides position evaluation, best moves, analysis
 
-### AI Integration
+### AI integration
 
-**For Move Hints & Game Reviews**:
+**Current approach:**
 
-- **Option 1**: Use Stockfish analysis + prompt engineering
-  - Stockfish provides move evaluation
-  - LLM (OpenAI/Anthropic) generates human-readable hints/summaries
-- **Option 2**: Fine-tuned chess model (more complex, future enhancement)
-- **Recommendation**: Start with Stockfish + LLM API (OpenAI GPT-4 or Claude)
+- **Move hints & classifications** — Stockfish on the client (`use-hint`, `run-game-analysis`).
+- **Post-game LLM summary** — Optional: **Vercel AI Gateway** + AI SDK `generateText` in Convex `"use node"` actions (`apps/web/lib/ai/`, `convex/ai_game_summary.ts`). Model ID from env; requires `AI_GATEWAY_API_KEY`.
+- **Future** — MultiPV-backed “explain this line/position” and richer coaching copy; see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) and [`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md).
 
 ### Caching
 
@@ -147,7 +125,6 @@ This document outlines the technology stack for the chess game project.
   - Automatic type inference from Convex function definitions
   - No code generation needed; types from `convex/_generated`
   - Works with Next.js; auth via Better Auth JWT
-- **Alternative** (future): better-convex for tRPC-style procedures on top of Convex
 
 **Rationale**:
 
@@ -274,47 +251,28 @@ This document outlines the technology stack for the chess game project.
   - **Free for private repos**: 2,000 minutes/month
   - **Rationale**: Simple, free, sufficient for MVP. Can optimize Docker builds later if needed.
 
-### Deployment Stack
+### Deployment stack
 
-- **Infrastructure as Code**: Terraform
-- **VPS**: Hostinger (or similar private VPS)
-- **Deployment Management**: Dokploy (or similar Docker-based deployment tool)
-- **Containerization**: Docker
-- **Orchestration**: Docker Compose
-- **Secrets Management**: Doppler
-- **DNS**: Amazon Route 53 (custom domain, managed by Terraform)
-- **Reverse Proxy**: Nginx (via Dokploy or separate container)
-- **Backup Storage**: AWS S3 (managed by Terraform)
+**This repo:** Next.js on **[Vercel](https://vercel.com)**; Convex on **Convex Cloud**; secrets often synced via **Doppler** with Vercel/CI. See [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) and [`deployment.md`](./deployment.md).
 
-## Decision Summary
+## Decision summary
 
-| Component           | Choice                                           | Rationale                                           |
-| ------------------- | ------------------------------------------------ | --------------------------------------------------- |
-| Monorepo            | Turbo Repo                                       | Multi-service management, code sharing              |
-| Frontend            | Next.js 14+                                      | Full-stack capabilities, auth integration, SSR      |
-| Auth                | Better Auth + Convex                             | Auth data and sessions stored in Convex             |
-| Backend             | Next.js API (auth) + Convex (games/moves)        | Auth + Convex for game data and real-time           |
-| TypeScript Compiler | TypeScript 6.x (now), 7.0 (future)               | 10x faster with Go-based compiler                   |
-| Game data / API     | Convex                                           | Real-time, type-safe queries/mutations, Better Auth |
-| Caching             | TBD (Start without, add Redis/Upstash if needed) | Performance optimization                            |
-| Chess Engine        | Stockfish                                        | Industry standard, client-side WASM                 |
-| AI                  | Stockfish + LLM API                              | Best moves from engine, summaries from LLM          |
-| Language            | TypeScript                                       | Type safety, better DX                              |
-| Type Safety         | Convex                                           | End-to-end type safety for game/move API            |
-| Styling             | Tailwind CSS                                     | Utility-first CSS framework                         |
-| UI Components       | ShadCN UI                                        | Component library built on Radix UI                 |
-| Chess Board         | Custom 2D (SVG icons)                            | Full control, brand consistency                     |
-| 3D Board (Future)   | Three.js + @react-three/fiber                    | 3D rendering for enhanced board view                |
+| Component       | Choice                                    | Rationale                                                |
+| --------------- | ----------------------------------------- | -------------------------------------------------------- |
+| Monorepo        | Turborepo + pnpm                          | Shared packages, cached builds                           |
+| Frontend        | Next.js 16                                | App Router, Server Components, auth routes               |
+| Auth            | Better Auth + Convex                      | Sessions and user rows in Convex                         |
+| App backend     | Convex + Next auth routes                 | Real-time game data; no separate REST/tRPC game layer    |
+| TypeScript      | 5.x / native preview (see repo)           | Strict typing across app and Convex                      |
+| Game data / API | Convex                                    | Queries, mutations, actions; generated types             |
+| Caching         | Convex + optional Redis later             | Add only if measured need                                |
+| Chess engine    | Stockfish (client worker)                 | Evals, hints, analysis; MultiPV roadmap                  |
+| AI              | Stockfish + Vercel AI Gateway (summaries) | Engine truth; LLM for optional narrative when configured |
+| Language        | TypeScript                                | Shared types, Convex end-to-end                          |
+| Styling         | Tailwind CSS 4                            | Utility-first                                            |
+| UI              | Radix + shadcn-style components           | Accessible primitives                                    |
 
-## Alternative Considerations
+## Alternative considerations
 
-### If you prefer lighter setup
-
-- React + Vite instead of Next.js
-- SQLite for development (PostgreSQL for production)
-- NextAuth.js instead of Better Auth
-
-### If you need more control
-
-- Separate Express/Fastify backend instead of Next.js API routes
-- Custom auth implementation (more work, more control)
+- **Other hosts:** Any Node host can run Next.js; Convex stays on Convex Cloud unless you self-host Convex (unusual for this project).
+- **Other auth:** NextAuth is common elsewhere; this repo standardized on **Better Auth + Convex**.

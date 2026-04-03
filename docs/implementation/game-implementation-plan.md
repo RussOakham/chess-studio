@@ -140,7 +140,7 @@ This document outlines the high-level implementation plan for building the core 
 
 **Location:** `apps/web/app/game/new/page.tsx`
 
-**Status:** ✅ **Complete** - Page and API endpoint implemented.
+**Status:** ✅ **Complete** — Page and Convex `api.games.create` flow implemented.
 
 **Tasks:**
 
@@ -154,9 +154,9 @@ This document outlines the high-level implementation plan for building the core 
     - Play as Black
     - Random (default)
   - **Start Game** button ✅
-- [x] Create API endpoint: `POST /api/games` ✅
-  - Validate user session ✅
-  - Create game record in database ✅
+- [x] Create game via **Convex** `api.games.create` mutation ✅
+  - Authenticated user required ✅
+  - Create game record in Convex ✅
   - Initialize with starting FEN position ✅
   - Return game ID ✅
 - [x] Handle game creation: ✅
@@ -168,7 +168,7 @@ This document outlines the high-level implementation plan for building the core 
 
 **Estimated Time:** 3-4 hours
 
-**Status:** ✅ Complete - New game page with difficulty and color selectors, POST API endpoint for game creation, form validation with Zod, error handling, and redirect to game page on success. Note: Difficulty and color preferences are accepted but not yet stored in database (will be used when implementing engine in Phase 2).
+**Status:** ✅ Complete — New game page with difficulty and color selectors, game creation via **`api.games.create`** (Convex mutation), form validation with Zod, error handling, and redirect to game page on success. Note: Difficulty and color preferences are accepted but not yet stored in database (will be used when implementing engine in Phase 2).
 
 ---
 

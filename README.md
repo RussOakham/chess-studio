@@ -1,44 +1,43 @@
 # Chess Studio
 
-AI-driven chess game application built with Next.js 16, React 19, and modern web technologies.
+Chess Studio is an **AI-empowered analysis** app: play vs engine, then review games with **engine-backed evaluation**, **best-move annotations**, optional **LLM-written summaries** (grounded in engine output), and a roadmap toward **multi-line engine analysis** (MultiPV) and richer position insight. Built with Next.js 16, React 19, Convex, and client-side Stockfish.
 
 ## Status
 
-🚧 **In Development** - Initial setup phase
+🚧 **In active development** — core PvE play, review pipeline, and optional AI summaries are in place; see `docs/planning/` for roadmap detail.
 
 ## Features
 
-- 🎮 Play chess against AI engine (Stockfish)
-- 🧠 AI-powered move hints and game analysis
-- 📊 Engine evaluation and game review
-- 📜 Game history and replay
-- 🎯 Pre-moves and planned move mode
-- 🎨 Modern UI with ShadCN Base UI and Tailwind CSS
+- 🎮 Play chess against the engine (Stockfish in the browser)
+- 📊 Live evaluation, hints from engine best moves, post-game analysis (classifications, key moments)
+- 🧠 Optional **AI game summary** (Vercel AI Gateway + AI SDK) when `AI_GATEWAY_API_KEY` is configured
+- 📜 Game history and replay on the review surface
+- 🎨 UI built with Tailwind CSS 4 and ShadCN-style components
+
+**Roadmap (not all shipped):** MultiPV “top lines” on review ([`docs/planning/engine-lines-multipv-prd.md`](docs/planning/engine-lines-multipv-prd.md)), deeper AI-assisted commentary — see [`docs/planning/mvp-features.md`](docs/planning/mvp-features.md).
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, ShadCN Base UI
-- **Backend**: Next.js API Routes; game data and real-time state via Convex
-- **Game data**: Convex (queries/mutations, real-time subscriptions) for games and moves
-- **Auth**: Better Auth with Convex (auth data and sessions stored in Convex; no Neon or Drizzle)
-- **Chess Engine**: Stockfish (client-side WASM)
-- **AI**: OpenAI/Anthropic for hints and summaries (planned)
-- **Authentication**: Better Auth (Convex JWT integration)
-- **Type Safety**: End-to-end type safety via Convex (typed queries/mutations)
-- **Monorepo**: Turbo Repo with pnpm workspaces
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, Radix/ShadCN-style UI
+- **Data & real time**: Convex (queries/mutations/subscriptions) for games, moves, and reviews
+- **Auth**: Better Auth with Convex (sessions and user records in Convex)
+- **Chess engine**: Stockfish (client-side worker / WASM) for evals, hints, and analysis
+- **AI summaries**: Vercel AI Gateway + AI SDK (`generateText`) in Convex actions (`ai_game_summary`) — not tRPC or a separate REST game API
+- **Type safety**: Convex-generated types and strict TypeScript
+- **Monorepo**: Turborepo with pnpm workspaces
 
 ## Project Structure
 
-This is a monorepo managed with Turbo Repo and pnpm.
+This is a monorepo managed with Turborepo and pnpm.
 
 ```text
-chess-game/
+chess-studio/
 ├── apps/
-│   └── web/              # Next.js web application
+│   └── web/              # Next.js app; Convex lives under apps/web/convex/
 ├── packages/
 │   ├── types/            # Shared TypeScript types
 │   ├── chess/            # Chess logic and utilities
-│   └── config/           # Shared configurations
+│   └── config/           # Shared TypeScript configs
 └── docs/                 # Documentation
 ```
 
@@ -55,7 +54,7 @@ chess-game/
 
    ```bash
    git clone <repository-url>
-   cd chess-game
+   cd chess-studio
    ```
 
 2. **Install Node.js version**

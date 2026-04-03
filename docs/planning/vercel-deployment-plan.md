@@ -4,7 +4,7 @@
 
 **Current intent:** Deploy the **Next.js web app** to **[Vercel](https://vercel.com)** on the **free (Hobby) tier** for simplicity and low operational overhead.
 
-This document is the **active deployment overview** for that approach. An **alternate** self-hosted strategy (VPS / Docker / Dokploy) is documented in [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md); see also the index at [`deployment.md`](./deployment.md).
+This document is the deployment overview for that approach. See also [`deployment.md`](./deployment.md).
 
 ## What gets deployed where
 
@@ -77,17 +77,6 @@ Document your team’s rule of thumb (e.g. “deploy Convex before or with the V
 ## Custom domain (optional)
 
 Hobby supports custom domains. Point DNS per Vercel’s wizard, then update **Better Auth** and any allowlists to the new hostname.
-
-## Differences from alternate self-hosted deployment
-
-Compared to [`deployment-alternate-vps-dokploy.md`](./deployment-alternate-vps-dokploy.md):
-
-| Topic         | Alternate (VPS / Dokploy)                  | This plan (Vercel)                |
-| ------------- | ------------------------------------------ | --------------------------------- |
-| App hosting   | VPS + Docker + Nginx                       | Vercel serverless/Fluid Next.js   |
-| API container | Optional Express/Go container (design-era) | Not used; Convex + Next.js routes |
-| SSL           | Dokploy / Let’s Encrypt on VPS             | Vercel-managed TLS                |
-| Secrets       | Doppler → Docker                           | Doppler and/or Vercel env         |
 
 ## Pre-launch checklist
 

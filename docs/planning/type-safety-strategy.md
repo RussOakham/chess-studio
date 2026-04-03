@@ -46,7 +46,7 @@ const makeMove = useMutation(api.games.makeMove); // (args) => Promise<...>
 
 ## Historical note
 
-The repository previously explored tRPC and other API styles; the live game flow is Convex-only. Older notes lived in this file and were removed to avoid contradicting the current stack.
+Earlier experiments with alternate API layers are retired. **Production game and move traffic is Convex-only** (typed queries, mutations, and actions).
 
 ## Resources
 

@@ -56,7 +56,7 @@ This project follows strict git workflow guidelines to ensure code quality and u
 feat(games): add move validation
 fix(auth): resolve session expiration issue
 docs: update API documentation
-refactor(trpc): simplify error handling
+refactor(convex): simplify error handling
 chore: update dependencies
 ```
 

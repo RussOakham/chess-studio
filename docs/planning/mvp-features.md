@@ -1,316 +1,87 @@
-# MVP Features - Chess.com Clone
+# MVP and roadmap — AI-empowered game analysis
 
 ## Overview
 
-This document outlines the MVP feature set for a slimmed-down chess.com clone. Features are organized by priority and implementation phase.
+This document describes **product priorities** for Chess Studio. The focus is **analysis and understanding**: engine-backed **evaluations**, **best moves and lines**, **move quality**, and **optional AI-assisted narrative**—not parity with a full chess.com-style social platform.
 
-**Implementation status:** See [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the authoritative phased checklist. This file is a **product backlog** (bullets are not completion checkboxes—do not infer shipped vs. not shipped from this list).
+**Implementation status:** See [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the phased engineering checklist. Bullets here are **backlog and direction**, not automatic shipped/not-shipped markers.
 
-## Core MVP Features (Phase 1 - Must Have)
+## North star
 
-### 1. User Authentication & Profile
+1. **Engine truth first** — Stockfish (client) owns evaluations, best moves, and classifications; Lichess Opening Explorer enriches book/opening metadata where used.
+2. **LLM as narrator** — Language models **explain and organize** structured engine output (e.g. post-game summary); they must **not** invent refutations or contradict stored best moves.
+3. **Convex as system of record** — Games, moves, reviews, and auth live in Convex with typed queries/mutations (no separate REST or tRPC game API).
 
-- User registration (email/password)
-- User login/logout
-- Session management
-- Basic user profile
-  - Username
-  - Email
-  - Profile picture (optional for MVP)
-- Password reset
+## Phase 1 — Core analysis loop (must-have direction)
 
-### 2. Chess Game Play
+### Authentication & profile
 
-- Interactive chess board
-  - Drag and drop piece movement
-  - Click to select, click to move
-  - Visual move indicators (highlight legal moves)
-  - Piece animations
-- Move validation
-  - Enforce chess rules
-  - Prevent illegal moves
-  - Handle special moves (castling, en passant, promotion)
-- Game state management
-  - Current position (FEN)
-  - Move history (PGN)
-  - Turn indicator
-  - Game status (in progress, check, checkmate, stalemate, draw)
-- Game controls
-  - Resign
-  - Offer draw
-  - Undo move (optional for MVP)
+- Registration, login, logout, sessions
+- Basic profile (username, email; avatar optional)
 
-### 3. Play vs Engine
+### Play vs engine
 
-- Start new game vs Stockfish engine
-- Engine difficulty levels (Easy, Medium, Hard)
-- Engine move calculation
-  - Engine makes moves automatically
-  - Configurable thinking time
-- Engine evaluation display
-  - Position evaluation bar
-  - Best move suggestion (optional for MVP)
+- Interactive board (validation, special moves, status)
+- Stockfish opponent with difficulty presets
+- Live evaluation bar during play
+- Engine **hints** (best move from Stockfish)
 
-### 4. Game History
+### Post-game analysis & review
 
-- View past games list
-  - Game date/time
-  - Opponent (Engine/Human)
-  - Result (Win/Loss/Draw)
-  - Game type
-- Game details view
-  - Full move list
-  - Replay game (step through moves)
-  - Game metadata (duration, result, etc.)
+- Full-game engine pass over the move list; persist to `game_reviews`
+- Move annotations (blunder / mistake / inaccuracy / best / book / good), key moments, suggestions
+- **Optional AI summary** — LLM narrative when `AI_GATEWAY_API_KEY` is set (Vercel AI Gateway + Convex action); rule-based fields remain authoritative
 
-### 5. Basic Game Analysis
+### Game history
 
-- Position evaluation
-  - Real-time engine evaluation during game
-  - Evaluation bar (advantage visualization)
-- Move analysis
-  - Show best move
-  - Show move evaluation
-- Post-game analysis
-  - Engine review of completed game
-  - Highlight mistakes/blunders
-  - Show best moves at key positions
+- List past games; open a game; **replay** and review surfaces
 
-### 6. AI Move Hints
+### Near-term roadmap (same product theme)
 
-- Request hint during game
-- Show suggested best move
-- Explain why move is good (optional for MVP)
+- **MultiPV / top engine lines** on the review page — see [`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md)
+- Richer **position-level** or **line-level** AI commentary grounded in engine PVs (planning — [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md))
 
-### 7. Game Review with AI Summary
+## Phase 2 — Deeper product (nice-to-have)
 
-- Generate AI summary of completed game
-  - Game overview
-  - Key moments
-  - Mistakes analysis
-  - Overall assessment
-
-## Enhanced Features (Phase 2 - Nice to Have)
-
-### 8. Game Modes & Time Controls
-
-- Time controls
-  - Blitz (3+0, 5+0)
-  - Rapid (10+0, 15+10)
-  - Classical (30+0)
-  - Custom time controls
-- Game modes
-  - Standard chess
-  - Chess variants (optional, future)
-
-### 9. User Ratings
-
-- ELO rating system
-- Rating display on profile
-- Rating history graph
-- Different ratings per time control
-
-### 10. Enhanced Game Features
-
-- Pre-moves
-  - Queue moves before your turn
-  - Auto-execute when it becomes your turn
-  - Cancel pre-move if opponent's move changes the position
-  - Visual indicator for queued pre-move
-- Planned / Draft Move Mode
-  - Plan multiple moves in advance
-  - Visualize move sequences
-  - Draft mode to explore variations
-  - Save/load move plans
-  - Execute planned moves when ready
-- 3D Board View
-  - Three.js rendering
-  - 3D piece models
-  - Camera controls
-  - Smooth move animations
-  - Toggle between 2D and 3D views
-- Takeback requests (for human vs human)
-- Draw offers
-- Move annotations
-- Game notes
-
-### 11. Social Features (Basic)
-
-- Friend system (optional for MVP)
-- Challenge friends (optional for MVP)
-- View friend's games (optional for MVP)
-
-### 12. Notifications
-
-- Game notifications
-  - Your turn notifications
-  - Game ended notifications
-- In-app notification center
-
-## Advanced Features (Phase 3 - Future)
-
-### 13. Play vs Human
-
-- Matchmaking system
-- Challenge system
-- Live game play
-- Spectator mode
-
-### 14. Puzzles & Training
-
-- Chess puzzles
-- Puzzle solving
-- Puzzle ratings
-- Daily puzzles
-
-### 15. Lessons & Learning
-
-- Chess lessons
-- Opening explorer
-- Endgame trainer
-
-### 16. Tournaments
-
-- Tournament creation
-- Tournament participation
-- Tournament brackets
-- Tournament results
-
-### 17. Advanced Analysis
-
-- Opening book integration
-- Endgame tablebase
-- Position search (similar positions)
-- Game comparison
-
-### 18. Vector Search & AI Features
-
-- Position similarity search (using pgvector)
-- Pattern recognition
-- Personalized recommendations
-
-## Technical Features (Infrastructure)
-
-### MVP Technical Requirements
-
-- Real-time game updates (Convex subscriptions)
-- Game state persistence
-- Move history storage
-- Engine integration (Stockfish)
-- AI integration (LLM for summaries/hints)
-- Responsive design (mobile-friendly)
-- Error handling
-- Loading states
-- Basic analytics
-
-## Feature Prioritization
-
-### Must Have for MVP (Phase 1)
-
-1. User authentication
-2. Play chess vs engine
-3. Basic game mechanics (move validation, board)
-4. Game history
-5. Basic game analysis
-6. AI move hints
-7. Game review with AI summary
-
-### Should Have (Phase 2)
-
-- Time controls
+- Time controls and clocks
 - User ratings
-- Enhanced game features
-  - Pre-moves (queue moves before your turn)
-  - Planned/draft move mode (plan move sequences)
+- Pre-moves, planned/draft move mode (faster play)
 - Notifications
+- Enhanced UX on the review page (depth controls, explain toggles) as analysis features land
 
-### Could Have (Phase 3)
+## Phase 3 — Broader platform (future)
 
-- Play vs human
-- Puzzles
-- Social features
-- Advanced analysis
+- Play vs human (matchmaking, live games)
+- Puzzles, lessons, tournaments
+- Social graph (friends, challenges) — only if product scope expands beyond analysis-first
 
-## User Stories
+### Advanced analysis (future)
 
-### As a User, I want to
+- Deeper opening book / tablebase integration
+- **Similarity search** or large-scale position retrieval would require **additional infrastructure** (not part of the current Convex-only data path); treat as research, not committed scope.
 
-1. **Register and login** so I can save my games and progress
-2. **Start a new game vs engine** so I can practice chess
-3. **Make moves on the board** so I can play chess
-4. **See engine moves** so I can play against a computer opponent
-5. **View my game history** so I can review past games
-6. **Get move hints** so I can learn better moves
-7. **Review completed games** so I can learn from my mistakes
-8. **See position evaluation** so I understand who's winning
-9. **Replay past games** so I can analyze them
-10. **Resign or offer draw** so I can end games appropriately
-11. **Use pre-moves** so I can play faster in time-controlled games
-12. **Plan moves in advance** so I can think through variations before committing
+## Technical foundations (aligned with repo)
 
-## Success Criteria
+- **Real time:** Convex subscriptions for live games
+- **Engine:** Client Stockfish worker; MultiPV extension per PRD
+- **AI:** Vercel AI Gateway + AI SDK for summaries; optional future providers behind the same pattern
+- **Types:** Convex-generated API types and strict TypeScript
 
-### MVP is successful if
+## Success criteria (product)
 
-- ✅ Users can register and login
-- ✅ Users can play a complete game vs engine
-- ✅ Games are saved and can be viewed later
-- ✅ Users can get basic analysis of their games
-- ✅ Users can get AI-generated game summaries
-- ✅ Move validation works correctly
-- ✅ Engine plays at different difficulty levels
-- ✅ Application is responsive and usable
+- Players can finish a game vs engine and open a **review** with engine-backed insight
+- **Best-move context** is visible where implemented (annotations, hints; MultiPV when shipped)
+- Optional **AI summary** reads well and does not contradict engine labels when enabled
+- App remains responsive on typical hardware (analysis depth and cancellation matter)
 
-## Out of Scope for MVP
+## Out of scope unless roadmap changes
 
-- Play vs other humans (Phase 2+)
-- Puzzles and training (Phase 3)
-- Tournaments (Phase 3)
-- Social features beyond basic profile (Phase 2+)
-- Advanced chess variants (Future)
-- Mobile apps (Web only for MVP)
-- Real-time spectating (Phase 2+)
+- Full social/chess.com parity
+- Native mobile apps (web-first)
+- Server-side engine farm (client Stockfish is the default architecture)
 
-## Implementation Notes
+## See also
 
-### Game Flow
-
-1. User logs in
-2. User clicks "New Game" → Selects engine difficulty
-3. Game starts → User is white, engine is black (or vice versa)
-4. User makes moves → Engine responds
-5. Game continues until checkmate, stalemate, or draw
-6. Game ends → User can review, get AI summary
-7. Game saved to history
-
-### Key Technical Considerations
-
-- **Type Safety**: Convex for end-to-end type safety for game/move API (typed queries and mutations)
-- **Styling**: Tailwind CSS (latest) + ShadCN UI for components
-- **Chess Board**: 2D top-down view with custom SVG icons (MVP)
-- **3D Board**: Three.js + @react-three/fiber (Phase 2+ enhanced feature)
-- **Real-time updates**: Convex subscriptions for live game/move updates (no polling)
-- **Engine integration**: Stockfish via child process or WebAssembly
-- **Move validation**: Use chess.js library
-- **Board UI**: Custom implementation with chess.js integration
-- **State management**: React state + Zustand if needed
-- **Game persistence**: Save to Convex after each move or at game end (real-time sync)
-- **Pre-move implementation**:
-  - Queue moves in client state before turn
-  - Validate pre-move when turn changes
-  - Auto-execute if still valid, cancel if invalid
-  - Visual indicator for queued pre-move
-- **Draft move mode**:
-  - Maintain separate draft game state (branch from current position)
-  - Allow exploring multiple move sequences
-  - Visualize potential moves without committing
-  - Save/load move plans
-  - Execute planned moves when ready
-
-## Next Steps
-
-1. **Define detailed user flows** for each MVP feature
-2. **Create wireframes/mockups** for key screens
-3. **Define API endpoints** for game operations
-4. **Design database schema** based on MVP features
-5. **Break down into development tasks**
+- [`project-plan.md`](./project-plan.md) — milestones
+- [`architecture.md`](./architecture.md) — runtime and data flow
+- [`tech-stack.md`](./tech-stack.md) — stack decisions (Convex for app data and real time)

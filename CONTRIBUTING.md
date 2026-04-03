@@ -16,7 +16,7 @@ Thank you for your interest in contributing to Chess Studio! This document provi
 
    ```bash
    git clone <repository-url>
-   cd chess-game
+   cd chess-studio
    ```
 
 2. **Install Node.js version**
@@ -50,9 +50,9 @@ Thank you for your interest in contributing to Chess Studio! This document provi
 ## Project Structure
 
 ```text
-chess-game/
+chess-studio/
 ├── apps/
-│   └── web/              # Next.js 16 web application
+│   └── web/              # Next.js 16 web application (Convex under convex/)
 ├── packages/
 │   ├── types/            # Shared TypeScript types
 │   ├── chess/            # Chess logic and utilities
