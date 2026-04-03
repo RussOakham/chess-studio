@@ -16,6 +16,8 @@ import type * as games from "../games.js";
 import type * as http from "../http.js";
 import type * as lib_authed_functions from "../lib/authed_functions.js";
 import type * as lib_game_access from "../lib/game_access.js";
+import type * as lib_review_validators from "../lib/review_validators.js";
+import type * as lib_save_review_internal from "../lib/save_review_internal.js";
 import type * as lichess_explorer from "../lichess_explorer.js";
 import type * as lichess_explorer_cache from "../lichess_explorer_cache.js";
 import type * as reviews from "../reviews.js";
@@ -36,6 +38,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/authed_functions": typeof lib_authed_functions;
   "lib/game_access": typeof lib_game_access;
+  "lib/review_validators": typeof lib_review_validators;
+  "lib/save_review_internal": typeof lib_save_review_internal;
   lichess_explorer: typeof lichess_explorer;
   lichess_explorer_cache: typeof lichess_explorer_cache;
   reviews: typeof reviews;
