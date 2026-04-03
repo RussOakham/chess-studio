@@ -16,5 +16,9 @@ yarn.lock
 # Generated files
 *.tsbuildinfo
 
+# Convex AI files (upstream skill content + generated guidelines; not maintained by hand)
+apps/web/.agents/
+apps/web/convex/_generated/ai/
+
 # Logs
 *.log

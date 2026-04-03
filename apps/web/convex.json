@@ -4,6 +4,6 @@
     "nodeVersion": "22"
   },
   "aiFiles": {
-    "enabled": false
+    "enabled": true
   }
 }
