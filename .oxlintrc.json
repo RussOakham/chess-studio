@@ -10,6 +10,7 @@
     "**/*.wasm",
     "**/convex/_generated/**"
   ],
+  "jsPlugins": ["@convex-dev/eslint-plugin"],
   "plugins": [
     "eslint",
     "unicorn",
@@ -115,8 +116,12 @@
       }
     },
     {
-      "files": ["**/apps/web/convex/**/*.ts"],
+      "files": ["**/convex/**/*.ts"],
       "rules": {
+        "@convex-dev/import-wrong-runtime": "off",
+        "@convex-dev/no-old-registered-function-syntax": "error",
+        "@convex-dev/require-args-validator": "error",
+        "@convex-dev/explicit-table-ids": "error",
         "unicorn/filename-case": "off"
       }
     },

@@ -1,6 +1,5 @@
 // oxlint-disable typescript/no-unsafe-member-access
 // oxlint-disable typescript/no-unsafe-assignment
-import convexPlugin from "@convex-dev/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import json from "eslint-plugin-json";
 import oxlint from "eslint-plugin-oxlint";
@@ -49,9 +48,6 @@ const config = [
       "json/trailing-comma": "error",
     },
   },
-
-  // Convex: best-practice rules for convex/** (scoped so rest of repo unchanged)
-  ...convexPlugin.configs.recommended,
 
   // YAML linting
   ...yml.configs["flat/recommended"],
