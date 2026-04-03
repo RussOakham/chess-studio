@@ -135,8 +135,8 @@ async function calculateBestMove(
     stockfish.addEventListener("message", messageHandler);
     sendUciStop(stockfish);
     stockfish.postMessage(`position fen ${fen}`);
-    stockfish.postMessage(`go depth ${depth}`);
     acceptBestmove = true;
+    stockfish.postMessage(`go depth ${depth}`);
   });
 }
 
@@ -330,8 +330,8 @@ async function getTopEngineLines(
     sendUciStop(stockfish);
     stockfish.postMessage(`setoption name MultiPV value ${String(multipv)}`);
     stockfish.postMessage(`position fen ${fen}`);
-    stockfish.postMessage(`go depth ${String(depth)}`);
     acceptSearchMessages = true;
+    stockfish.postMessage(`go depth ${String(depth)}`);
   });
 }
 
@@ -403,8 +403,8 @@ async function getPositionEvaluation(
     stockfish.addEventListener("message", messageHandler);
     sendUciStop(stockfish);
     stockfish.postMessage(`position fen ${fen}`);
-    stockfish.postMessage("go depth 5");
     acceptSearchMessages = true;
+    stockfish.postMessage("go depth 5");
   });
 }
 
