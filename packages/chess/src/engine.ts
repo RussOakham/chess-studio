@@ -88,6 +88,8 @@ async function calculateBestMove(
   depth: number,
   stockfish: StockfishInstance
 ): Promise<string> {
+  sendUciStop(stockfish);
+
   return new Promise((resolve, reject) => {
     let bestMove: string | null = null;
     let isResolved = false;
@@ -150,6 +152,178 @@ interface PositionEvaluationMate {
 
 type PositionEvaluation = PositionEvaluationCp | PositionEvaluationMate;
 
+/** One principal variation from a MultiPV search (1-based multipv index). */
+interface EngineLine {
+  multipv: number;
+  evaluation: PositionEvaluation;
+  movesUci: string[];
+}
+
+/** Options for {@link getTopEngineLines}. */
+interface GetTopEngineLinesOptions {
+  depth: number;
+  /** Number of lines (UCI MultiPV), default 3. */
+  multipv?: number;
+}
+
+const DEFAULT_ENGINE_LINES_MULTIPV = 3;
+
+/** Default search depth for live/review “top lines” (snappier UX; raise in UI later if needed). */
+const ENGINE_LINES_DEFAULT_DEPTH = 12;
+
+/**
+ * Send UCI `stop` to abort an in-flight search (safe to call before a new `go`).
+ */
+function sendUciStop(stockfish: StockfishInstance): void {
+  stockfish.postMessage("stop");
+}
+
+/**
+ * Parse a single UCI `info` line that includes `multipv` and `score` / `pv`.
+ * Returns null if the line is not a usable MultiPV info line.
+ */
+function parseMultipvInfoLine(message: string): {
+  multipv: number;
+  score: { type: "cp" | "mate"; raw: number };
+  movesUci: string[];
+} | null {
+  if (!message.startsWith("info ") || !message.includes("multipv")) {
+    return null;
+  }
+  const multipvMatch = message.match(/\bmultipv\s+(\d+)\b/);
+  if (multipvMatch === null) {
+    return null;
+  }
+  const multipv = parseInt(multipvMatch[1] ?? "0", 10);
+  if (multipv < 1 || Number.isNaN(multipv)) {
+    return null;
+  }
+
+  let score: { type: "cp" | "mate"; raw: number } | null = null;
+  const mateMatch = message.match(/\bscore\s+mate\s+(-?\d+)\b/);
+  const cpMatch = message.match(/\bscore\s+cp\s+(-?\d+)\b/);
+  if (mateMatch) {
+    score = { type: "mate", raw: parseInt(mateMatch[1] ?? "0", 10) };
+  } else if (cpMatch) {
+    score = { type: "cp", raw: parseInt(cpMatch[1] ?? "0", 10) };
+  } else {
+    return null;
+  }
+
+  const pvIdx = message.indexOf(" pv ");
+  const pvRest = pvIdx !== -1 ? message.slice(pvIdx + 4).trim() : "";
+  const movesUci =
+    pvRest.length > 0
+      ? pvRest
+          .split(/\s+/)
+          .filter((uciMove) => /^[a-h][1-8][a-h][1-8]/.test(uciMove))
+      : [];
+
+  return { multipv, score, movesUci };
+}
+
+function normalizeRawScoreToWhitePerspective(
+  score: { type: "cp" | "mate"; raw: number },
+  isBlackToMove: boolean
+): PositionEvaluation {
+  if (score.type === "mate") {
+    return {
+      type: "mate",
+      value: isBlackToMove ? -score.raw : score.raw,
+    };
+  }
+  return {
+    type: "cp",
+    value: isBlackToMove ? -score.raw : score.raw,
+  };
+}
+
+/**
+ * Run a MultiPV search and return ranked engine lines (default 3).
+ * Normalizes evaluations to White’s perspective (same convention as {@link getPositionEvaluation}).
+ *
+ * Sends `stop` first, then `setoption name MultiPV`, `position fen`, `go depth`.
+ */
+async function getTopEngineLines(
+  fen: string,
+  stockfish: StockfishInstance,
+  options: GetTopEngineLinesOptions
+): Promise<EngineLine[]> {
+  const multipv = Math.min(
+    500,
+    Math.max(1, options.multipv ?? DEFAULT_ENGINE_LINES_MULTIPV)
+  );
+  const { depth } = options;
+  const isBlackToMove = fen.split(" ")[1] === "b";
+
+  return new Promise((resolve, reject) => {
+    const state = new Map<
+      number,
+      { evaluation: PositionEvaluation; movesUci: string[] }
+    >();
+    let isResolved = false;
+
+    const messageHandler = (event: MessageEvent<string>) => {
+      const message = event.data;
+
+      if (message.startsWith("info ") && message.includes("multipv")) {
+        const parsed = parseMultipvInfoLine(message);
+        if (parsed !== null) {
+          const evaluation = normalizeRawScoreToWhitePerspective(
+            parsed.score,
+            isBlackToMove
+          );
+          state.set(parsed.multipv, {
+            evaluation,
+            movesUci: parsed.movesUci,
+          });
+        }
+      }
+
+      if (message.startsWith("bestmove")) {
+        const tokens = message.trim().split(/\s+/);
+        const [, bestMoveToken] = tokens;
+        if (!isResolved) {
+          isResolved = true;
+          stockfish.removeEventListener("message", messageHandler);
+          clearTimeout(timeout);
+          if (bestMoveToken === "(none)" || bestMoveToken === undefined) {
+            resolve([]);
+            return;
+          }
+          const lines: EngineLine[] = [];
+          for (let lineRank = 1; lineRank <= multipv; lineRank++) {
+            const row = state.get(lineRank);
+            if (row !== undefined) {
+              lines.push({
+                multipv: lineRank,
+                evaluation: row.evaluation,
+                movesUci: row.movesUci,
+              });
+            }
+          }
+          resolve(lines);
+        }
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      if (!isResolved) {
+        isResolved = true;
+        stockfish.removeEventListener("message", messageHandler);
+        reject(new Error("MultiPV engine lines timeout"));
+      }
+    }, 90000);
+
+    stockfish.addEventListener("message", messageHandler);
+
+    sendUciStop(stockfish);
+    stockfish.postMessage(`setoption name MultiPV value ${String(multipv)}`);
+    stockfish.postMessage(`position fen ${fen}`);
+    stockfish.postMessage(`go depth ${String(depth)}`);
+  });
+}
+
 /**
  * Get engine evaluation of the current position.
  * Result is normalized to White's perspective (positive = White better).
@@ -162,6 +336,8 @@ async function getPositionEvaluation(
   fen: string,
   stockfish: StockfishInstance
 ): Promise<PositionEvaluation> {
+  sendUciStop(stockfish);
+
   const isBlackToMove = fen.split(" ")[1] === "b";
 
   return new Promise((resolve, reject) => {
@@ -220,15 +396,22 @@ async function getPositionEvaluation(
 export {
   type DifficultyLevel,
   type EngineDifficultyId,
+  type EngineLine,
   type GameDifficulty,
+  type GetTopEngineLinesOptions,
   type LegacyEngineDifficulty,
   type PositionEvaluation,
   type PositionEvaluationCp,
   type PositionEvaluationMate,
   type StockfishInstance,
+  DEFAULT_ENGINE_LINES_MULTIPV,
   ENGINE_DIFFICULTY_IDS,
   DIFFICULTY_DEPTH,
-  getEngineDepth,
+  ENGINE_LINES_DEFAULT_DEPTH,
   calculateBestMove,
+  getEngineDepth,
   getPositionEvaluation,
+  getTopEngineLines,
+  parseMultipvInfoLine,
+  sendUciStop,
 };

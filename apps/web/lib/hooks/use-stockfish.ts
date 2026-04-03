@@ -1,30 +1,87 @@
 "use client";
 
 import type {
+  EngineLine,
   GameDifficulty,
   PositionEvaluation,
   StockfishInstance,
 } from "@repo/chess";
 import {
-  getEngineDepth,
+  ENGINE_LINES_DEFAULT_DEPTH,
   calculateBestMove,
+  getEngineDepth,
   getPositionEvaluation,
+  getTopEngineLines,
+  sendUciStop,
 } from "@repo/chess";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+function wrapStockfishWorker(worker: Worker): StockfishInstance {
+  const messageListenerWrappers = new Map<
+    (event: MessageEvent<string>) => void,
+    (event: MessageEvent) => void
+  >();
+
+  return {
+    postMessage: (message: string) => {
+      // eslint-disable-next-line unicorn/require-post-message-target-origin
+      worker.postMessage(message);
+    },
+    addEventListener: (
+      _type: "message",
+      listener: (event: MessageEvent<string>) => void
+    ) => {
+      const wrapped = (event: MessageEvent) => {
+        if (event instanceof MessageEvent && typeof event.data === "string") {
+          listener(event as MessageEvent<string>);
+        }
+      };
+      messageListenerWrappers.set(listener, wrapped);
+      worker.addEventListener("message", wrapped);
+    },
+    removeEventListener: (
+      _type: "message",
+      listener: (event: MessageEvent<string>) => void
+    ) => {
+      const wrapped = messageListenerWrappers.get(listener);
+      if (wrapped !== undefined) {
+        worker.removeEventListener("message", wrapped);
+        messageListenerWrappers.delete(listener);
+      }
+    },
+    terminate: () => {
+      worker.terminate();
+    },
+  };
+}
 
 /**
  * Hook for using Stockfish engine in the browser
  * Calculates best moves client-side using Web Workers
  * Uses native Worker API with files from /public/engine/
+ *
+ * **Two workers:** main (best move / eval bar) and a dedicated analysis worker (MultiPV)
+ * so rapid `stop`/`go` and MultiPV traffic do not share one WASM instance (avoids crashes).
  */
 export function useStockfish() {
   const [isReady, setIsReady] = useState(false);
+  const [isAnalysisEngineReady, setIsAnalysisEngineReady] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  /** Mirrors {@link isCalculating} for guards without stale closures. */
+  const isCalculatingRef = useRef(false);
   const stockfishRef = useRef<StockfishInstance | null>(null);
+  const analysisStockfishRef = useRef<StockfishInstance | null>(null);
+  /** Serializes MultiPV on the analysis worker only. */
+  const isAnalysisBusyRef = useRef(false);
+  /** Invalidates in-flight {@link getEngineLines} when incremented (FEN change / unmount). */
+  const engineLinesRequestIdRef = useRef(0);
 
-  // Initialize Stockfish on mount using native Web Worker
+  const setCalculating = (next: boolean) => {
+    isCalculatingRef.current = next;
+    setIsCalculating(next);
+  };
+
   useEffect(() => {
-    // Only initialize in browser
     if (typeof globalThis === "undefined" || typeof Worker === "undefined") {
       return;
     }
@@ -32,64 +89,38 @@ export function useStockfish() {
     let isMounted = true;
 
     try {
-      // Create a Web Worker from the stockfish.js file in public/engine/
-      // The stockfish.js file is designed to work as a Web Worker
-      const worker = new Worker("/engine/stockfish.js", {
+      const mainWorker = new Worker("/engine/stockfish.js", {
         type: "module",
       });
+      const mainWrapper = wrapStockfishWorker(mainWorker);
 
-      // Wrap the native Worker to match our StockfishInstance interface
-      const stockfishWrapper: StockfishInstance = {
-        postMessage: (message: string) => {
-          // Worker.postMessage doesn't require targetOrigin (only Window.postMessage does)
-          // eslint-disable-next-line unicorn/require-post-message-target-origin
-          worker.postMessage(message);
-        },
-        addEventListener: (
-          _type: "message",
-          listener: (event: MessageEvent<string>) => void
-        ) => {
-          worker.addEventListener("message", (event) => {
-            // Worker message events are MessageEvent<string> for stockfish
-            // Type guard to ensure event is MessageEvent<string>
-            if (
-              event instanceof MessageEvent &&
-              typeof event.data === "string"
-            ) {
-              listener(event as MessageEvent<string>);
-            }
-          });
-        },
-        removeEventListener: (
-          _type: "message",
-          listener: (event: MessageEvent<string>) => void
-        ) => {
-          // Worker removeEventListener accepts EventListener, which MessageEvent listener implements
-          worker.removeEventListener(
-            "message",
-            listener as unknown as EventListener
-          );
-        },
-        terminate: () => {
-          worker.terminate();
-        },
-      };
+      const analysisWorker = new Worker("/engine/stockfish.js", {
+        type: "module",
+      });
+      const analysisWrapper = wrapStockfishWorker(analysisWorker);
 
       if (isMounted) {
-        stockfishRef.current = stockfishWrapper;
+        stockfishRef.current = mainWrapper;
+        analysisStockfishRef.current = analysisWrapper;
         setIsReady(true);
+        setIsAnalysisEngineReady(true);
       }
     } catch (error) {
       console.error("Failed to initialize Stockfish:", error);
     }
 
-    // Cleanup on unmount
     return () => {
       isMounted = false;
       if (stockfishRef.current) {
         stockfishRef.current.terminate();
         stockfishRef.current = null;
       }
+      if (analysisStockfishRef.current) {
+        analysisStockfishRef.current.terminate();
+        analysisStockfishRef.current = null;
+      }
+      setIsReady(false);
+      setIsAnalysisEngineReady(false);
     };
   }, []);
 
@@ -109,11 +140,11 @@ export function useStockfish() {
       throw new Error("Stockfish not initialized");
     }
 
-    if (isCalculating) {
+    if (isCalculatingRef.current) {
       throw new Error("Stockfish is already calculating");
     }
 
-    setIsCalculating(true);
+    setCalculating(true);
 
     try {
       const depth = getEngineDepth(difficulty);
@@ -123,7 +154,6 @@ export function useStockfish() {
         stockfishRef.current
       );
 
-      // Parse UCI move (e.g., "e2e4" or "e7e8q")
       const from = bestMoveUci.slice(0, 2) ?? "";
       const to = bestMoveUci.slice(2, 4) ?? "";
       const promotion = bestMoveUci.length > 4 ? bestMoveUci[4] : undefined;
@@ -141,7 +171,7 @@ export function useStockfish() {
         uci: bestMoveUci,
       };
     } finally {
-      setIsCalculating(false);
+      setCalculating(false);
     }
   };
 
@@ -153,21 +183,69 @@ export function useStockfish() {
     if (!stockfishRef.current) {
       throw new Error("Stockfish not initialized");
     }
-    if (isCalculating) {
+    if (isCalculatingRef.current) {
       throw new Error("Stockfish is already calculating");
     }
-    setIsCalculating(true);
+    setCalculating(true);
     try {
       return await getPositionEvaluation(fen, stockfishRef.current);
     } finally {
-      setIsCalculating(false);
+      setCalculating(false);
     }
   };
 
+  /**
+   * MultiPV “top lines” on a **dedicated analysis worker** (does not set `isCalculating`).
+   */
+  const getEngineLines = useCallback(
+    async (
+      fen: string,
+      opts?: { depth?: number; multipv?: number }
+    ): Promise<EngineLine[] | null> => {
+      const sf = analysisStockfishRef.current;
+      if (!sf) {
+        throw new Error("Analysis Stockfish not initialized");
+      }
+      if (isAnalysisBusyRef.current) {
+        throw new Error("Analysis engine is busy");
+      }
+      const myId = ++engineLinesRequestIdRef.current;
+      isAnalysisBusyRef.current = true;
+      try {
+        const lines = await getTopEngineLines(fen, sf, {
+          depth: opts?.depth ?? ENGINE_LINES_DEFAULT_DEPTH,
+          multipv: opts?.multipv ?? 3,
+        });
+        if (myId !== engineLinesRequestIdRef.current) {
+          return null;
+        }
+        return lines;
+      } finally {
+        if (myId === engineLinesRequestIdRef.current) {
+          isAnalysisBusyRef.current = false;
+        }
+      }
+    },
+    []
+  );
+
+  const abortEngineLines = useCallback(() => {
+    engineLinesRequestIdRef.current += 1;
+    const sf = analysisStockfishRef.current;
+    if (sf) {
+      sendUciStop(sf);
+    }
+    isAnalysisBusyRef.current = false;
+  }, []);
+
   return {
     isReady,
+    /** Second worker finished loading; required for MultiPV panel. */
+    isAnalysisEngineReady,
     isCalculating,
     getBestMove,
     getEvaluation,
+    getEngineLines,
+    abortEngineLines,
   };
 }
