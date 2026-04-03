@@ -49,12 +49,12 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events -- focus sibling input; not a standalone control
     <div
       role="group"
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
-      // oxlint-disable-next-line jsx-a11y/click-events-have-key-events
       onClick={(event) => {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((event.target as HTMLElement).closest("button")) {

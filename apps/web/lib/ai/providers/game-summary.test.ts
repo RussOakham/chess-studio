@@ -1,5 +1,5 @@
 import { buildGameSummaryInput } from "@/lib/ai/schemas/game-summary-input";
-/* eslint-disable vitest/prefer-import-in-mock, vitest/prefer-called-times, @typescript-eslint/no-unsafe-type-assertion, jest/no-untyped-mock-factory -- partial `ai` module mock */
+/* eslint-disable vitest/prefer-import-in-mock, vitest/prefer-called-times, vitest/require-mock-type-parameters, @typescript-eslint/no-unsafe-type-assertion, jest/no-untyped-mock-factory -- partial `ai` module mock */
 import { GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { LanguageModelUsage } from "ai";
 import { generateText } from "ai";

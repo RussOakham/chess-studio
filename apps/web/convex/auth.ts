@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import type { GenericCtx } from "@convex-dev/better-auth";
 import { createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
