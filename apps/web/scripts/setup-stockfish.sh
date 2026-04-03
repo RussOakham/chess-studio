@@ -7,28 +7,29 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WEB_DIR="$(dirname "$SCRIPT_DIR")"
 PUBLIC_ENGINE_DIR="$WEB_DIR/public/engine"
-NODE_MODULES_DIR="$WEB_DIR/node_modules/stockfish/src"
+# stockfish@18 ships artifacts under bin/ (lite-single matches prior bundle size tradeoff)
+NODE_MODULES_DIR="$WEB_DIR/node_modules/stockfish/bin"
 
 echo "Setting up Stockfish engine files..."
 
 # Create public/engine directory if it doesn't exist
 mkdir -p "$PUBLIC_ENGINE_DIR"
 
-# Copy stockfish.js
-if [ -f "$NODE_MODULES_DIR/stockfish-17.1-lite-single-03e3232.js" ]; then
-  cp "$NODE_MODULES_DIR/stockfish-17.1-lite-single-03e3232.js" "$PUBLIC_ENGINE_DIR/stockfish.js"
+# Copy stockfish.js (lite single-threaded worker)
+if [ -f "$NODE_MODULES_DIR/stockfish-18-lite-single.js" ]; then
+  cp "$NODE_MODULES_DIR/stockfish-18-lite-single.js" "$PUBLIC_ENGINE_DIR/stockfish.js"
   echo "✓ Copied stockfish.js"
 else
-  echo "✗ Error: stockfish.js not found in node_modules"
+  echo "✗ Error: stockfish-18-lite-single.js not found in node_modules"
   exit 1
 fi
 
 # Copy stockfish.wasm
-if [ -f "$NODE_MODULES_DIR/stockfish-17.1-lite-single-03e3232.wasm" ]; then
-  cp "$NODE_MODULES_DIR/stockfish-17.1-lite-single-03e3232.wasm" "$PUBLIC_ENGINE_DIR/stockfish.wasm"
+if [ -f "$NODE_MODULES_DIR/stockfish-18-lite-single.wasm" ]; then
+  cp "$NODE_MODULES_DIR/stockfish-18-lite-single.wasm" "$PUBLIC_ENGINE_DIR/stockfish.wasm"
   echo "✓ Copied stockfish.wasm"
 else
-  echo "✗ Error: stockfish.wasm not found in node_modules"
+  echo "✗ Error: stockfish-18-lite-single.wasm not found in node_modules"
   exit 1
 fi
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { auth } from "@/lib/copy";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +13,7 @@ export function SignOutButton() {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      await signOut();
+      await authClient.signOut();
       router.push("/login");
       router.refresh();
     } catch (error) {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { auth, common } from "@/lib/copy";
 import type { LoginFormData } from "@/lib/validations/auth";
 import { loginSchema } from "@/lib/validations/auth";
@@ -35,7 +35,7 @@ export function LoginForm({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const result = await signIn.email({
+      const result = await authClient.signIn.email({
         email: data.email,
         password: data.password,
         rememberMe: data.rememberMe ?? true,

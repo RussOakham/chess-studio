@@ -28,11 +28,8 @@ function getAuthBaseUrl(): string {
   return "http://localhost:3000";
 }
 
-const authClient = createAuthClient({
+export const authClient = createAuthClient({
   baseURL: getAuthBaseUrl(),
   fetchOptions: { credentials: "include" },
   plugins: [convexClient()],
 });
-
-const { signIn, signUp, signOut, useSession } = authClient;
-export { authClient, signIn, signUp, signOut, useSession };

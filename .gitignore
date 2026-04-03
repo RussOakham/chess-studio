@@ -69,3 +69,7 @@ logs/
 # Large binary files (copied from node_modules by postinstall via setup-stockfish)
 apps/web/public/engine/*.wasm
 .vercel
+
+# Convex AI: Claude Code symlinks + stub (not used; keep out of version control)
+apps/web/.claude/
+apps/web/CLAUDE.md

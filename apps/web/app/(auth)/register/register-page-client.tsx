@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { signUp } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { auth, common } from "@/lib/copy";
 import type { RegisterFormData } from "@/lib/validations/auth";
 import { registerSchema } from "@/lib/validations/auth";
@@ -32,7 +32,7 @@ export function RegisterPageClient({
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const result = await signUp.email({
+      const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,
         name: data.name,
