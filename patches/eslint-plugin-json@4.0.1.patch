@@ -1,0 +1,25 @@
+diff --git a/src/index.js b/src/index.js
+index c0450828740aff8854ad7d1170348e99a5819fef..af9d3526fbef009464394c7f1065e4d3e746c62c 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -41,8 +41,10 @@ function getDiagnostics(jsonDocument) {
+         _.fromPairs
+     )(jsonDocument.syntaxErrors);
+ }
++const filePath = (context) => context.filename ?? context.getFilename?.();
++
+ const reportError = (filter) => (errorName, context) => {
+-    _.filter(filter, fileLintResults[context.getFilename()]).forEach((error) => {
++    _.filter(filter, fileLintResults[filePath(context)]).forEach((error) => {
+         context.report({
+             ruleId: `json/${errorName}`,
+             message: error.message,
+@@ -67,7 +69,7 @@ const reportComment = (errorName, context) => {
+                 end: {line: comment.end.line + 1, column: comment.end.character},
+             },
+         });
+-    }, fileComments[context.getFilename()]);
++    }, fileComments[filePath(context)]);
+ };
+ 
+ const ruleSchema = [
