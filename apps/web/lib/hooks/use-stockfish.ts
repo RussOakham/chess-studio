@@ -87,14 +87,16 @@ export function useStockfish() {
     }
 
     let isMounted = true;
+    let mainWorker: Worker | null = null;
+    let analysisWorker: Worker | null = null;
 
     try {
-      const mainWorker = new Worker("/engine/stockfish.js", {
+      mainWorker = new Worker("/engine/stockfish.js", {
         type: "module",
       });
       const mainWrapper = wrapStockfishWorker(mainWorker);
 
-      const analysisWorker = new Worker("/engine/stockfish.js", {
+      analysisWorker = new Worker("/engine/stockfish.js", {
         type: "module",
       });
       const analysisWrapper = wrapStockfishWorker(analysisWorker);
@@ -106,6 +108,8 @@ export function useStockfish() {
         setIsAnalysisEngineReady(true);
       }
     } catch (error) {
+      analysisWorker?.terminate();
+      mainWorker?.terminate();
       console.error("Failed to initialize Stockfish:", error);
     }
 

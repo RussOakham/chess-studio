@@ -88,17 +88,20 @@ async function calculateBestMove(
   depth: number,
   stockfish: StockfishInstance
 ): Promise<string> {
-  sendUciStop(stockfish);
-
   return new Promise((resolve, reject) => {
     let bestMove: string | null = null;
     let isResolved = false;
+    /** Ignore `bestmove` from a prior search until this run has sent `go`. */
+    let acceptBestmove = false;
 
     // Set up message handler
     const messageHandler = (event: MessageEvent<string>) => {
       const message = event.data;
       // Parse "bestmove e2e4" or "bestmove e2e4 ponder e7e5"
       if (message.startsWith("bestmove")) {
+        if (!acceptBestmove) {
+          return;
+        }
         const parts = message.split(" ");
         if (parts[1] && parts[1] !== "none") {
           bestMove = parts[1] ?? null;
@@ -129,12 +132,11 @@ async function calculateBestMove(
       }
     }, 30000); // 30 second timeout
 
-    // Add message listener
     stockfish.addEventListener("message", messageHandler);
-
-    // Send position and start calculation
+    sendUciStop(stockfish);
     stockfish.postMessage(`position fen ${fen}`);
     stockfish.postMessage(`go depth ${depth}`);
+    acceptBestmove = true;
   });
 }
 
@@ -262,11 +264,17 @@ async function getTopEngineLines(
       { evaluation: PositionEvaluation; movesUci: string[] }
     >();
     let isResolved = false;
+    /** Ignore MultiPV `info`/`bestmove` from a prior search until this run has sent `go`. */
+    let acceptSearchMessages = false;
 
     const messageHandler = (event: MessageEvent<string>) => {
       const message = event.data;
 
-      if (message.startsWith("info ") && message.includes("multipv")) {
+      if (
+        acceptSearchMessages &&
+        message.startsWith("info ") &&
+        message.includes("multipv")
+      ) {
         const parsed = parseMultipvInfoLine(message);
         if (parsed !== null) {
           const evaluation = normalizeRawScoreToWhitePerspective(
@@ -281,6 +289,9 @@ async function getTopEngineLines(
       }
 
       if (message.startsWith("bestmove")) {
+        if (!acceptSearchMessages) {
+          return;
+        }
         const tokens = message.trim().split(/\s+/);
         const [, bestMoveToken] = tokens;
         if (!isResolved) {
@@ -316,11 +327,11 @@ async function getTopEngineLines(
     }, 90000);
 
     stockfish.addEventListener("message", messageHandler);
-
     sendUciStop(stockfish);
     stockfish.postMessage(`setoption name MultiPV value ${String(multipv)}`);
     stockfish.postMessage(`position fen ${fen}`);
     stockfish.postMessage(`go depth ${String(depth)}`);
+    acceptSearchMessages = true;
   });
 }
 
@@ -336,17 +347,17 @@ async function getPositionEvaluation(
   fen: string,
   stockfish: StockfishInstance
 ): Promise<PositionEvaluation> {
-  sendUciStop(stockfish);
-
   const isBlackToMove = fen.split(" ")[1] === "b";
 
   return new Promise((resolve, reject) => {
     let evaluation: PositionEvaluation | null = null;
     let isResolved = false;
+    /** Ignore `info`/`bestmove` from a prior search until this run has sent `go`. */
+    let acceptSearchMessages = false;
 
     const messageHandler = (event: MessageEvent<string>) => {
       const message = event.data;
-      if (message.includes("score")) {
+      if (acceptSearchMessages && message.includes("score")) {
         const mateMatch = message.match(/score mate (-?\d+)/);
         const cpMatch = message.match(/score cp (-?\d+)/);
         if (mateMatch) {
@@ -365,6 +376,9 @@ async function getPositionEvaluation(
       }
 
       if (message.startsWith("bestmove")) {
+        if (!acceptSearchMessages) {
+          return;
+        }
         if (!isResolved) {
           isResolved = true;
           stockfish.removeEventListener("message", messageHandler);
@@ -387,9 +401,10 @@ async function getPositionEvaluation(
     }, 10000);
 
     stockfish.addEventListener("message", messageHandler);
-
+    sendUciStop(stockfish);
     stockfish.postMessage(`position fen ${fen}`);
     stockfish.postMessage("go depth 5");
+    acceptSearchMessages = true;
   });
 }
 

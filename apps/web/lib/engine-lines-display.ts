@@ -41,7 +41,7 @@ function formatEngineLineEvaluation(ev: PositionEvaluation): string {
     if (ev.value < 0) {
       return `-#${String(Math.abs(ev.value))}`;
     }
-    return "0.00";
+    return "#0";
   }
   const pawnsFromCp = ev.value / 100;
   return pawnsFromCp >= 0
