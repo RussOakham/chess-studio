@@ -1,5 +1,3 @@
-"use client";
-
 import { getSanForMove } from "@/lib/chess-notation";
 import { sortMovesByNumber } from "@/lib/game-replay";
 import {
@@ -13,92 +11,29 @@ import type {
   GameDifficulty,
   MoveAnnotation,
   MoveAnnotationType,
-  PositionEvaluation,
 } from "@repo/chess";
 
-/** Centipawn equivalent for mate (for drop calculation). */
-const MATE_CP = 10000;
-
-/** Eval loss thresholds (centipawns) for suboptimal moves (tunable). */
-const BLUNDER_CP = 300;
-const MISTAKE_CP = 100;
-/** Inaccuracy band: [INACCURACY_CP, MISTAKE_CP). */
-const INACCURACY_CP = 40;
-/** Below this, treat eval swing as noise → still "good". */
-const GOOD_FLOOR_CP = 25;
-
-function evalToCp(ev: PositionEvaluation): number {
-  if (ev.type === "cp") {
-    return ev.value;
-  }
-  return ev.value > 0 ? MATE_CP : -MATE_CP;
-}
-
-/** Normalize UCI for comparison (e.g. "e7e8q" vs "e7e8q"). */
-function normalizeUci(uci: string): string {
-  return uci.toLowerCase().trim();
-}
-
-interface GameAnalysisResult {
-  summary: string;
-  /**
-   * Centipawn-equivalent eval after each half-move (position after the move), in the same
-   * order as `moveAnnotations` — i.e. `sortMovesByNumber(moves)` order, not the raw `moves` array.
-   */
-  evaluations: number[];
-  keyMoments: string[];
-  suggestions: string[];
-  moveAnnotations: MoveAnnotation[];
-  /** Lichess Opening Explorer name when available (deepest in opening window). */
-  openingNameLichess?: string | null;
-}
-
-interface AnalysisMove {
-  moveNumber: number;
-  fenBefore: string;
-  fenAfter: string;
-  moveSan: string;
-  moveUci: string;
-}
-
-interface GameForAnalysis {
-  status: string;
-  color: "white" | "black" | "random";
-}
-
-type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
-type GetBestMove = (
-  fen: string,
-  difficulty: GameDifficulty
-) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
-
-/** Map key: `explorerMastersCacheKey(fen)` → masters explorer JSON or null if unavailable. */
-type GetExplorerBatch = (
-  fens: string[]
-) => Promise<Map<string, ExplorerMastersResponse | null>>;
-
-function classifySuboptimalMove(drop: number): MoveAnnotationType | null {
-  if (drop < GOOD_FLOOR_CP) {
-    return null;
-  }
-  if (drop >= BLUNDER_CP) {
-    return "blunder";
-  }
-  if (drop >= MISTAKE_CP) {
-    return "mistake";
-  }
-  if (drop >= INACCURACY_CP) {
-    return "inaccuracy";
-  }
-  return "good";
-}
+import {
+  classifySuboptimalMove,
+  evalToCp,
+  normalizeUci,
+} from "./classification";
+import { buildSuggestions, buildSummary } from "./summary-text";
+import type {
+  AnalysisMove,
+  GameAnalysisResult,
+  GameForAnalysis,
+  GetBestMove,
+  GetEvaluation,
+  GetExplorerBatch,
+} from "./types";
 
 /**
  * Run Stockfish analysis over a completed game's moves.
  * Uses fixed "strong" depth for analysis. Calls onProgress(completed, total) each move.
  * Runs sequentially to avoid overloading the Stockfish worker.
  */
-async function runGameAnalysisImpl(
+export async function runGameAnalysis(
   _game: GameForAnalysis,
   moves: AnalysisMove[],
   getEvaluation: GetEvaluation,
@@ -267,72 +202,3 @@ async function runGameAnalysisImpl(
     openingNameLichess: openingNameLichess ?? null,
   };
 }
-
-function buildSummary(
-  moveCount: number,
-  blunders: number,
-  mistakes: number,
-  inaccuracies: number,
-  best: number
-): string {
-  const parts: string[] = [];
-  parts.push(`Game had ${moveCount} move${moveCount === 1 ? "" : "s"}.`);
-  if (blunders > 0 || mistakes > 0 || inaccuracies > 0) {
-    const items: string[] = [];
-    if (blunders > 0) {
-      items.push(`${blunders} blunder${blunders === 1 ? "" : "s"}`);
-    }
-    if (mistakes > 0) {
-      items.push(`${mistakes} mistake${mistakes === 1 ? "" : "s"}`);
-    }
-    if (inaccuracies > 0) {
-      items.push(
-        `${inaccuracies} inaccurac${inaccuracies === 1 ? "y" : "ies"}`
-      );
-    }
-    parts.push(`You had ${items.join(", ")}.`);
-  }
-  if (best > 0) {
-    parts.push(`${best} of your moves matched the engine's best.`);
-  }
-  return parts.join(" ");
-}
-
-function buildSuggestions(
-  blunders: number,
-  mistakes: number,
-  inaccuracies: number
-): string[] {
-  const list: string[] = [];
-  if (blunders > 0) {
-    list.push("Take more time on critical moves to avoid blunders.");
-  }
-  if (mistakes > 0) {
-    list.push(
-      "Review key positions: consider the engine's best move and why it's stronger."
-    );
-  }
-  if (inaccuracies > 0) {
-    list.push(
-      "Watch for small inaccuracies—they add up; compare your move with the engine line in quiet positions."
-    );
-  }
-  if (blunders + mistakes > 3) {
-    list.push(
-      "Try to reduce tactical errors by checking your moves before playing."
-    );
-  }
-  if (list.length === 0) {
-    list.push("Keep reviewing your games to spot small improvements.");
-  }
-  return list.slice(0, 4);
-}
-
-export { runGameAnalysisImpl as runGameAnalysis };
-export type {
-  AnalysisMove,
-  GameAnalysisResult,
-  GameForAnalysis,
-  MoveAnnotation,
-  MoveAnnotationType,
-};
