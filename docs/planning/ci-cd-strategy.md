@@ -6,15 +6,20 @@
 
 ## GitHub Actions
 
-The repo ships a single workflow:
+The repo ships one workflow file, [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), on **pull requests** (all branches). It defines several **jobs**:
 
-| File         | Purpose                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------ |
-| **`ci.yml`** | On PRs/pushes: format check, lint, type-check, tests, **Next.js production build** (often with **Doppler**). |
+| Job              | What it runs                                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Setup**        | Install deps, Turbo cache, Doppler CLI; **`pnpm turbo run build --filter=!@repo/web`**, then **`next build`** for `apps/web` via **`doppler run`** (needs **`DOPPLER_TOKEN`**) |
+| **Format check** | **`pnpm format`** (check only)                                                                                                                                                 |
+| **Lint**         | After Setup: **`pnpm lint`**                                                                                                                                                   |
+| **Type check**   | After Setup: **`pnpm type-check`**                                                                                                                                             |
+| **Test**         | After Setup: **`pnpm test`**                                                                                                                                                   |
+| **Docs**         | **`pnpm lint:md`**                                                                                                                                                             |
+
+Lint, type-check, and test **depend on** Setup so they can reuse cached build outputs.
 
 There are **no** Terraform, Docker-build, or VPS deploy workflows in this repository.
-
-See [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) for exact jobs and triggers.
 
 ## Secrets in CI
 

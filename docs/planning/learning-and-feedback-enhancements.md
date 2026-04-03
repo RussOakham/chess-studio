@@ -26,7 +26,7 @@ It is a planning note, not a committed roadmap. Implementation details may chang
 
 ### AI in the codebase
 
-- **Shipped:** Optional **post-game AI summary** — Convex action `ai_game_summary.generate` calls **Vercel AI Gateway** + AI SDK (`generateText`) with a structured DTO built from the rule-based review (`apps/web/lib/ai/`, `apps/web/convex/ai_game_summary.ts`). Requires `AI_GATEWAY_API_KEY`; stored on `game_reviews.aiSummary`.
+- **Shipped:** Optional **post-game AI summary** — Convex action `ai_game_summary.generate` calls **Vercel AI Gateway** + AI SDK (`generateText`) with a structured **data transfer object (DTO)** built from the rule-based review (`apps/web/lib/ai/`, `apps/web/convex/ai_game_summary.ts`). Requires `AI_GATEWAY_API_KEY`; **Large Language Model (LLM)** output is stored on `game_reviews.aiSummary`.
 - **Not shipped yet:** Natural-language **per-position** or **MultiPV-line** commentary beyond the summary flow; those are the enhancement ideas below.
 
 ---
