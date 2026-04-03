@@ -74,6 +74,19 @@ export default defineSchema({
         })
       )
     ),
+    /** LLM-generated narrative; rule-based analysis stays in `summary`. */
+    aiSummary: v.optional(v.string()),
+    aiSummaryMeta: v.optional(
+      v.object({
+        model: v.string(),
+        generatedAt: v.number(),
+        promptVersion: v.optional(v.number()),
+      })
+    ),
+    /** Set while `ai_game_summary.generate` is running; prevents concurrent LLM calls. */
+    aiSummaryGenerationStartedAt: v.optional(v.number()),
+    /** Opaque token issued with the lock; release/patch must match to avoid stale writers. */
+    aiSummaryGenerationClaim: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_gameId", ["gameId"]),
 

@@ -151,6 +151,14 @@
       "rules": {
         "react/no-array-index-key": "off"
       }
+    },
+    {
+      "files": ["**/apps/web/components/ai-elements/**/*.tsx"],
+      "rules": {
+        "import/exports-last": "off",
+        "import/group-exports": "off",
+        "react/no-array-index-key": "off"
+      }
     }
   ]
 }

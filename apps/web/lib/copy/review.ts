@@ -40,6 +40,16 @@ export const review = {
   },
   startReview: "Start Review",
   rerunAnalysis: "Re-run analysis",
+  aiSummary: {
+    title: "AI summary",
+    description:
+      "A short narrative from your analysis data. It does not replace the engine summary above.",
+    generate: "Generate AI summary",
+    regenerate: "Regenerate",
+    generating: "Generating…",
+    alreadyCurrent: "You already have an AI summary.",
+    errorGeneric: "Could not generate summary. Try again.",
+  },
   midReview: {
     sidebarTitle: "Game Review",
     backToOverview: "Back to overview",

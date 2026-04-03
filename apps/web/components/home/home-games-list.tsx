@@ -12,27 +12,37 @@ import {
 } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/page-loading";
 import { api } from "@/convex/_generated/api";
-import { gameList, loading } from "@/lib/copy";
+import { errors, gameList, loading } from "@/lib/copy";
 import {
   formatBadgeText,
   getStatusLabel,
   isActive,
   isRecent,
 } from "@/lib/game-list-helpers";
+import { useConvexAuthGate } from "@/lib/hooks/use-convex-auth-gate";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 
 export function HomeGamesList() {
-  const gamesQuery = useQuery(api.games.list, { limit: 15 });
-  const games = gamesQuery ?? [];
-  const isLoading = gamesQuery === undefined;
+  const { authLoading, isAuthenticated } = useConvexAuthGate();
+  const gamesQuery = useQuery(
+    api.games.list,
+    authLoading || !isAuthenticated ? "skip" : { limit: 15 }
+  );
 
-  const activeGames = games.filter((game) => isActive(game.status));
-  const recentGames = games.filter((game) => isRecent(game.status));
-
-  if (isLoading) {
+  if (authLoading) {
     return <PageLoading message={loading.games} />;
   }
+  if (!isAuthenticated) {
+    return <PageLoading message={errors.redirectingToSignIn} />;
+  }
+  if (gamesQuery === undefined) {
+    return <PageLoading message={loading.games} />;
+  }
+
+  const games = gamesQuery;
+  const activeGames = games.filter((game) => isActive(game.status));
+  const recentGames = games.filter((game) => isRecent(game.status));
 
   return (
     <>

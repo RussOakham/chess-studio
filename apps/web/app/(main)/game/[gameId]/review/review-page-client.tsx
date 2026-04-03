@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import type { BoardArrow } from "@/components/chess/chessboard";
 import { EvaluationBar } from "@/components/chess/evaluation-bar";
 import { EvaluationSparkline } from "@/components/chess/evaluation-sparkline";
@@ -50,8 +55,8 @@ import type {
   MoveAnnotationType,
   PositionEvaluation,
 } from "@repo/chess";
-import { useQuery } from "convex/react";
-import { Bot, User } from "lucide-react";
+import { useAction, useQuery } from "convex/react";
+import { Bot, Loader2, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -577,6 +582,40 @@ export function ReviewPageClient({
     getBestMove,
   });
 
+  const generateAiSummary = useAction(api.ai_game_summary.generate);
+  const [aiSummaryPending, setAiSummaryPending] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+  const [aiSummaryNotice, setAiSummaryNotice] = useState<string | null>(null);
+
+  const handleAiSummaryAction = useCallback(
+    async (regenerate: boolean) => {
+      if (game === undefined || game === null) {
+        return;
+      }
+      setAiSummaryError(null);
+      setAiSummaryNotice(null);
+      setAiSummaryPending(true);
+      try {
+        const result = await generateAiSummary({
+          gameId: game._id,
+          regenerate,
+        });
+        if (result.status === "unchanged") {
+          setAiSummaryNotice(reviewCopy.aiSummary.alreadyCurrent);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : reviewCopy.aiSummary.errorGeneric;
+        setAiSummaryError(message);
+      } finally {
+        setAiSummaryPending(false);
+      }
+    },
+    [game, generateAiSummary]
+  );
+
   /** Caps auto backfill retries so repeated failures cannot spin forever. */
   const analysisBackfillAttemptsRef = useRef(0);
   const [backfillExhausted, setBackfillExhausted] = useState(false);
@@ -818,6 +857,86 @@ export function ReviewPageClient({
             </div>
           </CardContent>
         </Card>
+
+        {!isAnalyzing ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {reviewCopy.aiSummary.title}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {reviewCopy.aiSummary.description}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {review.aiSummary?.trim() ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="min-h-11"
+                    disabled={aiSummaryPending}
+                    onClick={() => {
+                      void handleAiSummaryAction(true);
+                    }}
+                  >
+                    {aiSummaryPending ? (
+                      <>
+                        <Loader2
+                          aria-hidden
+                          className="mr-2 size-4 shrink-0 animate-spin"
+                        />
+                        {reviewCopy.aiSummary.generating}
+                      </>
+                    ) : (
+                      reviewCopy.aiSummary.regenerate
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="min-h-11"
+                    disabled={aiSummaryPending}
+                    onClick={() => {
+                      void handleAiSummaryAction(false);
+                    }}
+                  >
+                    {aiSummaryPending ? (
+                      <>
+                        <Loader2
+                          aria-hidden
+                          className="mr-2 size-4 shrink-0 animate-spin"
+                        />
+                        {reviewCopy.aiSummary.generating}
+                      </>
+                    ) : (
+                      reviewCopy.aiSummary.generate
+                    )}
+                  </Button>
+                )}
+              </div>
+              {aiSummaryNotice !== null ? (
+                <p className="text-sm text-muted-foreground" role="status">
+                  {aiSummaryNotice}
+                </p>
+              ) : null}
+              {aiSummaryError !== null ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {aiSummaryError}
+                </p>
+              ) : null}
+              {review.aiSummary?.trim() ? (
+                <Message from="assistant">
+                  <MessageContent className="max-w-none">
+                    <MessageResponse>{review.aiSummary.trim()}</MessageResponse>
+                  </MessageContent>
+                </Message>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
         {review.evaluations && review.evaluations.length >= 2 ? (
           <Card className="animate-in fade-in-0 fill-mode-both slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:animate-none">
