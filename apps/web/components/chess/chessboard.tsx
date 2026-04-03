@@ -1,17 +1,16 @@
 "use client";
 
 import { Chess } from "chess.js";
-import type { ComponentProps, CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { Chessboard } from "react-chessboard";
+import { Chessboard, defaultArrowOptions } from "react-chessboard";
+import type { ChessboardOptions } from "react-chessboard";
 
 /** Styles keyed by square (e.g. "e1") for highlighting (e.g. king in check). */
 type CustomSquareStyles = Record<string, CSSProperties>;
 
-/** Arrow tuple: [from, to, optional color] per react-chessboard customArrows. */
+/** Arrow tuple: [from, to, optional color] — converted to react-chessboard v5 `Arrow`. */
 type BoardArrow = [string, string, string?];
-
-type ChessboardArrow = ComponentProps<typeof Chessboard>["customArrows"];
 
 interface ChessboardWrapperProps {
   /** FEN string representing the current board position */
@@ -34,6 +33,17 @@ interface ChessboardWrapperProps {
   boardOverlay?: ReactNode;
 }
 
+function mapCustomArrowsToV5(arrows: BoardArrow[] | undefined) {
+  if (arrows === undefined || arrows.length === 0) {
+    return undefined;
+  }
+  return arrows.map(([startSquare, endSquare, color]) => ({
+    startSquare,
+    endSquare,
+    color: color ?? defaultArrowOptions.color,
+  }));
+}
+
 function ChessboardWrapper({
   position,
   orientation = "white",
@@ -45,8 +55,6 @@ function ChessboardWrapper({
   customArrows,
   boardOverlay,
 }: ChessboardWrapperProps) {
-  // Initialize chess instance with the current position
-  // Update when position changes
   const chess = useMemo(() => {
     const game = new Chess();
     try {
@@ -60,70 +68,17 @@ function ChessboardWrapper({
         error: error,
         position: position,
       });
-      // If position is invalid, start with default position
       game.reset();
     }
     return game;
   }, [position]);
 
-  // Get the actual FEN from chess instance to ensure it's valid
   const validPosition = useMemo(() => chess.fen(), [chess]);
 
-  // Track if a move is being processed
   const [isMoving, setIsMoving] = useState(false);
 
-  /**
-   * Handle piece drop - called when user drops a piece on a square
-   * @returns true if move is legal, false otherwise
-   */
-  function onPieceDrop(sourceSquare: string, targetSquare: string): boolean {
-    // Prevent moves while processing
-    if (isMoving) {
-      return false;
-    }
-
-    try {
-      // Attempt to make the move
-      const move = chess.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: "q", // Always promote to queen for simplicity (can be made configurable later)
-      });
-
-      // If move is null, it's illegal
-      if (move === null) {
-        return false;
-      }
-
-      // Move is legal - notify parent component
-      if (onMove) {
-        setIsMoving(true);
-        onMove({
-          from: sourceSquare,
-          to: targetSquare,
-          promotion: move.promotion,
-        });
-        // Reset moving state after a short delay
-        setTimeout(() => setIsMoving(false), 100);
-      }
-
-      return true;
-    } catch (error) {
-      console.log({
-        error: error,
-        sourceSquare: sourceSquare,
-        targetSquare: targetSquare,
-      });
-      // Invalid move
-      return false;
-    }
-  }
-
-  // Set a default board width if not provided
-  // Use responsive width based on viewport, but cap at 600px
   const defaultBoardWidth = boardWidth ?? 560;
 
-  // Memoize style objects to prevent unnecessary re-renders
   const boardStyle = useMemo(
     () => ({
       borderRadius: "4px",
@@ -144,26 +99,78 @@ function ChessboardWrapper({
     [defaultBoardWidth]
   );
 
+  const v5Arrows = useMemo(
+    () => mapCustomArrowsToV5(customArrows),
+    [customArrows]
+  );
+
+  const chessboardOptions = useMemo((): ChessboardOptions => {
+    return {
+      position: validPosition,
+      boardOrientation: orientation,
+      allowDragging: draggable,
+      showNotation: showCoordinates,
+      boardStyle,
+      darkSquareStyle,
+      lightSquareStyle,
+      squareStyles: customSquareStyles,
+      arrows: v5Arrows,
+      onPieceDrop: ({ sourceSquare, targetSquare }) => {
+        if (targetSquare === null) {
+          return false;
+        }
+        if (isMoving) {
+          return false;
+        }
+        try {
+          const move = chess.move({
+            from: sourceSquare,
+            to: targetSquare,
+            promotion: "q",
+          });
+          if (move === null) {
+            return false;
+          }
+          if (onMove) {
+            setIsMoving(true);
+            onMove({
+              from: sourceSquare,
+              to: targetSquare,
+              promotion: move.promotion,
+            });
+            setTimeout(() => setIsMoving(false), 100);
+          }
+          return true;
+        } catch (error) {
+          console.log({
+            error: error,
+            sourceSquare: sourceSquare,
+            targetSquare: targetSquare,
+          });
+          return false;
+        }
+      },
+    };
+  }, [
+    validPosition,
+    orientation,
+    draggable,
+    showCoordinates,
+    boardStyle,
+    darkSquareStyle,
+    lightSquareStyle,
+    customSquareStyles,
+    v5Arrows,
+    chess,
+    isMoving,
+    onMove,
+  ]);
+
   return (
     <div className="flex w-full items-center justify-center p-4">
       <div className={boardWidth != null ? "w-full" : "w-full max-w-[600px]"}>
         <div className="relative shrink-0" style={boardBoxStyle}>
-          <Chessboard
-            position={validPosition}
-            onPieceDrop={onPieceDrop}
-            boardOrientation={orientation}
-            arePiecesDraggable={draggable}
-            boardWidth={defaultBoardWidth}
-            customBoardStyle={boardStyle}
-            customDarkSquareStyle={darkSquareStyle}
-            customLightSquareStyle={lightSquareStyle}
-            customSquareStyles={customSquareStyles}
-            customArrows={
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- hint from/to are valid Square strings
-              customArrows as ChessboardArrow
-            }
-            showBoardNotation={showCoordinates}
-          />
+          <Chessboard options={chessboardOptions} />
           {boardOverlay ? (
             <div className="pointer-events-none absolute inset-0 z-10">
               {boardOverlay}
