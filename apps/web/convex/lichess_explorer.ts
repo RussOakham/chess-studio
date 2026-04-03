@@ -1,3 +1,4 @@
+/// <reference types="node" />
 "use node";
 
 import { setTimeout as delay } from "node:timers/promises";

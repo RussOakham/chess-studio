@@ -36,7 +36,6 @@
   },
   "rules": {
     "unicorn/no-null": "off",
-    "unicorn/prevent-abbreviations": "off",
     "unicorn/numeric-separators-style": "off",
     "react-in-jsx-scope": "off",
     "jsx-max-depth": "off",
