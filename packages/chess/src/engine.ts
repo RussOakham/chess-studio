@@ -103,8 +103,9 @@ async function calculateBestMove(
           return;
         }
         const parts = message.split(" ");
-        if (parts[1] && parts[1] !== "none") {
-          bestMove = parts[1] ?? null;
+        const moveToken = parts[1];
+        if (!isUciBestmoveNoMove(moveToken)) {
+          bestMove = moveToken ?? null;
           if (!isResolved && bestMove) {
             isResolved = true;
             stockfish.removeEventListener("message", messageHandler);
@@ -178,6 +179,15 @@ const ENGINE_LINES_DEFAULT_DEPTH = 12;
  */
 function sendUciStop(stockfish: StockfishInstance): void {
   stockfish.postMessage("stop");
+}
+
+/** True when UCI `bestmove` has no legal move (`none`, `(none)`, or missing; engines vary). */
+function isUciBestmoveNoMove(token: string | undefined): boolean {
+  if (token === undefined) {
+    return true;
+  }
+  const normalized = token.replace(/^\(|\)$/g, "");
+  return normalized === "none" || normalized === "";
 }
 
 /**
@@ -298,7 +308,7 @@ async function getTopEngineLines(
           isResolved = true;
           stockfish.removeEventListener("message", messageHandler);
           clearTimeout(timeout);
-          if (bestMoveToken === "(none)" || bestMoveToken === undefined) {
+          if (isUciBestmoveNoMove(bestMoveToken)) {
             resolve([]);
             return;
           }

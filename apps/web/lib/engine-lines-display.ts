@@ -26,8 +26,12 @@ function engineLineEvalPillClassName(ev: PositionEvaluation): string {
     case "black": {
       return "border-neutral-800 bg-neutral-950 text-white dark:border-neutral-700 dark:bg-black dark:text-white";
     }
-    default: {
+    case "equal": {
       return "border-border bg-muted text-foreground";
+    }
+    default: {
+      const _exhaustive: never = lean;
+      return _exhaustive;
     }
   }
 }
