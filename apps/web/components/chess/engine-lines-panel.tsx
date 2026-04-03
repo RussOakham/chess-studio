@@ -13,11 +13,13 @@ import type { EngineLine } from "@repo/chess";
 import { ENGINE_LINES_DEFAULT_DEPTH } from "@repo/chess";
 import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const DEBOUNCE_MS = 150;
 const MAX_PLIES_DISPLAY = 10;
 const MAX_SAN_LENGTH = 72;
+/** Reserved height for three engine rows + padding to avoid CLS (loading vs lines). */
+const ANALYSIS_BODY_MIN_CLASS = "min-h-[12rem]";
 
 interface EngineLinesPanelProps {
   fen: string;
@@ -62,9 +64,12 @@ export function EngineLinesPanel({
   const [loading, setLoading] = useState(false);
   const [linesError, setLinesError] = useState<string | null>(null);
   const [depthShown, setDepthShown] = useState<number | null>(null);
+  /** False after first successful lines fetch; later FEN changes keep prior lines until new data (no analyzing flash). */
+  const isFirstFetchRef = useRef(true);
 
   useEffect(() => {
     if (!analysisActive || !isStockfishReady || blockAnalysis) {
+      isFirstFetchRef.current = true;
       setLines(null);
       setLinesFen(null);
       setLoading(false);
@@ -73,19 +78,14 @@ export function EngineLinesPanel({
       return;
     }
 
-    // New FEN: clear immediately so we never render the previous PV against the new
-    // position (UCI would be illegal and chess.js can throw).
-    setLines(null);
-    setLinesFen(null);
     setLinesError(null);
-    setDepthShown(null);
-    setLoading(true);
+    if (isFirstFetchRef.current) {
+      setLoading(true);
+    }
 
     let cancelled = false;
 
     const debounceTimer = setTimeout(() => {
-      setLinesError(null);
-
       void (async () => {
         try {
           const result = await getEngineLines(fen, {
@@ -95,9 +95,13 @@ export function EngineLinesPanel({
           if (cancelled) {
             return;
           }
-          setLines(result ?? []);
+          if (result === null) {
+            return;
+          }
+          setLines(result);
           setLinesFen(fen);
           setDepthShown(ENGINE_LINES_DEFAULT_DEPTH);
+          isFirstFetchRef.current = false;
         } catch (error) {
           if (!cancelled) {
             setLinesError(
@@ -107,6 +111,7 @@ export function EngineLinesPanel({
             );
             setLines(null);
             setLinesFen(null);
+            isFirstFetchRef.current = true;
           }
         } finally {
           if (!cancelled) {
@@ -135,15 +140,23 @@ export function EngineLinesPanel({
   const renderAnalysisContent = (): ReactNode => {
     if (blockAnalysis) {
       return (
-        <p className="py-4 text-sm text-muted-foreground">
+        <p
+          className={cn(
+            "py-4 text-sm text-muted-foreground",
+            ANALYSIS_BODY_MIN_CLASS
+          )}
+        >
           {engineLinesCopy.engineBusy}
         </p>
       );
     }
-    if (loading) {
+    if (loading && lines === null) {
       return (
         <div
-          className="flex items-center gap-2 py-6 text-sm text-muted-foreground"
+          className={cn(
+            "flex items-center gap-2 py-6 text-sm text-muted-foreground",
+            ANALYSIS_BODY_MIN_CLASS
+          )}
           aria-busy
           aria-live="polite"
         >
@@ -154,35 +167,39 @@ export function EngineLinesPanel({
     }
     if (linesError !== null) {
       return (
-        <p className="py-3 text-sm text-destructive" role="alert">
+        <p
+          className={cn(
+            "py-3 text-sm text-destructive",
+            ANALYSIS_BODY_MIN_CLASS
+          )}
+          role="alert"
+        >
           {linesError}
         </p>
       );
     }
     if (lines !== null && lines.length === 0) {
       return (
-        <p className="py-3 text-sm text-muted-foreground">
+        <p
+          className={cn(
+            "py-3 text-sm text-muted-foreground",
+            ANALYSIS_BODY_MIN_CLASS
+          )}
+        >
           {engineLinesCopy.emptyPosition}
         </p>
       );
     }
-    if (lines !== null && linesFen !== fen) {
-      return (
-        <div
-          className="flex items-center gap-2 py-6 text-sm text-muted-foreground"
-          aria-busy
-          aria-live="polite"
-        >
-          <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-          {engineLinesCopy.loading}
-        </div>
-      );
-    }
+    const fenForSan = linesFen ?? fen;
     return (
-      <ul className="divide-y divide-border">
+      <ul
+        className={cn("divide-y divide-border", ANALYSIS_BODY_MIN_CLASS)}
+        aria-busy={linesFen !== fen}
+        aria-live="polite"
+      >
         {(lines ?? []).map((line) => {
           const sanRaw = uciPvToSanPrefix(
-            fen,
+            fenForSan,
             line.movesUci,
             MAX_PLIES_DISPLAY
           );
@@ -241,7 +258,7 @@ export function EngineLinesPanel({
             </span>
           )}
         </div>
-        {showPanelBody && depthShown !== null && !loading && !linesError ? (
+        {showPanelBody && depthShown !== null && !linesError ? (
           <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
             {engineLinesCopy.headerMeta(depthShown)}
           </span>
