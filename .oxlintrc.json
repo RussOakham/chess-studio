@@ -83,7 +83,10 @@
       "files": ["**/*.test.{ts,tsx,js,jsx}", "**/*.spec.{ts,tsx,js,jsx}"],
       "rules": {
         "no-console": "off",
-        "vitest/prefer-describe-function-title": "off"
+        "vitest/prefer-describe-function-title": "off",
+        "jest/prefer-importing-jest-globals": "off",
+        "vitest/prefer-importing-vitest-globals": "off",
+        "vitest/no-importing-vitest-globals": "off"
       }
     },
     {

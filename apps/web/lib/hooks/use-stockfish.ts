@@ -113,6 +113,7 @@ export function useStockfish() {
       console.error("Failed to initialize Stockfish:", error);
     }
 
+    // eslint-disable-next-line @typescript-eslint/consistent-return -- React effects may return cleanup fns
     return () => {
       isMounted = false;
       if (stockfishRef.current) {

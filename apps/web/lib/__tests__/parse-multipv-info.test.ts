@@ -1,4 +1,5 @@
 import { parseMultipvInfoLine } from "@repo/chess";
+import { describe, expect, it } from "vitest";
 
 describe("parseMultipvInfoLine", () => {
   it("parses cp score and pv moves", () => {

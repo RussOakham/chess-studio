@@ -54,7 +54,7 @@ function formatMoveHistory<Move extends ReplayMove>(
       ...move,
       id:
         move._id !== undefined
-          ? String(move._id)
+          ? move._id
           : `${move.moveNumber}-${move.moveSan}`,
       displayNumber: isWhiteMove ? movePairNumber : undefined,
       isWhiteMove,

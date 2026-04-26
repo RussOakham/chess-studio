@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { describe, expect, it } from "vitest";
+
 import { getBookOpeningLine, isBookContinuation } from "./book-heuristic";
 import { fenForExplorerCacheKey } from "./fen-for-explorer-cache";
 import { parseExplorerMastersResponse } from "./parse-explorer-response";

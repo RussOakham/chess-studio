@@ -3,6 +3,7 @@ import { buildGameSummaryInput } from "@/lib/ai/schemas/game-summary-input";
 import { GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { LanguageModelUsage } from "ai";
 import { generateText } from "ai";
+import { describe, expect, it, vi } from "vitest";
 
 import { generateGameSummary } from "./game-summary";
 

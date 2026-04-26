@@ -65,8 +65,8 @@ function ChessboardWrapper({
       }
     } catch (error) {
       console.error("Invalid FEN position, using default:", {
-        error: error,
-        position: position,
+        error,
+        position,
       });
       game.reset();
     }
@@ -143,9 +143,9 @@ function ChessboardWrapper({
           return true;
         } catch (error) {
           console.log({
-            error: error,
-            sourceSquare: sourceSquare,
-            targetSquare: targetSquare,
+            error,
+            sourceSquare,
+            targetSquare,
           });
           return false;
         }

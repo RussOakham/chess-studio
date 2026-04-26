@@ -118,6 +118,7 @@ export function useEngineMoveEffect({
         })();
       }, 500);
 
+      // eslint-disable-next-line @typescript-eslint/consistent-return -- React effects may return cleanup fns
       return () => {
         clearTimeout(timeout);
         if (calculationFenRef.current === fenAtStart) {

@@ -40,6 +40,7 @@ export function useEvaluationSync(
         }
       })();
     }, DEBOUNCE_MS);
+    // eslint-disable-next-line @typescript-eslint/consistent-return -- React effects may return cleanup fns
     return () => clearTimeout(timeoutId);
     // Omit isCalculating to avoid loop: getEvaluation sets it, so deps would retrigger effect
     // eslint-disable-next-line react-hooks/exhaustive-deps -- gameFen, gameStatus, isStockfishReady

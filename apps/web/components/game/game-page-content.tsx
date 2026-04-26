@@ -252,7 +252,7 @@ export function GamePageContent({
     fen: viewingFen,
     difficulty: game?.difficulty,
     getBestMove,
-    enabled: Boolean(hintEnabled),
+    enabled: hintEnabled,
   });
 
   const customSquareStyles = useMemo(
