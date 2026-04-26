@@ -6,7 +6,7 @@
 - **Stack + data/auth (canonical)**: `docs/planning/stack-and-data.md`
 - **Project direction / milestones (canonical)**: `docs/planning/project-plan.md`
 - **Backlog (product, not status)**: `docs/planning/mvp-features.md`
-- **Current shipped feature status (canonical)**: `docs/implementation/game-implementation-plan.md`
+- **Current shipped feature status (canonical)**: `docs/implementation/feature-status.md`
 
 ## What lives where
 
@@ -25,7 +25,7 @@ Forward-looking: roadmaps, PRDs, and “why we chose X” decisions.
 
 “How it works today” and “what’s left” for engineering execution.
 
-- **Shipped feature status + remaining work**: `game-implementation-plan.md`
+- **Shipped feature status + remaining work**: `feature-status.md`
 
 ### `docs/drafts/`
 

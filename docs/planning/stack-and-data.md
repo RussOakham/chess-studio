@@ -23,6 +23,23 @@ All application data lives in Convex:
 
 **Schema source of truth**: `apps/web/convex/schema.ts`.
 
+## Type safety (end-to-end)
+
+Convex is the type boundary for game data:
+
+```text
+apps/web/convex/schema.ts + queries/mutations/actions
+  ↓ (Convex codegen)
+apps/web/convex/_generated/{api,dataModel}.d.ts
+  ↓
+useQuery(api.games.*), useMutation(api.games.*), useAction(api.reviews.*), …
+```
+
+Guidelines:
+
+- Prefer **inference** from generated Convex types over duplicating DTO types.
+- Validate **at boundaries**: Convex `v.*` validators on args/returns; Zod for client-only forms.
+
 ## Auth (Better Auth + Convex)
 
 - Next.js exposes the Better Auth handler under `apps/web/app/api/auth/[...all]/`.

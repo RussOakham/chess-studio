@@ -30,7 +30,7 @@ See [`mvp-features.md`](./mvp-features.md) for the full backlog and phasing.
 - [x] Project setup and planning
 - [x] Tech stack selection (Next.js, Convex, Better Auth, client Stockfish)
 - [x] Architecture aligned with implementation ([`architecture.md`](./architecture.md))
-- [x] Core game flow vs engine ([`game-implementation-plan.md`](../implementation/game-implementation-plan.md))
+- [x] Core game flow vs engine ([`feature-status.md`](../implementation/feature-status.md))
 - [x] Engine integration (client Stockfish; evals, hints, post-game analysis)
 - [x] Optional **AI game summary** (Convex action + Vercel AI Gateway when configured)
 - [x] **MultiPV / engine lines** on review (shipped — see PRD)

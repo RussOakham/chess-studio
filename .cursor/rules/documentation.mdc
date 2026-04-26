@@ -139,13 +139,10 @@ Documentation must reflect the **current state** of the codebase:
 
 ### 5. Temporary / personal docs (`.temp.md`) vs tracked docs
 
-**Policy:** See [`docs/temp/README.md`](../../docs/temp/README.md) (the only file under `docs/temp/` that belongs in git).
-
 **Summary:**
 
-- `.temp.md` files under `docs/temp/` are **developer-specific**, **not committed**, and **must not be linked or referenced** from any other tracked documentation, rules, or skills (they are not the same on every machine). **Exception:** linking [`docs/temp/README.md`](../../docs/temp/README.md) is allowed because it defines this policy.
-- Anything that should live in project history belongs in normal paths (e.g. `docs/implementation/*.md`, `docs/planning/*.md`) and should be written **as if new**—not as a pointer to a personal temp file.
-- **Durable implementation plans** use tracked files such as `docs/implementation/<name>.md`, not `.temp.*` names in the repo.
+- `.temp.*` files are **developer-specific**, **not committed**, and **must not be linked or referenced** from any tracked documentation, rules, or skills (they are not the same on every machine).
+- Anything that should live in project history belongs in normal tracked paths (e.g. `docs/implementation/*.md`, `docs/planning/*.md`) and should be written **as if new**—not as a pointer to a personal temp file.
 
 ## Writing Style
 

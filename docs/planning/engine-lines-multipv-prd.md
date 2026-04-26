@@ -2,7 +2,7 @@
 
 This document defines the **product requirements** and a **phased implementation plan** for showing **multiple engine principal variations** (“best N lines”) on the game review experience, and sets the foundation for **future AI-assisted position commentary** grounded in those lines.
 
-**Related:** [Learning and feedback enhancements](./learning-and-feedback-enhancements.md) (hints and position review sections), [Game implementation plan](../implementation/game-implementation-plan.md) (Phase 4.x analysis). The shipped **AI game summary** (full-game **Large Language Model (LLM)** narrative) is a separate feature in `apps/web/convex/ai_game_summary.ts` and the game review UI.
+**Related:** [Learning and feedback enhancements](./learning-and-feedback-enhancements.md) (hints and position review sections), [Feature status](../implementation/feature-status.md). The shipped **AI game summary** (full-game **Large Language Model (LLM)** narrative) is a separate feature in `apps/web/convex/ai_game_summary.ts` and the game review UI.
 
 **Status:** Shipped in app (MultiPV analysis panel in review and optional live game toggle); Convex persistence for lines remains out of scope for v1.
 

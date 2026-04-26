@@ -10,7 +10,7 @@ Work through an implementation plan in order, update checklists as you go, and r
 ## When to use
 
 - User attaches or references an implementation plan and asks to implement it.
-- Plan lives in `docs/implementation/*.md`, or a Cursor plan with phases/todos. (Personal `.temp.md` scratch is outside shared git history; see `docs/temp/README.md`—do not cite those paths from repo docs.)
+- Plan lives in `docs/implementation/*.md`, or a Cursor plan with phases/todos. (Personal `.temp.*` scratch is outside shared git history; do not cite those paths from repo docs.)
 
 ## Steps
 

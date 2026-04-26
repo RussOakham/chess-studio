@@ -4,7 +4,7 @@
 
 This document describes **product priorities** for Chess Studio. The focus is **analysis and understanding**: engine-backed **evaluations**, **best moves and lines**, **move quality**, and **optional AI-assisted narrative**—not parity with a full chess.com-style social platform.
 
-**Implementation status:** See [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md) for the phased engineering checklist. Bullets here are **backlog and direction**, not automatic shipped/not-shipped markers.
+**Implementation status:** See [`docs/implementation/feature-status.md`](../implementation/feature-status.md) for shipped status and remaining work. Bullets here are **backlog and direction**, not automatic shipped/not-shipped markers.
 
 ## North star
 
