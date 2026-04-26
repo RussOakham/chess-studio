@@ -1,16 +1,18 @@
-# Game Implementation Plan
+# Game feature status (shipped + remaining work)
 
 ## Overview
 
-This document outlines the high-level implementation plan for building the core chess game functionality. The plan is organized into phases that build upon each other, starting with the essential user journey and progressing to full game mechanics.
+This document is the **canonical status** for the core chess game experience: what’s shipped, what’s deferred, and what’s still open.
+
+If you’re looking for roadmaps/PRDs (not status), start from `docs/README.md` → `docs/planning/`.
 
 ## Current Status
 
-✅ **Completed:**
+✅ **Shipped / implemented**
 
 - Project setup and configuration
 - Authentication system (login/register)
-- Database schema (games, moves, gameReviews tables)
+- Convex schema (games, moves, game_reviews, auth tables via Better Auth component)
 - Basic chess utilities package (`packages/chess`)
 - Code quality tooling (oxlint with type-aware linting, oxfmt)
 - **Convex migration** ✅
@@ -107,7 +109,7 @@ This document outlines the high-level implementation plan for building the core 
 - `chess.js` handles all game logic (move validation, FEN/PGN, game state)
 - Our code focuses on connecting these libraries and managing game state/persistence
 
-## Implementation Phases
+## Phased checklist (historical plan, kept as a checklist)
 
 ### Phase 1: Core Game Flow (MVP Foundation)
 
@@ -525,7 +527,7 @@ This document outlines the high-level implementation plan for building the core 
 - [x] Engine review of completed game (client-side Stockfish over each position; save to Convex `game_reviews`)
 - [x] Highlight mistakes/blunders (move list badges ?? blunder, ? mistake, !! best; tooltip with best move when applicable)
 - [x] Show best moves at key positions (key moments and per-move `bestMoveSan` in annotations)
-- [ ] AI-generated game summary (optional follow-up; MVP uses rule-based summary)
+- [x] AI-generated game summary (optional; shipped when configured via Vercel AI Gateway + Convex action)
 
 **Estimated Time:** 6-8 hours
 
@@ -552,33 +554,9 @@ This document outlines the high-level implementation plan for building the core 
 - **Convex**: Persistence and real-time (games, moves, auth)
 - **Next.js App Router**: Routing and API routes
 
-### Database Operations
+### Persistence and API surface
 
-**Game Creation:**
-
-```typescript
-// Create game with initial FEN
-const game = await db.insert(games).values({
-  userId: session.user.id,
-  status: "in_progress",
-  fen: INITIAL_FEN,
-});
-```
-
-**Move Saving:**
-
-```typescript
-// Save move after validation
-await db.insert(moves).values({
-  gameId: game.id,
-  moveNumber: moveNumber,
-  moveSan: move.san,
-  moveUci: move.uci,
-  fenBefore: fenBefore,
-  fenAfter: fenAfter,
-  evaluation: engineEvaluation,
-});
-```
+Games, moves, reviews, and auth data are stored in **Convex**. The app uses the generated `api.*` functions via `useQuery` / `useMutation` and server-authenticated lookups.
 
 ### Convex function surface (queries, mutations, actions)
 

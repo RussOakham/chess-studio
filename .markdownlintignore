@@ -20,5 +20,8 @@ yarn.lock
 apps/web/.agents/
 apps/web/convex/_generated/ai/
 
+# Docs drafts / scratchpads
+docs/drafts/
+
 # Logs
 *.log

@@ -87,7 +87,7 @@ _Goal: Show how we use rules, skills, plugins, and process so that “implement 
 
 1. **Request:** User describes the feature (optionally with `@` refs to plan or files).
 2. **Context:** Cursor loads always-applied rules, AGENTS.md, and glob-scoped rules for the files the agent touches; skills are used when relevant (e.g. function-creator for a new Convex mutation).
-3. **Plan (for larger work):** We use tracked implementation plans (e.g. `docs/implementation/*.md`) or Cursor plans with phases and todos; the agent works through phases and updates checklists. Personal `.temp.md` scratch (see [`docs/temp/README.md`](../temp/README.md)) is not referenced from repo docs.
+3. **Plan (for larger work):** We use tracked implementation plans (e.g. `docs/implementation/*.md`) or Cursor plans with phases and todos; the agent works through phases and updates checklists. Personal `.temp.*` scratch is not referenced from repo docs.
 4. **Implement:** Agent edits code, runs lint/format/type-check, and follows rules (e.g. thin handlers, validators, no commit without permission).
 5. **Review:** After Convex or React/Next.js changes, we run Convex reviewer and consider Vercel React best-practices (per AGENTS.md and convex-react-review rule).
 6. **Commit/MR:** User reviews; agent suggests commit message and branch; user approves commit/push; MR only when user asks, draft first, build verified before creating/pushing.
