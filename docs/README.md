@@ -20,6 +20,7 @@ Forward-looking: roadmaps, PRDs, and “why we chose X” decisions.
 - **Deploy & ops (canonical)**: `deploy-and-ops.md`
 - **Architecture**: `architecture.md`
 - **Stack + data/auth (canonical)**: `stack-and-data.md`
+- **Testing strategy (canonical)**: `testing-strategy.md`
 
 ### `docs/implementation/`
 
