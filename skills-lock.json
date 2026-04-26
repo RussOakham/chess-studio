@@ -6,20 +6,85 @@
       "sourceType": "github",
       "computedHash": "186f3db6c967bd19ff6ffeeb5d6cae84f7443cdae50835b57f61449a5696e7a4"
     },
+    "design-an-interface": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "885b05367fb1cf61a1e27e0d50f14d2502a05c1fa276c6e9ea050ce6a90e7095"
+    },
     "documentation-writer": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "computedHash": "ee53d65b163cd7eb953a930c95841cfe398cc2c0bd24c06508bbaa07c432be35"
+    },
+    "domain-model": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "a971b48051dc5f3d7093167ac68f285d77a6f7b23c90f3e95698d41640b10d73"
+    },
+    "git-guardrails-claude-code": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "53a1de29d2b76481202608376fa4a20a8bd7e65b0b8a907a8c9578e629cf313f"
+    },
+    "github-triage": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "ad678ff77b997e483e7849530ea8f168002d77bff9e68ae00579cec1deffd291"
     },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "computedHash": "f343ef02aa0ada0f8b13a77b6db7fb6a11f88d8067128215585500ef4fd3b5e0"
     },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "b627d5ecf36847d678b470aa87f46da602ee1013af8c97cd26ad4d005e59662d"
+    },
+    "qa": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "20c63e29b268b1f0762cff524b5e321d5e1a773b4f61b90d84811b755948a66c"
+    },
+    "setup-pre-commit": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "f9aeedf0a1f560ec465c3939c54434c2d949ac8b958a0493db52216f688a0366"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "ad055544599481182d0079c4198e85da26677cb408a677be2da04915375f0427"
+    },
+    "to-issues": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "2db47f0db7e6975486cd28bc6744f1358b47a434fb98df5b6ad507b6c3685b6a"
+    },
+    "to-prd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "8351452ad372ea4f839d3f7b951927b417851ffa49e7e6af28ea0f0ae111dca8"
+    },
+    "triage-issue": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "6834b87393bff8f529b3126b9f761c1c2b9706af8a784ad1061961c34bbdb4a9"
+    },
+    "ubiquitous-language": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "c8968b02b83c365bc81d85cc17fb4c8854b80f5b6dece322164fff5b00142231"
+    },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "zoom-out": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "b549a5421e015c19eaac2131056a77d2d61adcd192760c3000dba8a824132970"
     }
   }
 }

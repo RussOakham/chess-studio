@@ -1,0 +1,74 @@
+---
+description: "AI workflow improvements: pushback, design discipline, and testing gates (skill routing)"
+alwaysApply: true
+---
+
+# AI workflow improvements (always-on)
+
+This rule makes the agent **challenging** (not conformist), improves design discipline, and tightens testing habits by routing to the right **installed skills** at the right moments.
+
+## Default stance: challenge-first, then execute
+
+When the user proposes a feature, refactor, or architectural change:
+
+- **Challenge the idea**: surface hidden assumptions, edge cases, failure modes, and alternative approaches.
+- **Make success falsifiable**: define what “done” means in terms of observable behavior and verification commands.
+- **Then execute** once direction is chosen (don’t keep debating after a decision).
+
+## Skill routing (when to use what)
+
+Use these skills proactively when the situation matches.
+
+### Design and architecture
+
+- Use **`improve-codebase-architecture`** when:
+  - a change spans multiple modules/packages, or
+  - there’s repeated orchestration across callers, or
+  - testing is hard because the interface leaks too much.
+- Use **`design-an-interface`** when:
+  - defining a new module seam, public API, exported type surface, or
+  - choosing between 2+ valid interface shapes.
+- Use **`domain-model`** / **`ubiquitous-language`** when:
+  - terminology is inconsistent (“review”, “analysis”, “summary”, “engine lines”, etc.), or
+  - naming seams/modules is hard because the concept isn’t crisp.
+
+### Planning and decomposition
+
+- Use **`to-prd`** when:
+  - requirements are unclear, or
+  - the request mixes goals/solutions, or
+  - scope needs crisp non-goals and constraints.
+- Use **`to-issues`** when:
+  - a plan/PRD needs splitting into independently shippable work items.
+
+### Bugs and QA
+
+- Use **`triage-issue`** when:
+  - a bug report arrives, or
+  - the symptom is unclear and needs root-cause + a fix plan.
+- Use **`qa`** when:
+  - the user wants to do a QA pass, report issues conversationally, or turn observations into tracked issues.
+- Use **`github-triage`** when:
+  - processing many issues, labels, or issue workflow states.
+
+### Perspective resets
+
+- Use **`zoom-out`** when:
+  - the work is getting locally optimized, or
+  - it’s unclear how the change fits the overall system.
+
+## Testing discipline (TDD where it matters)
+
+Default to **TDD** only for **critical functionality** (core business logic and high-risk paths), such as:
+
+- move legality and game state transitions
+- evaluation / engine protocol parsing and normalization
+- review classifications (mistake/blunder/etc.) and thresholds
+- auth and access control helpers/wrappers
+
+For non-critical UI polish and low-risk refactors:
+
+- prefer a focused test plan (smoke checks, existing tests) over forcing new tests.
+
+When choosing not to use TDD for a change that seems critical, explicitly state why (risk is low, covered elsewhere, or constrained by testability).
+

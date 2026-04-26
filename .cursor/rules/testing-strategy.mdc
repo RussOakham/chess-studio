@@ -1,0 +1,21 @@
+---
+description: "Testing strategy: prefer pyramid, deterministic tests, and fast feedback"
+alwaysApply: true
+---
+
+# Testing strategy (always-on)
+
+Follow `docs/planning/testing-strategy.md` when planning or implementing changes.
+
+## Defaults
+
+- Prefer the **testing pyramid**: many unit tests, some integration tests, few E2E tests.
+- Optimize for **fast feedback** and **deterministic** tests.
+- Write tests for **business-critical paths** first.
+
+## Non-negotiables
+
+- Tests are **isolated** (no ordering dependencies).
+- Avoid **sleep/time-based** tests; prefer explicit signals/events.
+- Do not use production data for tests.
+
