@@ -46,10 +46,10 @@ That means:
 - Vercel env vars are **not automatically available** to Convex actions.
 - If you want AI summaries, set **`AI_GATEWAY_API_KEY`** on the Convex deployment(s) that run the action.
 
-Related: `docs/planning/vercel-deployment-plan.md` (hosting + secrets checklist).
+Related: `docs/planning/deploy-and-ops.md` (deploy, CI, secrets).
 
 ## Related docs
 
 - **Architecture diagram**: `docs/planning/architecture.md`
-- **Deployment checklist**: `docs/planning/vercel-deployment-plan.md`
+- **Deploy & ops**: `docs/planning/deploy-and-ops.md`
 - **Milestones**: `docs/planning/project-plan.md`

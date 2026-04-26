@@ -4,14 +4,14 @@
 
 **chess-studio** is a Turborepo monorepo: a **Next.js** app (`apps/web`) for the UI and auth routes, **Convex** for persistence, real-time subscriptions, and server functions, and **Better Auth** integrated with Convex. The chess **Stockfish** engine runs **in the browser** (Web Worker) for evaluation, hints, and opponent moves—not on a separate game API.
 
-**Deployment:** The Next.js app runs on **[Vercel](https://vercel.com)**; **[Convex](https://www.convex.dev/)** runs on Convex Cloud (`npx convex deploy`). See [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) and the index at [`deployment.md`](./deployment.md).
+**Deployment:** The Next.js app runs on **[Vercel](https://vercel.com)**; **[Convex](https://www.convex.dev/)** runs on Convex Cloud (`npx convex deploy`). See [`deploy-and-ops.md`](./deploy-and-ops.md).
 
 ## Deployment (summary)
 
-| Piece       | Where        | Document                                                   |
-| ----------- | ------------ | ---------------------------------------------------------- |
-| **Web**     | Vercel       | [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) |
-| **Backend** | Convex Cloud | Same + [`stack-and-data.md`](./stack-and-data.md)          |
+| Piece       | Where        | Document                                          |
+| ----------- | ------------ | ------------------------------------------------- |
+| **Web**     | Vercel       | [`deploy-and-ops.md`](./deploy-and-ops.md)        |
+| **Backend** | Convex Cloud | Same + [`stack-and-data.md`](./stack-and-data.md) |
 
 ## Monorepo structure (current)
 

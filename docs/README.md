@@ -17,7 +17,7 @@ Forward-looking: roadmaps, PRDs, and “why we chose X” decisions.
 - **Roadmap + milestones**: `project-plan.md`
 - **Product backlog**: `mvp-features.md`
 - **PRDs**: e.g. `engine-lines-multipv-prd.md`
-- **Operational plans** (deploy/CI/secrets): `deployment.md`, `vercel-deployment-plan.md`, `ci-cd-strategy.md`, `doppler-secrets.md`
+- **Deploy & ops (canonical)**: `deploy-and-ops.md`
 - **Architecture**: `architecture.md`
 - **Stack + data/auth (canonical)**: `stack-and-data.md`
 
