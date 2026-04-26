@@ -38,7 +38,7 @@
     "typescript": "^6.0.3"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,css,md}": [
+    "*.{ts,tsx,js,jsx,css}": [
       "oxlint --type-aware --type-check",
       "eslint",
       "oxfmt"
