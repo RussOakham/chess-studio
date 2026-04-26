@@ -59,5 +59,5 @@ De-prioritize:
 
 ## References
 
-- Test Pyramid: `https://martinfowler.com/articles/practical-test-pyramid.html`
-- JavaScript testing best practices: `https://github.com/goldbergyoni/javascript-testing-best-practices`
+- Test Pyramid: [The Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
+- JavaScript testing best practices: [JavaScript Testing Best Practices](https://github.com/goldbergyoni/javascript-testing-best-practices)
