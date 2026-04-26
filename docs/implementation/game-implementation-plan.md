@@ -525,7 +525,7 @@ This document outlines the high-level implementation plan for building the core 
 - [x] Engine review of completed game (client-side Stockfish over each position; save to Convex `game_reviews`)
 - [x] Highlight mistakes/blunders (move list badges ?? blunder, ? mistake, !! best; tooltip with best move when applicable)
 - [x] Show best moves at key positions (key moments and per-move `bestMoveSan` in annotations)
-- [ ] AI-generated game summary (optional follow-up; MVP uses rule-based summary)
+- [x] AI-generated game summary (optional; shipped when configured via Vercel AI Gateway + Convex action)
 
 **Estimated Time:** 6-8 hours
 

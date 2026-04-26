@@ -73,3 +73,7 @@ apps/web/public/engine/*.wasm
 # Convex AI: Claude Code symlinks + stub (not used; keep out of version control)
 apps/web/.claude/
 apps/web/CLAUDE.md
+
+# Local agent skill installs (tracked via skills-lock.json instead)
+.agents/
+.claude/
