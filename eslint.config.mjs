@@ -3,7 +3,7 @@
 import tsParser from "@typescript-eslint/parser";
 import json from "eslint-plugin-json";
 import oxlint from "eslint-plugin-oxlint";
-import yml from "eslint-plugin-yml";
+import { configs as ymlConfigs } from "eslint-plugin-yml";
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
@@ -40,7 +40,7 @@ const config = [
       "**/pnpm-lock.yaml",
     ],
     plugins: {
-      json: json,
+      json,
     },
     processor: json.processors[".json"],
     rules: {
@@ -50,7 +50,7 @@ const config = [
   },
 
   // YAML linting
-  ...yml.configs["flat/recommended"],
+  ...ymlConfigs["flat/recommended"],
 
   // eslint-plugin-oxlint to disable rules handled by Oxlint (for all files)
   // Type-aware linting is now handled by oxlint --type-aware
