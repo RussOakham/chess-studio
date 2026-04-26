@@ -7,6 +7,7 @@ import {
   buildGameSummaryInput,
   gameSummaryInputSchema,
 } from "@/lib/ai/schemas/game-summary-input";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 const minimalGame = {

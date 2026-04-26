@@ -35,6 +35,7 @@ export function useBoardContainerSize(
     updateSize();
     const ro = new ResizeObserver(updateSize);
     ro.observe(el);
+    // eslint-disable-next-line @typescript-eslint/consistent-return -- React effects may return cleanup fns
     return () => ro.disconnect();
   }, [containerRef, minSide, inset]);
 

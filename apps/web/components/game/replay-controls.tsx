@@ -49,6 +49,7 @@ export function ReplayControls({
         return Math.min(sortedMovesLength, prev + 1);
       });
     }, AUTOPLAY_MS);
+    // eslint-disable-next-line @typescript-eslint/consistent-return -- React effects may return cleanup fns
     return () => clearInterval(id);
   }, [playing, sortedMovesLength, setReplayIndex]);
 

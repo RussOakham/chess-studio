@@ -52,7 +52,7 @@ async function generateTextWithMappedErrors(
   try {
     return await generateText(params);
   } catch (error) {
-    mapGatewayGenerateError(error);
+    return mapGatewayGenerateError(error);
   }
 }
 

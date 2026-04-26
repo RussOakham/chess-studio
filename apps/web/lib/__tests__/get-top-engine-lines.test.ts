@@ -1,5 +1,6 @@
 import type { StockfishInstance } from "@repo/chess";
 import { getTopEngineLines } from "@repo/chess";
+import { describe, expect, it } from "vitest";
 
 function createMockStockfish(script: string[]): StockfishInstance {
   const queue = [...script];
