@@ -5,7 +5,7 @@ import type {
   PositionEvaluation,
 } from "@repo/chess";
 
-export interface GameAnalysisResult {
+interface GameAnalysisResult {
   summary: string;
   /**
    * Centipawn-equivalent eval after each half-move (position after the move), in the same
@@ -19,7 +19,7 @@ export interface GameAnalysisResult {
   openingNameLichess?: string | null;
 }
 
-export interface AnalysisMove {
+interface AnalysisMove {
   moveNumber: number;
   fenBefore: string;
   fenAfter: string;
@@ -27,19 +27,28 @@ export interface AnalysisMove {
   moveUci: string;
 }
 
-export interface GameForAnalysis {
+interface GameForAnalysis {
   status: string;
   color: "white" | "black" | "random";
 }
 
-export type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
+type GetEvaluation = (fen: string) => Promise<PositionEvaluation>;
 
-export type GetBestMove = (
+type GetBestMove = (
   fen: string,
   difficulty: GameDifficulty
 ) => Promise<{ from: string; to: string; promotion?: string; uci: string }>;
 
 /** Map key: `explorerMastersCacheKey(fen)` → masters explorer JSON or null if unavailable. */
-export type GetExplorerBatch = (
+type GetExplorerBatch = (
   fens: string[]
 ) => Promise<Map<string, ExplorerMastersResponse | null>>;
+
+export {
+  type AnalysisMove,
+  type GameAnalysisResult,
+  type GameForAnalysis,
+  type GetBestMove,
+  type GetEvaluation,
+  type GetExplorerBatch,
+};

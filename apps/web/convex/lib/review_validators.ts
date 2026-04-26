@@ -1,24 +1,24 @@
 import { v } from "convex/values";
 
-export const MAX_KEY_MOMENTS = 20;
-export const MAX_SUGGESTIONS = 10;
-export const MAX_MOVE_ANNOTATIONS = 500;
-export const MAX_EVALUATIONS = 500;
-export const MAX_SUMMARY_LENGTH = 10_000;
+const MAX_KEY_MOMENTS = 20;
+const MAX_SUGGESTIONS = 10;
+const MAX_MOVE_ANNOTATIONS = 500;
+const MAX_EVALUATIONS = 500;
+const MAX_SUMMARY_LENGTH = 10_000;
 /** LLM narrative cap (separate from rule-based `summary`). */
-export const MAX_AI_SUMMARY_LENGTH = 12_000;
+const MAX_AI_SUMMARY_LENGTH = 12_000;
 
-export function newAiSummaryClaimToken(): string {
+function newAiSummaryClaimToken(): string {
   return globalThis.crypto.randomUUID();
 }
 
-export const aiSummaryMetaValidator = v.object({
+const aiSummaryMetaValidator = v.object({
   model: v.string(),
   generatedAt: v.number(),
   promptVersion: v.optional(v.number()),
 });
 
-export const moveAnnotationValidator = v.object({
+const moveAnnotationValidator = v.object({
   moveNumber: v.number(),
   type: v.union(
     v.literal("blunder"),
@@ -33,3 +33,15 @@ export const moveAnnotationValidator = v.object({
   bookOpeningEco: v.optional(v.string()),
   bookOpeningName: v.optional(v.string()),
 });
+
+export {
+  MAX_AI_SUMMARY_LENGTH,
+  MAX_EVALUATIONS,
+  MAX_KEY_MOMENTS,
+  MAX_MOVE_ANNOTATIONS,
+  MAX_SUGGESTIONS,
+  MAX_SUMMARY_LENGTH,
+  aiSummaryMetaValidator,
+  moveAnnotationValidator,
+  newAiSummaryClaimToken,
+};

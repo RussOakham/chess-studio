@@ -11,7 +11,7 @@ const INACCURACY_CP = 40;
 /** Below this, treat eval swing as noise → still "good". */
 const GOOD_FLOOR_CP = 25;
 
-export function evalToCp(ev: PositionEvaluation): number {
+function evalToCp(ev: PositionEvaluation): number {
   if (ev.type === "cp") {
     return ev.value;
   }
@@ -19,13 +19,11 @@ export function evalToCp(ev: PositionEvaluation): number {
 }
 
 /** Normalize UCI for comparison (e.g. "e7e8q" vs "e7e8q"). */
-export function normalizeUci(uci: string): string {
+function normalizeUci(uci: string): string {
   return uci.toLowerCase().trim();
 }
 
-export function classifySuboptimalMove(
-  drop: number
-): MoveAnnotationType | null {
+function classifySuboptimalMove(drop: number): MoveAnnotationType | null {
   if (drop < GOOD_FLOOR_CP) {
     return null;
   }
@@ -40,3 +38,5 @@ export function classifySuboptimalMove(
   }
   return "good";
 }
+
+export { classifySuboptimalMove, evalToCp, normalizeUci };

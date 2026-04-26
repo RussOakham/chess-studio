@@ -1,4 +1,4 @@
-export function buildSummary(
+function buildSummary(
   moveCount: number,
   blunders: number,
   mistakes: number,
@@ -28,7 +28,7 @@ export function buildSummary(
   return parts.join(" ");
 }
 
-export function buildSuggestions(
+function buildSuggestions(
   blunders: number,
   mistakes: number,
   inaccuracies: number
@@ -57,3 +57,5 @@ export function buildSuggestions(
   }
   return list.slice(0, 4);
 }
+
+export { buildSummary, buildSuggestions };

@@ -3,12 +3,13 @@ import type { PositionEvaluation, StockfishInstance } from "./engine-types";
 /**
  * Send UCI `stop` to abort an in-flight search (safe to call before a new `go`).
  */
-export function sendUciStop(stockfish: StockfishInstance): void {
+function sendUciStop(stockfish: StockfishInstance): void {
+  // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
   stockfish.postMessage("stop");
 }
 
 /** True when UCI `bestmove` has no legal move (`none`, `(none)`, or missing; engines vary). */
-export function isUciBestmoveNoMove(token: string | undefined): boolean {
+function isUciBestmoveNoMove(token: string | undefined): boolean {
   if (token === undefined) {
     return true;
   }
@@ -20,7 +21,7 @@ export function isUciBestmoveNoMove(token: string | undefined): boolean {
  * Parse a single UCI `info` line that includes `multipv` and `score` / `pv`.
  * Returns null if the line is not a usable MultiPV info line.
  */
-export function parseMultipvInfoLine(message: string): {
+function parseMultipvInfoLine(message: string): {
   multipv: number;
   score: { type: "cp" | "mate"; raw: number };
   movesUci: string[];
@@ -28,7 +29,7 @@ export function parseMultipvInfoLine(message: string): {
   if (!message.startsWith("info ") || !message.includes("multipv")) {
     return null;
   }
-  const multipvMatch = message.match(/\bmultipv\s+(\d+)\b/);
+  const multipvMatch = /\bmultipv\s+(\d+)\b/.exec(message);
   if (multipvMatch === null) {
     return null;
   }
@@ -38,8 +39,8 @@ export function parseMultipvInfoLine(message: string): {
   }
 
   let score: { type: "cp" | "mate"; raw: number } | null = null;
-  const mateMatch = message.match(/\bscore\s+mate\s+(-?\d+)\b/);
-  const cpMatch = message.match(/\bscore\s+cp\s+(-?\d+)\b/);
+  const mateMatch = /\bscore\s+mate\s+(-?\d+)\b/.exec(message);
+  const cpMatch = /\bscore\s+cp\s+(-?\d+)\b/.exec(message);
   if (mateMatch) {
     score = { type: "mate", raw: parseInt(mateMatch[1] ?? "0", 10) };
   } else if (cpMatch) {
@@ -60,7 +61,7 @@ export function parseMultipvInfoLine(message: string): {
   return { multipv, score, movesUci };
 }
 
-export function normalizeRawScoreToWhitePerspective(
+function normalizeRawScoreToWhitePerspective(
   score: { type: "cp" | "mate"; raw: number },
   isBlackToMove: boolean
 ): PositionEvaluation {
@@ -75,3 +76,10 @@ export function normalizeRawScoreToWhitePerspective(
     value: isBlackToMove ? -score.raw : score.raw,
   };
 }
+
+export {
+  isUciBestmoveNoMove,
+  normalizeRawScoreToWhitePerspective,
+  parseMultipvInfoLine,
+  sendUciStop,
+};
