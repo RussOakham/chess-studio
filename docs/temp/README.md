@@ -32,5 +32,5 @@ When something in a personal `.temp.md` should become real project knowledge:
 Use these (and similar) for durable, shared documentation:
 
 - Game feature status: [`docs/implementation/game-implementation-plan.md`](../implementation/game-implementation-plan.md)
-- Convex + auth + env: [`docs/planning/convex-auth-data.md`](../planning/convex-auth-data.md)
+- Stack + data/auth: [`docs/planning/stack-and-data.md`](../planning/stack-and-data.md)
 - Game review / QA: [`docs/game-review-cross-cutting-qa.md`](../game-review-cross-cutting-qa.md)

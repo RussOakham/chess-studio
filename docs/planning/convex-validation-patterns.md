@@ -26,7 +26,7 @@ Under `convex/`, use **underscores** in file names (for example `game_access.ts`
 
 ## Client and URL: game ids (Zod)
 
-Shared rules for game id **strings** from URLs, search params, or props live in **`apps/web/lib/validation/game-id.ts`**:
+Shared rules for game id **strings** from URLs, search params, or props live in `apps/web/lib/validation/game-id.ts`:
 
 - **`gameIdParamSchema`** — Zod schema (URL-safe segment before Convex validates the id).
 - **`parseGameIdParam`** / **`toGameId`** (re-exported from `@/lib/convex-id`) — parse and narrow to `Id<"games">`; throws on failure.
@@ -36,7 +36,7 @@ Parse errors use **`zod-validation-error`** (`fromZodError`) so messages stay re
 
 ## `v` vs Zod
 
-- **Queries and mutations:** keep using **`v.*`** for `args` unless you adopt Zod builders from the **`convex-helpers`** package ([npm](https://www.npmjs.com/package/convex-helpers), [GitHub](https://github.com/get-convex/convex-helpers)): [`zCustomQuery`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L105), [`zCustomMutation`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L187), and helpers [`zodToConvex`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L427) / [`zid`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L311) in **`convex-helpers/server/zod4`**. See the package README [Zod Validation](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation) section and Convex Stack [TypeScript, Zod, and validating function arguments](https://stack.convex.dev/typescript-zod-function-validation). Compose with **`customQuery` / `customMutation`** and the same auth `input` pattern as `authed_functions`.
+- **Queries and mutations:** keep using **`v.*`** for `args` unless you adopt Zod builders from the **`convex-helpers`** package ([npm](https://www.npmjs.com/package/convex-helpers), [GitHub](https://github.com/get-convex/convex-helpers)): [`zCustomQuery`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L105), [`zCustomMutation`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L187), and helpers [`zodToConvex`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L427) / [`zid`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L311) in **`convex-helpers/server/zod4`**. See the package README [Zod Validation](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/README.md#zod-validation) section and Convex Stack [TypeScript, Zod, and validating function arguments](https://stack.convex.dev/typescript-zod-function-validation). Compose with **`customQuery`** / **`customMutation`** and the same auth `input` pattern as `authed_functions`.
 - **Shared string shapes and client parsing:** use **Zod** in `lib/validation/` (and re-export from `lib/convex-id.ts` if you want a stable import path).
 - **Actions:** use **`authedAction`** with **`v` args**. [`zCustomAction`](https://github.com/get-convex/convex-helpers/blob/main/packages/convex-helpers/server/zod4.ts#L269) (`convex-helpers/server/zod4`) can fail Convex module analysis for **`"use node"`** entrypoints in some setups; re-check with **`npx convex codegen`** before relying on Zod `args` for Node actions.
 
@@ -46,4 +46,4 @@ The published module path is **`convex-helpers/server/zod4`** (source: [`zod4.ts
 
 ## Related docs
 
-- [Convex, auth, and data](./convex-auth-data.md) — stack and file map.
+- [Stack, data, auth, and AI env](./stack-and-data.md) — canonical reference.

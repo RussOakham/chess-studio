@@ -84,4 +84,4 @@ This document describes **product priorities** for Chess Studio. The focus is **
 
 - [`project-plan.md`](./project-plan.md) — milestones
 - [`architecture.md`](./architecture.md) — runtime and data flow
-- [`tech-stack.md`](./tech-stack.md) — stack decisions (Convex for app data and real time)
+- [`stack-and-data.md`](./stack-and-data.md) — stack and data/auth (canonical)

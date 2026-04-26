@@ -4,7 +4,7 @@
 
 This document describes the end-to-end type safety strategy for the chess game application.
 
-**Current approach:** The app uses **Convex** for the game and move API. Convex generates TypeScript types from your schema and function definitions in `apps/web/convex/` into `convex/_generated/` (API types and data model). The frontend imports `api` from `@/convex/_generated/api` and uses `useQuery` / `useMutation` / `useAction` with full inference — there is no separate REST or tRPC layer for games. See [`convex-auth-data.md`](./convex-auth-data.md) and `@.cursor/rules/convex.mdc`.
+**Current approach:** The app uses **Convex** for the game and move API. Convex generates TypeScript types from your schema and function definitions in `apps/web/convex/` into `convex/_generated/` (API types and data model). The frontend imports `api` from `@/convex/_generated/api` and uses `useQuery` / `useMutation` / `useAction` with full inference — there is no separate REST or tRPC layer for games. See [`stack-and-data.md`](./stack-and-data.md) and `@.cursor/rules/convex.mdc`.
 
 ## Type flow (Convex)
 

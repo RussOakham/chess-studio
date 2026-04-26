@@ -11,7 +11,7 @@
 | Piece       | Where        | Document                                                   |
 | ----------- | ------------ | ---------------------------------------------------------- |
 | **Web**     | Vercel       | [`vercel-deployment-plan.md`](./vercel-deployment-plan.md) |
-| **Backend** | Convex Cloud | Same + [`convex-auth-data.md`](./convex-auth-data.md)      |
+| **Backend** | Convex Cloud | Same + [`stack-and-data.md`](./stack-and-data.md)          |
 
 ## Monorepo structure (current)
 
@@ -74,7 +74,7 @@ Key UI concepts: chessboard, move list, evaluation bar, game review with move-qu
 
 - **Games and moves** — Stored and queried via Convex; real-time updates for active games.
 - **Reviews** — Analysis results (summary, evaluations, key moments, move annotations) saved after **client-side** Stockfish runs over completed games (`run-game-analysis.ts`), then persisted through Convex.
-- **Auth** — Better Auth with Convex; see [`convex-auth-data.md`](./convex-auth-data.md).
+- **Auth** — Better Auth with Convex; see [`stack-and-data.md`](./stack-and-data.md).
 
 There is **no** separate REST API document for game CRUD in production; clients use **Convex generated APIs** (`useQuery`, `useMutation`, etc.).
 

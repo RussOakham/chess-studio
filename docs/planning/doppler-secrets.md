@@ -33,14 +33,14 @@ Use a **read-only** service token for the **`dev`** config in GitHub as **`DOPPL
 
 ### Required secrets in Doppler `dev` (typical)
 
-| Secret                        | Notes                                                                                                                                                           |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CONVEX_URL`      | From Convex dashboard or `npx convex dev`                                                                                                                       |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex `.convex.site` URL for Better Auth                                                                                                                       |
-| `BETTER_AUTH_SECRET`          | Same value as on Convex when shared                                                                                                                             |
-| `BETTER_AUTH_URL`             | Placeholder acceptable for CI if the build only needs it to exist                                                                                               |
-| `LICHESS_API_TOKEN`           | Optional; also set on Convex for explorer actions                                                                                                               |
-| `AI_GATEWAY_API_KEY`          | For Convex actions that call the gateway; set on Convex for runtime. See [`convex-auth-data.md`](./convex-auth-data.md#ai-gateway-and-llm-calls-vercel-ai-sdk). |
+| Secret                        | Notes                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`      | From Convex dashboard or `npx convex dev`                                                                            |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex `.convex.site` URL for Better Auth                                                                            |
+| `BETTER_AUTH_SECRET`          | Same value as on Convex when shared                                                                                  |
+| `BETTER_AUTH_URL`             | Placeholder acceptable for CI if the build only needs it to exist                                                    |
+| `LICHESS_API_TOKEN`           | Optional; also set on Convex for explorer actions                                                                    |
+| `AI_GATEWAY_API_KEY`          | For Convex actions that call the gateway; set on Convex for runtime. See [`stack-and-data.md`](./stack-and-data.md). |
 
 ### Populate from `.env.local`
 
