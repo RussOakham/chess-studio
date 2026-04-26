@@ -9,6 +9,20 @@ interface DeleteManyJwksResult {
   continueCursor: string | null;
 }
 
+function isDeleteManyJwksResult(value: unknown): value is DeleteManyJwksResult {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const count: unknown = Reflect.get(value, "count");
+  const isDone: unknown = Reflect.get(value, "isDone");
+  const continueCursor: unknown = Reflect.get(value, "continueCursor");
+  return (
+    typeof count === "number" &&
+    typeof isDone === "boolean" &&
+    (typeof continueCursor === "string" || continueCursor === null)
+  );
+}
+
 /**
  * Deletes all JWKS rows in the Better Auth component. Those keys are encrypted
  * with `BETTER_AUTH_SECRET`; after rotating the secret or fixing env drift, old
@@ -25,11 +39,12 @@ export const clearJwks = internalMutation({
     let cursor: string | null = null;
     let totalDeleted = 0;
     for (;;) {
-      const result = (await ctx.runMutation(
+      // oxlint-disable-next-line eslint/no-await-in-loop -- pagination loop is inherently sequential
+      const resultUnknown: unknown = await ctx.runMutation(
         components.betterAuth.adapter.deleteMany,
         {
           input: {
-            model: "jwks",
+            model: "jwks" as const,
             where: [],
           },
           paginationOpts: {
@@ -37,7 +52,11 @@ export const clearJwks = internalMutation({
             cursor,
           },
         }
-      )) as DeleteManyJwksResult;
+      );
+      if (!isDeleteManyJwksResult(resultUnknown)) {
+        throw new Error("Unexpected deleteMany JWKS response shape");
+      }
+      const result = resultUnknown;
       totalDeleted += result.count;
       if (result.isDone) {
         break;

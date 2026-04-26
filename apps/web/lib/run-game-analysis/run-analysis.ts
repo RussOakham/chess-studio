@@ -82,8 +82,11 @@ export async function runGameAnalysis(
       const turn = fenBefore.split(" ")[1] === "b" ? "black" : "white";
 
       /* Sequential calls so Stockfish's isCalculating guard isn't tripped. */
+      // eslint-disable-next-line no-await-in-loop -- Stockfish worker is stateful; keep this sequential
       const evalBefore = await getEvaluation(fenBefore);
+      // eslint-disable-next-line no-await-in-loop -- Stockfish worker is stateful; keep this sequential
       const bestMoveResult = await getBestMove(fenBefore, analysisDepth);
+      // eslint-disable-next-line no-await-in-loop -- Stockfish worker is stateful; keep this sequential
       const evalAfter = await getEvaluation(fenAfter);
 
       const cpBefore = evalToCp(evalBefore);

@@ -13,6 +13,7 @@ export async function calculateBestMove(
   depth: number,
   stockfish: StockfishInstance
 ): Promise<string> {
+  // eslint-disable-next-line promise/avoid-new -- event-based worker protocol needs a promise boundary
   return new Promise((resolve, reject) => {
     let bestMove: string | null = null;
     let isResolved = false;
@@ -26,8 +27,7 @@ export async function calculateBestMove(
         if (!acceptBestmove) {
           return;
         }
-        const parts = message.split(" ");
-        const moveToken = parts[1];
+        const [, moveToken] = message.trim().split(/\s+/);
         if (!isUciBestmoveNoMove(moveToken)) {
           bestMove = moveToken ?? null;
           if (!isResolved && bestMove) {
@@ -58,8 +58,10 @@ export async function calculateBestMove(
 
     stockfish.addEventListener("message", messageHandler);
     sendUciStop(stockfish);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`position fen ${fen}`);
     acceptBestmove = true;
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`go depth ${depth}`);
   });
 }

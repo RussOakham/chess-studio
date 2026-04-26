@@ -6,18 +6,12 @@ import { Chess } from "chess.js";
  * White-leaning → white pill / dark text; Black-leaning → black pill / light text (literal piece colours).
  */
 function engineLineEvalPillClassName(ev: PositionEvaluation): string {
-  const lean: "white" | "black" | "equal" =
-    ev.type === "mate"
-      ? ev.value > 0
-        ? "white"
-        : ev.value < 0
-          ? "black"
-          : "equal"
-      : ev.value > 0
-        ? "white"
-        : ev.value < 0
-          ? "black"
-          : "equal";
+  let lean: "white" | "black" | "equal" = "equal";
+  if (ev.value > 0) {
+    lean = "white";
+  } else if (ev.value < 0) {
+    lean = "black";
+  }
 
   switch (lean) {
     case "white": {
@@ -78,7 +72,7 @@ function uciPvToSanPrefix(
       const from = uci.slice(0, 2);
       const to = uci.slice(2, 4);
       const promotion = uci.length > 4 ? uci[4] : undefined;
-      let played;
+      let played: ReturnType<Chess["move"]> | null = null;
       try {
         played = chess.move({
           from,
