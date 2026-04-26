@@ -15,6 +15,7 @@ export async function getPositionEvaluation(
 ): Promise<PositionEvaluation> {
   const isBlackToMove = fen.split(" ")[1] === "b";
 
+  // eslint-disable-next-line promise/avoid-new -- event-based worker protocol needs a promise boundary
   return new Promise((resolve, reject) => {
     let evaluation: PositionEvaluation | null = null;
     let isResolved = false;
@@ -24,8 +25,8 @@ export async function getPositionEvaluation(
     const messageHandler = (event: MessageEvent<string>) => {
       const message = event.data;
       if (acceptSearchMessages && message.includes("score")) {
-        const mateMatch = message.match(/score mate (-?\d+)/);
-        const cpMatch = message.match(/score cp (-?\d+)/);
+        const mateMatch = /score mate (-?\d+)/.exec(message);
+        const cpMatch = /score cp (-?\d+)/.exec(message);
         if (mateMatch) {
           const raw = parseInt(mateMatch[1] ?? "0", 10);
           evaluation = {
@@ -68,8 +69,10 @@ export async function getPositionEvaluation(
 
     stockfish.addEventListener("message", messageHandler);
     sendUciStop(stockfish);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`position fen ${fen}`);
     acceptSearchMessages = true;
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage("go depth 5");
   });
 }

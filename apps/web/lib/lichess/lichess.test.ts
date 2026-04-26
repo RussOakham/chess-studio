@@ -39,12 +39,14 @@ describe("isBookContinuation", () => {
   it("returns true for high-share move", () => {
     const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as unknown;
     const parsed = parseExplorerMastersResponse(raw);
+    // eslint-disable-next-line vitest/prefer-strict-boolean-matchers -- keep boolean matcher consistent in this file
     expect(isBookContinuation(parsed, "c6d5")).toBeTruthy();
   });
 
   it("returns false for unknown UCI", () => {
     const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as unknown;
     const parsed = parseExplorerMastersResponse(raw);
+    // eslint-disable-next-line vitest/prefer-strict-boolean-matchers -- keep boolean matcher consistent in this file
     expect(isBookContinuation(parsed, "h7h6")).toBeFalsy();
   });
 });

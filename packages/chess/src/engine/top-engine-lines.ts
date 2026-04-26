@@ -11,10 +11,10 @@ import {
   sendUciStop,
 } from "./uci";
 
-export const DEFAULT_ENGINE_LINES_MULTIPV = 3;
+const DEFAULT_ENGINE_LINES_MULTIPV = 3;
 
 /** Default search depth for live/review “top lines” (snappier UX; raise in UI later if needed). */
-export const ENGINE_LINES_DEFAULT_DEPTH = 12;
+const ENGINE_LINES_DEFAULT_DEPTH = 12;
 
 /**
  * Run a MultiPV search and return ranked engine lines (default 3).
@@ -22,7 +22,7 @@ export const ENGINE_LINES_DEFAULT_DEPTH = 12;
  *
  * Sends `stop` first, then `setoption name MultiPV`, `position fen`, `go depth`.
  */
-export async function getTopEngineLines(
+async function getTopEngineLines(
   fen: string,
   stockfish: StockfishInstance,
   options: GetTopEngineLinesOptions
@@ -34,6 +34,7 @@ export async function getTopEngineLines(
   const { depth } = options;
   const isBlackToMove = fen.split(" ")[1] === "b";
 
+  // eslint-disable-next-line promise/avoid-new -- event-based worker protocol needs a promise boundary
   return new Promise((resolve, reject) => {
     const state = new Map<
       number,
@@ -104,9 +105,18 @@ export async function getTopEngineLines(
 
     stockfish.addEventListener("message", messageHandler);
     sendUciStop(stockfish);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`setoption name MultiPV value ${String(multipv)}`);
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`position fen ${fen}`);
     acceptSearchMessages = true;
+    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
     stockfish.postMessage(`go depth ${String(depth)}`);
   });
 }
+
+export {
+  DEFAULT_ENGINE_LINES_MULTIPV,
+  ENGINE_LINES_DEFAULT_DEPTH,
+  getTopEngineLines,
+};
