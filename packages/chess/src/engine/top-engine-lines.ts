@@ -1,15 +1,10 @@
 import type {
   EngineLine,
   GetTopEngineLinesOptions,
-  PositionEvaluation,
   StockfishInstance,
 } from "./engine-types";
-import {
-  isUciBestmoveNoMove,
-  normalizeRawScoreToWhitePerspective,
-  parseMultipvInfoLine,
-  sendUciStop,
-} from "./uci";
+import { createUciSearchSession } from "./uci-search-session";
+import { transportFromStockfishInstance } from "./uci-transport";
 
 const DEFAULT_ENGINE_LINES_MULTIPV = 3;
 
@@ -27,92 +22,14 @@ async function getTopEngineLines(
   stockfish: StockfishInstance,
   options: GetTopEngineLinesOptions
 ): Promise<EngineLine[]> {
-  const multipv = Math.min(
-    500,
-    Math.max(1, options.multipv ?? DEFAULT_ENGINE_LINES_MULTIPV)
-  );
-  const { depth } = options;
-  const isBlackToMove = fen.split(" ")[1] === "b";
-
-  // eslint-disable-next-line promise/avoid-new -- event-based worker protocol needs a promise boundary
-  return new Promise((resolve, reject) => {
-    const state = new Map<
-      number,
-      { evaluation: PositionEvaluation; movesUci: string[] }
-    >();
-    let isResolved = false;
-    /** Ignore MultiPV `info`/`bestmove` from a prior search until this run has sent `go`. */
-    let acceptSearchMessages = false;
-
-    const messageHandler = (event: MessageEvent<string>) => {
-      const message = event.data;
-
-      if (
-        acceptSearchMessages &&
-        message.startsWith("info ") &&
-        message.includes("multipv")
-      ) {
-        const parsed = parseMultipvInfoLine(message);
-        if (parsed !== null) {
-          const evaluation = normalizeRawScoreToWhitePerspective(
-            parsed.score,
-            isBlackToMove
-          );
-          state.set(parsed.multipv, {
-            evaluation,
-            movesUci: parsed.movesUci,
-          });
-        }
-      }
-
-      if (message.startsWith("bestmove")) {
-        if (!acceptSearchMessages) {
-          return;
-        }
-        const tokens = message.trim().split(/\s+/);
-        const [, bestMoveToken] = tokens;
-        if (!isResolved) {
-          isResolved = true;
-          stockfish.removeEventListener("message", messageHandler);
-          clearTimeout(timeout);
-          if (isUciBestmoveNoMove(bestMoveToken)) {
-            resolve([]);
-            return;
-          }
-          const lines: EngineLine[] = [];
-          for (let lineRank = 1; lineRank <= multipv; lineRank++) {
-            const row = state.get(lineRank);
-            if (row !== undefined) {
-              lines.push({
-                multipv: lineRank,
-                evaluation: row.evaluation,
-                movesUci: row.movesUci,
-              });
-            }
-          }
-          resolve(lines);
-        }
-      }
-    };
-
-    const timeout = setTimeout(() => {
-      if (!isResolved) {
-        isResolved = true;
-        stockfish.removeEventListener("message", messageHandler);
-        reject(new Error("MultiPV engine lines timeout"));
-      }
-    }, 90000);
-
-    stockfish.addEventListener("message", messageHandler);
-    sendUciStop(stockfish);
-    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
-    stockfish.postMessage(`setoption name MultiPV value ${String(multipv)}`);
-    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
-    stockfish.postMessage(`position fen ${fen}`);
-    acceptSearchMessages = true;
-    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
-    stockfish.postMessage(`go depth ${String(depth)}`);
-  });
+  const transport = transportFromStockfishInstance(stockfish);
+  const session = createUciSearchSession(transport);
+  const result = await session.run({ kind: "multiPv", fen, options });
+  session.dispose();
+  if (result.kind !== "multiPv") {
+    throw new Error("Unexpected UCI search result kind");
+  }
+  return result.lines;
 }
 
 export {
