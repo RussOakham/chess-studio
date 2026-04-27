@@ -13,51 +13,51 @@ Scope: code quality and architecture, not product roadmap.
 ## Map of major modules (current)
 
 - **Web app**: `apps/web` (Next.js App Router)
-  - UI components under `apps/web/components/**`
+  - UI components under `apps/web/components/`\*\*
   - Client logic under `apps/web/lib/**`
   - Tests: `apps/web/**/{__tests__|*.test.ts}`
-- **Backend**: `apps/web/convex/**` (schema, queries, mutations, actions)
-- **Shared chess logic**: `packages/chess/**`
+- **Backend**: `apps/web/convex/`\*\* (schema, queries, mutations, actions)
+- **Shared chess logic**: `packages/chess/`\*\*
   - Engine protocol wrappers: `packages/chess/src/engine/**`
 
 ## Refactor candidates (prioritized)
 
 ### Now (highest leverage)
 
-1. **Deepen the Stockfish “search session” module**
-   - **Why**: `calculateBestMove`, `getPositionEvaluation`, and `getTopEngineLines` repeat the same event-based worker protocol shape (listener + timeout + “ignore prior search” gating + stop/go sequencing).
-   - **Symptom**: repeated `promise/avoid-new` and `unicorn/require-post-message-target-origin` suppressions around `postMessage` and promise boundaries.
-   - **Proposed shape**: a single internal helper (or class) that models a “search session” and exposes:
-     - `runBestMove(fen, depth)`
-     - `runEvaluation(fen, depth)`
-     - `runMultiPv(fen, depth, multipv)`
-   - **Outcome**: smaller surface area, less duplication, fewer suppressions, easier tests for parsing + edge cases.
+- **Deepen the Stockfish “search session” module**
+  - **Why**: `calculateBestMove`, `getPositionEvaluation`, and `getTopEngineLines` repeat the same event-based worker protocol shape (listener + timeout + “ignore prior search” gating + stop/go sequencing).
+  - **Symptom**: repeated `promise/avoid-new` and `unicorn/require-post-message-target-origin` suppressions around `postMessage` and promise boundaries.
+  - **Proposed shape**: a single internal helper (or class) that models a “search session” and exposes:
+    - `runBestMove(fen, depth)`
+    - `runEvaluation(fen, depth)`
+    - `runMultiPv(fen, depth, multipv)`
+  - **Outcome**: smaller surface area, less duplication, fewer suppressions, easier tests for parsing + edge cases.
 
-2. **Make analysis orchestration a “deep module”**
-   - Current boundary:
-     - `runGameAnalysis` takes `getEvaluation`, `getBestMove`, `getExplorerBatch` and runs an imperative loop.
-     - `useGameAnalysis` wires Convex + batching + parsing + saving.
-   - **Why**: this is one of the business-critical paths (review output), and it already needs sequential constraints due to Stockfish statefulness.
-   - **Proposed direction**:
-     - keep `runGameAnalysis` pure (already close)
-     - move all “wiring” concerns into a single module that exposes a narrow API like `analyzeCompletedGame({ game, moves, engine, explorer })`
-   - **Outcome**: fewer edge-case bugs, easier integration tests (mock engine + mock explorer + assert persisted payload).
+- **Make analysis orchestration a “deep module”**
+  - **Current boundary**:
+    - `runGameAnalysis` takes `getEvaluation`, `getBestMove`, `getExplorerBatch` and runs an imperative loop.
+    - `useGameAnalysis` wires Convex + batching + parsing + saving.
+  - **Why**: this is one of the business-critical paths (review output), and it already needs sequential constraints due to Stockfish statefulness.
+  - **Proposed direction**:
+    - keep `runGameAnalysis` pure (already close)
+    - move all “wiring” concerns into a single module that exposes a narrow API like `analyzeCompletedGame({ game, moves, engine, explorer })`
+  - **Outcome**: fewer edge-case bugs, easier integration tests (mock engine + mock explorer + assert persisted payload).
 
 ### Next (medium leverage)
 
-1. **Normalize “unknown → typed” parsing helpers**
-   - Lichess parsing (`parseExplorerMastersResponse`) and Convex adapter responses (e.g. JWKS maintenance) both need robust unknown-shape handling.
-   - **Opportunity**: a small shared `isRecord` / `readString` / `readNumber` helper that improves readability and consistency without adding abstraction bloat.
+- **Normalize “unknown → typed” parsing helpers**
+  - Lichess parsing (`parseExplorerMastersResponse`) and Convex adapter responses (e.g. JWKS maintenance) both need robust unknown-shape handling.
+  - **Opportunity**: a small shared `isRecord` / `readString` / `readNumber` helper that improves readability and consistency without adding abstraction bloat.
 
-2. **Reduce linter-driven structure changes**
-   - The repo currently uses several targeted rule disables (await-in-loop, consistent-return in effects, worker postMessage origin).
-   - **Goal**: keep suppressions rare and intention-revealing by pushing complexity behind deeper modules rather than “sprinkled comments”.
+- **Reduce linter-driven structure changes**
+  - The repo currently uses several targeted rule disables (await-in-loop, consistent-return in effects, worker postMessage origin).
+  - **Goal**: keep suppressions rare and intention-revealing by pushing complexity behind deeper modules rather than “sprinkled comments”.
 
 ### Later (nice-to-have)
 
-1. **Clarify engine “depth/difficulty” semantics**
-   - There’s a mix of “difficulty presets” and explicit depths across UI hooks and analysis paths.
-   - **Goal**: a single mapping/contract for “what strength means” in each feature (live hints vs post-game analysis vs MultiPV lines).
+- **Clarify engine “depth/difficulty” semantics**
+  - There’s a mix of “difficulty presets” and explicit depths across UI hooks and analysis paths.
+  - **Goal**: a single mapping/contract for “what strength means” in each feature (live hints vs post-game analysis vs MultiPV lines).
 
 ## Testing opportunities (aligned with testing strategy)
 
