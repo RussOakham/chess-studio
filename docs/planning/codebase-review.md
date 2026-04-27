@@ -6,18 +6,18 @@ Scope: code quality and architecture, not product roadmap.
 
 ## Executive summary
 
-- **Core seams are in good shape**: `packages/chess` provides a clear “engine protocol + helpers” boundary; `apps/web/convex/lib/*` encapsulates auth/access control.
-- **Main refactor opportunities**: consolidate “event-based worker protocol” patterns in `packages/chess/src/engine/*`, tighten the analysis orchestration boundary (`runGameAnalysis` + `useGameAnalysis`), and reduce linter-workarounds by making interfaces a bit deeper.
+- **Core seams are in good shape**: `packages/chess` provides a clear “engine protocol + helpers” boundary; `apps/web/convex/lib/**` encapsulates auth/access control.
+- **Main refactor opportunities**: consolidate “event-based worker protocol” patterns in `packages/chess/src/engine/**`, tighten the analysis orchestration boundary (`runGameAnalysis` + `useGameAnalysis`), and reduce linter-workarounds by making interfaces a bit deeper.
 - **Testing is early-stage**: there are a handful of Vitest tests (engine parsing, Lichess parsing, AI DTO/schema), but we’re still missing unit tests for the most business-critical pure logic (classification thresholds, summary/suggestion text, UCI parsing edge cases).
 
 ## Map of major modules (current)
 
 - **Web app**: `apps/web` (Next.js App Router)
-  - UI components under `apps/web/components/`\*\*
+  - UI components under `apps/web/components/`
   - Client logic under `apps/web/lib/**`
   - Tests: `apps/web/**/{__tests__|*.test.ts}`
-- **Backend**: `apps/web/convex/`\*\* (schema, queries, mutations, actions)
-- **Shared chess logic**: `packages/chess/`\*\*
+- **Backend**: `apps/web/convex/` (schema, queries, mutations, actions)
+- **Shared chess logic**: `packages/chess/`
   - Engine protocol wrappers: `packages/chess/src/engine/**`
 
 ## Refactor candidates (prioritized)
@@ -32,7 +32,6 @@ Scope: code quality and architecture, not product roadmap.
     - `runEvaluation(fen, depth)`
     - `runMultiPv(fen, depth, multipv)`
   - **Outcome**: smaller surface area, less duplication, fewer suppressions, easier tests for parsing + edge cases.
-
 - **Make analysis orchestration a “deep module”**
   - **Current boundary**:
     - `runGameAnalysis` takes `getEvaluation`, `getBestMove`, `getExplorerBatch` and runs an imperative loop.
@@ -48,7 +47,6 @@ Scope: code quality and architecture, not product roadmap.
 - **Normalize “unknown → typed” parsing helpers**
   - Lichess parsing (`parseExplorerMastersResponse`) and Convex adapter responses (e.g. JWKS maintenance) both need robust unknown-shape handling.
   - **Opportunity**: a small shared `isRecord` / `readString` / `readNumber` helper that improves readability and consistency without adding abstraction bloat.
-
 - **Reduce linter-driven structure changes**
   - The repo currently uses several targeted rule disables (await-in-loop, consistent-return in effects, worker postMessage origin).
   - **Goal**: keep suppressions rare and intention-revealing by pushing complexity behind deeper modules rather than “sprinkled comments”.

@@ -23,7 +23,7 @@ See [`mvp-features.md`](./mvp-features.md) for the full backlog and phasing.
 - **Analysis & review** — post-game engine pass, move annotations, key moments, optional **AI summary** (Vercel AI Gateway) when enabled.
 - **Hints** — engine best-move hints during play.
 - **History & replay** — list games, open review, step through moves.
-- **Roadmap** — MultiPV / **top engine lines** on review ([`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md)), richer position commentary, deeper AI assist — see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md).
+- **Roadmap** — MultiPV / **top engine lines** on review ([`PRD/engine-lines-multipv-prd.md`](./PRD/engine-lines-multipv-prd.md)), richer position commentary, deeper AI assist — see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md).
 
 ## Milestones
 
