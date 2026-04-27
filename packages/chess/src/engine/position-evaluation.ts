@@ -16,10 +16,13 @@ export async function getPositionEvaluation(
 ): Promise<PositionEvaluation> {
   const transport = transportFromStockfishInstance(stockfish);
   const session = createUciSearchSession(transport);
-  const result = await session.run({ kind: "evaluation", fen, depth: 5 });
-  session.dispose();
-  if (result.kind !== "evaluation") {
-    throw new Error("Unexpected UCI search result kind");
+  try {
+    const result = await session.run({ kind: "evaluation", fen, depth: 5 });
+    if (result.kind !== "evaluation") {
+      throw new Error("Unexpected UCI search result kind");
+    }
+    return result.evaluation;
+  } finally {
+    session.dispose();
   }
-  return result.evaluation;
 }

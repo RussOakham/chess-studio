@@ -6,19 +6,19 @@ Scope: code quality and architecture, not product roadmap.
 
 ## Executive summary
 
-- **Core seams are in good shape**: `packages/chess` provides a clear “engine protocol + helpers” boundary; `apps/web/convex/lib/**` encapsulates auth/access control.
-- **Main refactor opportunities**: consolidate “event-based worker protocol” patterns in `packages/chess/src/engine/**`, tighten the analysis orchestration boundary (`runGameAnalysis` + `useGameAnalysis`), and reduce linter-workarounds by making interfaces a bit deeper.
+- **Core seams are in good shape**: `packages/chess` provides a clear “engine protocol + helpers” boundary; `apps/web/convex/lib/` (recursive) encapsulates auth/access control.
+- **Main refactor opportunities**: consolidate “event-based worker protocol” patterns in `packages/chess/src/engine/` (recursive), tighten the analysis orchestration boundary (`runGameAnalysis` + `useGameAnalysis`), and reduce linter-workarounds by making interfaces a bit deeper.
 - **Testing is early-stage**: there are a handful of Vitest tests (engine parsing, Lichess parsing, AI DTO/schema), but we’re still missing unit tests for the most business-critical pure logic (classification thresholds, summary/suggestion text, UCI parsing edge cases).
 
 ## Map of major modules (current)
 
 - **Web app**: `apps/web` (Next.js App Router)
   - UI components under `apps/web/components/`
-  - Client logic under `apps/web/lib/**`
+  - Client logic under `apps/web/lib/` (recursive)
   - Tests: `apps/web/**/{__tests__|*.test.ts}`
 - **Backend**: `apps/web/convex/` (schema, queries, mutations, actions)
 - **Shared chess logic**: `packages/chess/`
-  - Engine protocol wrappers: `packages/chess/src/engine/**`
+  - Engine protocol wrappers: `packages/chess/src/engine/` (recursive)
 
 ## Refactor candidates (prioritized)
 

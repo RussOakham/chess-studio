@@ -24,12 +24,15 @@ async function getTopEngineLines(
 ): Promise<EngineLine[]> {
   const transport = transportFromStockfishInstance(stockfish);
   const session = createUciSearchSession(transport);
-  const result = await session.run({ kind: "multiPv", fen, options });
-  session.dispose();
-  if (result.kind !== "multiPv") {
-    throw new Error("Unexpected UCI search result kind");
+  try {
+    const result = await session.run({ kind: "multiPv", fen, options });
+    if (result.kind !== "multiPv") {
+      throw new Error("Unexpected UCI search result kind");
+    }
+    return result.lines;
+  } finally {
+    session.dispose();
   }
-  return result.lines;
 }
 
 export {

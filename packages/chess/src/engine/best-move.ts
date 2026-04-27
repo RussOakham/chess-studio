@@ -16,10 +16,13 @@ export async function calculateBestMove(
 ): Promise<string> {
   const transport = transportFromStockfishInstance(stockfish);
   const session = createUciSearchSession(transport);
-  const result = await session.run({ kind: "bestMove", fen, depth });
-  session.dispose();
-  if (result.kind !== "bestMove") {
-    throw new Error("Unexpected UCI search result kind");
+  try {
+    const result = await session.run({ kind: "bestMove", fen, depth });
+    if (result.kind !== "bestMove") {
+      throw new Error("Unexpected UCI search result kind");
+    }
+    return result.bestMoveUci;
+  } finally {
+    session.dispose();
   }
-  return result.bestMoveUci;
 }
