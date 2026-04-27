@@ -14,7 +14,7 @@ Chess Studio is an **AI-empowered analysis** app: play vs engine, then review ga
 - 📜 Game history and replay on the review surface
 - 🎨 UI built with Tailwind CSS 4 and ShadCN-style components
 
-**Roadmap (not all shipped):** MultiPV “top lines” on review ([`docs/planning/engine-lines-multipv-prd.md`](docs/planning/engine-lines-multipv-prd.md)), deeper AI-assisted commentary — see [`docs/planning/mvp-features.md`](docs/planning/mvp-features.md).
+**Roadmap (not all shipped):** MultiPV “top lines” on review ([`docs/planning/PRD/engine-lines-multipv-prd.md`](docs/planning/PRD/engine-lines-multipv-prd.md)), deeper AI-assisted commentary — see [`docs/planning/mvp-features.md`](docs/planning/mvp-features.md).
 
 ## Tech Stack
 

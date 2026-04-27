@@ -38,7 +38,7 @@ This document describes **product priorities** for Chess Studio. The focus is **
 
 ### Near-term roadmap (same product theme)
 
-- **MultiPV / top engine lines** on the review page — see [`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md)
+- **MultiPV / top engine lines** on the review page — see [`PRD/engine-lines-multipv-prd.md`](./PRD/engine-lines-multipv-prd.md)
 - Richer **position-level** or **line-level** AI commentary grounded in engine PVs (planning — [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md))
 
 ## Phase 2 — Deeper product (nice-to-have)

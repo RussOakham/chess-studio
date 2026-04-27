@@ -1,5 +1,6 @@
 import type { PositionEvaluation, StockfishInstance } from "./engine-types";
-import { sendUciStop } from "./uci";
+import { createUciSearchSession } from "./uci-search-session";
+import { transportFromStockfishInstance } from "./uci-transport";
 
 /**
  * Get engine evaluation of the current position.
@@ -13,66 +14,15 @@ export async function getPositionEvaluation(
   fen: string,
   stockfish: StockfishInstance
 ): Promise<PositionEvaluation> {
-  const isBlackToMove = fen.split(" ")[1] === "b";
-
-  // eslint-disable-next-line promise/avoid-new -- event-based worker protocol needs a promise boundary
-  return new Promise((resolve, reject) => {
-    let evaluation: PositionEvaluation | null = null;
-    let isResolved = false;
-    /** Ignore `info`/`bestmove` from a prior search until this run has sent `go`. */
-    let acceptSearchMessages = false;
-
-    const messageHandler = (event: MessageEvent<string>) => {
-      const message = event.data;
-      if (acceptSearchMessages && message.includes("score")) {
-        const mateMatch = /score mate (-?\d+)/.exec(message);
-        const cpMatch = /score cp (-?\d+)/.exec(message);
-        if (mateMatch) {
-          const raw = parseInt(mateMatch[1] ?? "0", 10);
-          evaluation = {
-            type: "mate",
-            value: isBlackToMove ? -raw : raw,
-          };
-        } else if (cpMatch) {
-          const raw = parseInt(cpMatch[1] ?? "0", 10);
-          evaluation = {
-            type: "cp",
-            value: isBlackToMove ? -raw : raw,
-          };
-        }
-      }
-
-      if (message.startsWith("bestmove")) {
-        if (!acceptSearchMessages) {
-          return;
-        }
-        if (!isResolved) {
-          isResolved = true;
-          stockfish.removeEventListener("message", messageHandler);
-          clearTimeout(timeout);
-          if (evaluation !== null) {
-            resolve(evaluation);
-          } else {
-            reject(new Error("Could not get evaluation"));
-          }
-        }
-      }
-    };
-
-    const timeout = setTimeout(() => {
-      if (!isResolved) {
-        isResolved = true;
-        stockfish.removeEventListener("message", messageHandler);
-        reject(new Error("Evaluation timeout"));
-      }
-    }, 10000);
-
-    stockfish.addEventListener("message", messageHandler);
-    sendUciStop(stockfish);
-    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
-    stockfish.postMessage(`position fen ${fen}`);
-    acceptSearchMessages = true;
-    // eslint-disable-next-line unicorn/require-post-message-target-origin -- Worker-like postMessage (not Window.postMessage)
-    stockfish.postMessage("go depth 5");
-  });
+  const transport = transportFromStockfishInstance(stockfish);
+  const session = createUciSearchSession(transport);
+  try {
+    const result = await session.run({ kind: "evaluation", fen, depth: 5 });
+    if (result.kind !== "evaluation") {
+      throw new Error("Unexpected UCI search result kind");
+    }
+    return result.evaluation;
+  } finally {
+    session.dispose();
+  }
 }

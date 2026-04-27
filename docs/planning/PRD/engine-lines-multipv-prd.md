@@ -105,45 +105,45 @@ New work adds **parse + API** in `packages/chess` and **hooks + UI** in `apps/we
 
 **Objective:** Prove MultiPV parsing against the shipped worker.
 
-- [ ] Add a **dev-only** or **unit-test-adjacent** harness that feeds sample FENs and asserts three PVs parse.
-- [ ] Document **abort** semantics (`stop` / `ucinewgame`) if user changes position mid-search.
-- [ ] **Exit criteria:** Stable structured output for 3 lines on 5–10 test positions (opening, tactical, endgame).
+- Add a **dev-only** or **unit-test-adjacent** harness that feeds sample FENs and asserts three PVs parse.
+- Document **abort** semantics (`stop` / `ucinewgame`) if user changes position mid-search.
+- **Exit criteria:** Stable structured output for 3 lines on 5–10 test positions (opening, tactical, endgame).
 
 ### Phase 1 — Engine module (`packages/chess`)
 
-- [ ] Introduce types, e.g. `EngineLine { multipv: number; evaluation: PositionEvaluation; movesUci: string[] }` (refine names to match codebase).
-- [ ] Implement `getTopEngineLines(fen, options)` where `options` includes `{ depth, multipv }` and uses existing `StockfishInstance`.
-- [ ] Handle **mate/cp** scoring consistently with **White’s perspective** (align with `getPositionEvaluation` normalization).
-- [ ] Optional: `ucinewgame` between searches if required by worker behavior.
-- [ ] Export from `packages/chess` and add **unit tests** for parsing (mock UCI strings if feasible).
+- Introduce types, e.g. `EngineLine { multipv: number; evaluation: PositionEvaluation; movesUci: string[] }` (refine names to match codebase).
+- Implement `getTopEngineLines(fen, options)` where `options` includes `{ depth, multipv }` and uses existing `StockfishInstance`.
+- Handle **mate/cp** scoring consistently with **White’s perspective** (align with `getPositionEvaluation` normalization).
+- Optional: `ucinewgame` between searches if required by worker behavior.
+- Export from `packages/chess` and add **unit tests** for parsing (mock UCI strings if feasible).
 
 ### Phase 2 — Hook integration (`apps/web`)
 
-- [ ] Extend `useStockfish` (or add `useEngineLines`) with **`getEngineLines(fen, opts)`**, respecting **single-flight** / cancel:
+- Extend `useStockfish` (or add `useEngineLines`) with `getEngineLines(fen, opts)`, respecting **single-flight** / cancel:
   - Either reject concurrent calls or queue (match existing `isCalculating` pattern).
-- [ ] On position change (move index / FEN), **cancel** in-flight search before starting a new one.
-- [ ] Expose **loading** and **error** state for UI.
+- On position change (move index / FEN), **cancel** in-flight search before starting a new one.
+- Expose **loading** and **error** state for UI.
 
 ### Phase 3 — Review page UI
 
-- [ ] New presentational component, e.g. `engine-lines-panel.tsx` (kebab-case per repo), showing N rows.
-- [ ] Convert PV UCI to **SAN** using `chess.js` from the position FEN (reuse patterns from elsewhere in app).
-- [ ] Wire to **current FEN** from review replay state (same source as board).
-- [ ] **Empty states:** engine loading, no worker, analysis unavailable.
-- [ ] Copy in `lib/copy` if the project centralizes strings for review.
+- New presentational component, e.g. `engine-lines-panel.tsx` (kebab-case per repo), showing N rows.
+- Convert PV UCI to **SAN** using `chess.js` from the position FEN (reuse patterns from elsewhere in app).
+- Wire to **current FEN** from review replay state (same source as board).
+- **Empty states:** engine loading, no worker, analysis unavailable.
+- Copy in `lib/copy` if the project centralizes strings for review.
 
 ### Phase 4 — Polish and guardrails
 
-- [ ] **Depth default:** e.g. align with “club”/“strong” tier or one step below full game analysis — document in `engine.ts` or review-specific constant.
-- [ ] **Mobile:** verify scroll and panel collapse; reduce N or depth if needed.
-- [ ] **Lint / type-check / manual QA** on Chrome/Safari.
+- **Depth default:** e.g. align with “club”/“strong” tier or one step below full game analysis — document in `engine.ts` or review-specific constant.
+- **Mobile:** verify scroll and panel collapse; reduce N or depth if needed.
+- **Lint / type-check / manual QA** on Chrome/Safari.
 
 ### Phase 5 — (Optional) Persistence
 
 Only if product asks for “lines remembered per move” without recompute:
 
-- [ ] Schema slice on `game_reviews` or child table (versioned JSON per move index).
-- [ ] Size caps and migration story.
+- Schema slice on `game_reviews` or child table (versioned JSON per move index).
+- Size caps and migration story.
 
 **Default recommendation:** **On-demand only** for v1 — no Convex persistence of MultiPV rows.
 
@@ -185,10 +185,10 @@ userContext?: { lastMoveSan?: string }  // optional
 
 ## 6. Testing checklist
 
-- [ ] Unit: UCI `info` parsing (multipv 1–3, cp and mate scores).
-- [ ] Integration: review page stepping moves updates lines correctly.
-- [ ] Edge: start position, sharp tactical position, endgame KRvK-style if applicable.
-- [ ] Regression: existing `getBestMove` / game analysis pipeline still passes.
+- Unit: UCI `info` parsing (multipv 1–3, cp and mate scores).
+- Integration: review page stepping moves updates lines correctly.
+- Edge: start position, sharp tactical position, endgame KRvK-style if applicable.
+- Regression: existing `getBestMove` / game analysis pipeline still passes.
 
 ---
 

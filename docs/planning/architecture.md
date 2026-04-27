@@ -87,7 +87,7 @@ There is **no** separate REST API document for game CRUD in production; clients 
 
 - **Lichess** — Opening explorer (masters) for book metadata and explorer-backed UI; implemented with caching in Convex (`lichess_explorer.ts`, related libs under `apps/web/lib/lichess/`).
 - **OAuth** — GitHub (and any others configured) via Better Auth.
-- **AI summaries** — Optional **LLM-generated post-game narrative** via Convex action `ai_game_summary` (`apps/web/convex/ai_game_summary.ts`), using **Vercel AI Gateway** and the AI SDK (`apps/web/lib/ai/`). Requires `AI_GATEWAY_API_KEY`; rule-based engine analysis remains authoritative. Broader AI-assisted commentary (MultiPV lines, position explain) is roadmap work — see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) and [`engine-lines-multipv-prd.md`](./engine-lines-multipv-prd.md).
+- **AI summaries** — Optional **LLM-generated post-game narrative** via Convex action `ai_game_summary` (`apps/web/convex/ai_game_summary.ts`), using **Vercel AI Gateway** and the AI SDK (`apps/web/lib/ai/`). Requires `AI_GATEWAY_API_KEY`; rule-based engine analysis remains authoritative. Broader AI-assisted commentary (MultiPV lines, position explain) is roadmap work — see [`learning-and-feedback-enhancements.md`](./learning-and-feedback-enhancements.md) and [`PRD/engine-lines-multipv-prd.md`](./PRD/engine-lines-multipv-prd.md).
 
 ## Security considerations
 
