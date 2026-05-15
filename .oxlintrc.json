@@ -12,8 +12,8 @@
   ],
   "jsPlugins": ["@convex-dev/eslint-plugin"],
   "options": {
-    "type-aware": true,
-    "type-check": true
+    "typeAware": true,
+    "typeCheck": true
   },
   "plugins": [
     "eslint",
