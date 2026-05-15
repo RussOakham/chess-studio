@@ -11,6 +11,10 @@
     "**/convex/_generated/**"
   ],
   "jsPlugins": ["@convex-dev/eslint-plugin"],
+  "options": {
+    "type-aware": true,
+    "type-check": true
+  },
   "plugins": [
     "eslint",
     "unicorn",
