@@ -1,7 +1,7 @@
+import json from "@eslint/json";
 // oxlint-disable typescript/no-unsafe-member-access
 // oxlint-disable typescript/no-unsafe-assignment
 import tsParser from "@typescript-eslint/parser";
-import json from "@eslint/json";
 import oxlint from "eslint-plugin-oxlint";
 import { configs as ymlConfigs } from "eslint-plugin-yml";
 
