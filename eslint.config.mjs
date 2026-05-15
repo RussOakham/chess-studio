@@ -1,7 +1,7 @@
 // oxlint-disable typescript/no-unsafe-member-access
 // oxlint-disable typescript/no-unsafe-assignment
 import tsParser from "@typescript-eslint/parser";
-import json from "eslint-plugin-json";
+import json from "@eslint/json";
 import oxlint from "eslint-plugin-oxlint";
 import { configs as ymlConfigs } from "eslint-plugin-yml";
 
@@ -30,7 +30,19 @@ const config = [
     ],
   },
 
-  // JSON linting (explicitly only for JSON files, not package.json)
+  // JSONC (comments allowed) — must use json/jsonc, not json/json
+  {
+    files: [".vscode/**/*.json", "apps/web/convex/tsconfig.json"],
+    plugins: {
+      json,
+    },
+    language: "json/jsonc",
+    rules: {
+      "json/no-duplicate-keys": "error",
+    },
+  },
+
+  // Strict JSON (no comments; trailing commas are parse errors)
   {
     files: ["**/*.json"],
     ignores: [
@@ -38,14 +50,15 @@ const config = [
       "**/package-lock.json",
       "**/yarn.lock",
       "**/pnpm-lock.yaml",
+      ".vscode/**/*.json",
+      "apps/web/convex/tsconfig.json",
     ],
     plugins: {
       json,
     },
-    processor: json.processors[".json"],
+    language: "json/json",
     rules: {
-      "json/duplicate-key": "error",
-      "json/trailing-comma": "error",
+      "json/no-duplicate-keys": "error",
     },
   },
 
