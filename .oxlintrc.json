@@ -11,6 +11,10 @@
     "**/convex/_generated/**"
   ],
   "jsPlugins": ["@convex-dev/eslint-plugin"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
   "plugins": [
     "eslint",
     "unicorn",
@@ -51,6 +55,7 @@
     "no-namespace": "off",
     "sort-imports": "off",
     "img-redundant-alt": "off",
+    "prefer-tag-over-role": "off",
     "jsx-no-jsx-as-prop": "off",
     "jsx-no-new-function-as-prop": "off",
     "no-duplicate-imports": "off",
